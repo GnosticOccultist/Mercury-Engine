@@ -1,0 +1,333 @@
+package fr.mercury.nucleus.application;
+
+import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
+import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
+import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
+import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
+import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
+import static org.lwjgl.glfw.GLFW.glfwDefaultWindowHints;
+import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
+import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
+import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
+import static org.lwjgl.glfw.GLFW.glfwInit;
+import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
+import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
+import static org.lwjgl.glfw.GLFW.glfwShowWindow;
+import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
+import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
+import static org.lwjgl.glfw.GLFW.glfwWindowHint;
+import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
+import static org.lwjgl.opengl.GL11.GL_FALSE;
+import static org.lwjgl.opengl.GL11.GL_TRUE;
+import static org.lwjgl.system.MemoryUtil.NULL;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+
+import fr.mercury.nucleus.utils.NanoTimer;
+
+/**
+ * <code>GLFWContext</code> is a wrapper class to handle the creation of 
+ * GLFW context and LWJGL initialization.
+ * <p>
+ * It also contains the <code>Application</code> main-loop with update and render methods.
+ * 
+ * @author GnosticOccultist
+ */
+public class MercuryContext implements Runnable {
+	
+	/**
+	 * The application which manages the context.
+	 */
+	private Application application;
+	/**
+	 * The general settings.
+	 */
+	private MercurySettings settings = new MercurySettings(true);
+	/**
+	 * Whether the context is initialized.
+	 */
+	private final AtomicBoolean initialized = new AtomicBoolean(false);
+	/**
+	 * The boolean to notify about a needed restart.
+	 */
+	private final AtomicBoolean needRestart = new AtomicBoolean(false);
+	/**
+	 * The window handle value.
+	 */
+	private long window = NULL;
+	/**
+	 * The timer using to calculate the sleeping time.
+	 */
+	private NanoTimer timer;
+	/**
+	 * The frame-rate limit.
+	 */
+	private int frameRateLimit;
+	/**
+	 * The sleeping time of the frame.
+	 */
+	private double frameSleepTime;
+
+	public void initialize() {
+		if(initialized.get()) {
+			System.err.println("Warning : The context is already initialized!");
+			return;
+		}
+		
+		run();
+	}
+	
+	/**
+	 * Restart the context to apply new settings. The context should first
+	 * be initialized.
+	 */
+	public void restart() {
+		if(initialized.get()) {
+			needRestart.set(true);
+		} else {
+			System.err.println("Warning: The context isn't initialized, cannot restart!");
+		}
+	}
+	
+	@Override
+	public void run() {
+		if(!initializeInMercury()) {
+			System.err.println("Error: The context initialization failed. Stopping...");
+			return;
+		}
+		
+		if(application == null) {
+			throw new IllegalArgumentException("The bounded application cannot be null !");
+		}
+		
+		while (true) {
+			
+			runLoop();
+			
+			if(glfwWindowShouldClose(window)) {
+				break;
+			}
+		}
+		
+		cleanup();
+	}
+	
+	/**
+	 * Execute a single iteration over the rendering and updating logic inside
+	 * the OpenGL Thread.
+	 */
+	private void runLoop() {
+    	// If a restart is required, recreate the context.
+    	if(needRestart.getAndSet(false)) {
+    		try {
+    			System.out.println("Restarting the application: " + application.getClass().getSimpleName());
+    			destroyContext();
+    			createContext(settings);
+    		} catch (Exception ex) {
+    			System.err.println("Error: Failed to set display settings!" + ex.getMessage());
+    		}
+    	}
+		
+		if(!initialized.get()) {
+			throw new IllegalStateException();
+		}
+		
+		application.update();
+		
+		glfwSwapBuffers(window);
+		
+		if(frameRateLimit != settings.getFrameRate()) {
+			setFrameRateLimit(settings.getFrameRate());
+		}
+		
+		if(frameRateLimit > 0) {
+    		final double sleep = frameSleepTime - (timer.getTimePerFrame() / 1000.0);
+    		final long sleepMillis = (long) sleep;
+    		final int additionalNanos = (int) ((sleep - sleepMillis) * 1000000.0);
+    		
+    		if(sleepMillis >= 0 && additionalNanos >= 0) {
+    			try {
+    				Thread.sleep(sleepMillis, additionalNanos);
+    			} catch (InterruptedException ignored) {
+    				// Just ignore...
+    			}
+    		}
+		}
+		
+		glfwPollEvents();
+	}
+
+	/**
+	 * Initialize the LWJGL display in OpenGL Thread.
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
+	private boolean initializeInMercury() {
+		try {
+			
+			timer = new NanoTimer();
+			
+			createContext(settings);
+			
+			initialized.set(true);
+		} catch (Exception ex) {
+			
+			// Creation failed destroying the context 
+			// and stopping there.
+			destroyContext();
+			ex.printStackTrace();
+			return false;
+		}
+		
+		application.initialize();
+		return true;
+	}
+	
+	private void createContext(MercurySettings settings) {
+		
+		// Setup an error callback. The default implementation
+        // will print the error message in System.err.
+        GLFWErrorCallback.createPrint(System.err).set();
+		
+		if(!glfwInit()) {
+			throw new IllegalStateException("Unable to initialize GLFW context!");
+		}
+		
+		// Optional, the current window hints are already the default
+		glfwDefaultWindowHints();
+		
+		// The window will stay hidden after creation.
+		glfwWindowHint(GLFW_VISIBLE, GL_FALSE); 		    
+		// Whether the window is going to be resizable or not based on the configs.
+		glfwWindowHint(GLFW_RESIZABLE, settings.isResizable() ? GL_TRUE : GL_FALSE);
+		
+		// This allow to use OpenGL 3.x and 4.x contexts on OSX.
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+		
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+		
+		long monitor = NULL;
+		
+		if(settings.isFullscreen()) {
+			monitor = glfwGetPrimaryMonitor();
+		}
+		
+		// Getting the resolution of the primary monitor.
+		final GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+		
+		// Make sure the width and the height is superior than 0.
+		if(settings.getWidth() <= 0 || settings.getHeight() <= 0) {
+			settings.setResolution(videoMode.width(), videoMode.height());
+		}
+		
+		// Create the window.
+		window = glfwCreateWindow(settings.getWidth(), 
+				settings.getHeight(), settings.getTitle(), monitor, NULL);
+		
+		if(window == NULL) {
+			throw new RuntimeException("Failed to create the GLFW window");
+		}
+		
+		// Center the window
+		if(!settings.isFullscreen()) {
+			glfwSetWindowPos(window,  
+					(videoMode.width() - settings.getWidth()) / 2, 
+					(videoMode.height() - settings.getHeight()) / 2);
+		}
+		
+		// Make the OpenGL context current.
+        glfwMakeContextCurrent(window);
+        
+        // Enabling V-Sync.
+        glfwSwapInterval(settings.isVSync() ? 1 : 0);
+        
+        // Finally show the window when finished.
+        showWindow();
+	}
+	
+	private void cleanup() {
+		application.cleanup();
+		destroyContext();
+		
+		// Reset the state of variables.
+		timer = null;
+		initialized.set(false);
+	}
+	
+	/**
+	 * Destroy the GLFW context.
+	 */
+	private void destroyContext() {
+		try {
+			if(window != NULL) {
+				glfwDestroyWindow(window);
+				window = NULL;
+			}
+		} catch (Exception e) {
+			System.err.println("Failed to destroy context");
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Show the window.
+	 */
+	private void showWindow() {
+		glfwShowWindow(window);
+	}
+	
+	/**
+	 * Set the settings used by the context to the provided ones.
+	 * <p>
+	 * Note that the settings won't be
+	 * 
+	 * @param settings The settings to use. 
+	 */
+	public void setSettings(MercurySettings settings) {
+		this.settings.copyFrom(settings);
+	}
+	
+	/**
+	 * Sets the frame-rate limit and determine the frame sleep time
+	 * 
+	 * @param frameRateLimit The frame-rate limit.
+	 */
+	private void setFrameRateLimit(int frameRateLimit) {
+		this.frameRateLimit = frameRateLimit;
+		this.frameSleepTime = 1000.0 / this.frameRateLimit;
+	}
+	
+	/**
+	 * Bind the context to the specified application.
+	 * <p>
+	 * It should be called before creating the context using {@link #initialize()}.
+	 * 
+	 * @param application
+	 */
+	public void setApplication(Application application) {
+		this.application = application;
+	}
+	
+	/**
+	 * Set the title of the window's context.
+	 * Note that it is only visible when windowed.
+	 * 
+	 * @param title The title of the window.
+	 */
+	public void setTitle(String title) {
+		if(initialized.get() && window != NULL) {
+			glfwSetWindowTitle(window, title);
+		}
+	}
+}
