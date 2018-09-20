@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.math;
+package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
 
@@ -31,6 +31,14 @@ public final class Vector3f {
 	 * The Z-component of the vector.
 	 */
 	public float z;
+	
+	/**
+	 * Instantiates a new <code>Vector3f</code> with 0 value for 
+	 * each component {0,0,0}.
+	 */
+	public Vector3f() {
+		set(0, 0, 0);
+	}
 	
 	/**
 	 * Instantiates a new <code>Vector3f</code> with the provided
@@ -305,7 +313,7 @@ public final class Vector3f {
 	
 	@Override
 	public boolean equals(Object o) {
-		if(!(o instanceof Vector3f)) {
+		if(o == null || !(o instanceof Vector3f)) {
 			return false;
 		}
 		
@@ -313,13 +321,13 @@ public final class Vector3f {
 			return true;
 		}
 		
-		Vector3f comp = (Vector3f) o;
-		if (Float.compare(x, comp.x) != 0) {
+		Vector3f other = (Vector3f) o;
+		if (Float.compare(x, other.x) != 0) {
 			return false;
 		}
-		if (Float.compare(y, comp.y) != 0) {
+		if (Float.compare(y, other.y) != 0) {
 			return false;
 		}
-		return Float.compare(z, comp.z) == 0;
+		return Float.compare(z, other.z) == 0;
 	}
 }

@@ -1,6 +1,7 @@
-package fr.mercury.nucleus.math;
+package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.math.MercuryMath;
 
 /**
  * <code>Quaternion</code> defines a rotation in 4 dimensions instead of 3, using hypercomplex numbers.
@@ -33,6 +34,14 @@ public final class Quaternion {
 	 * The W-component of the vector.
 	 */
 	public float w;
+	
+	/**
+	 * Instantiates a new <code>Quaternion</code> with identity 
+	 * values {0,0,0,1}.
+	 */
+	public Quaternion() {
+		set(0, 0, 0, 1);
+	}
 	
 	/**
 	 * Instantiates a new <code>Quaternion</code> with the provided
@@ -232,7 +241,7 @@ public final class Quaternion {
 	 * <p>
 	 * Same as calling <code>set(0,0,0,1)</code>.
 	 * 
-	 * @return The zero vector.
+	 * @return The identity quaternion.
 	 */
 	public Quaternion identity() {
 		x = y = z = 0;
@@ -252,7 +261,7 @@ public final class Quaternion {
 	
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof Quaternion)) {
+		if (o == null || !(o instanceof Quaternion)) {
 			return false;
 		}
 
@@ -260,16 +269,16 @@ public final class Quaternion {
 			return true;
 		}
 
-		Quaternion comp = (Quaternion) o;
-		if (Float.compare(x, comp.x) != 0) {
+		Quaternion other = (Quaternion) o;
+		if (Float.compare(x, other.x) != 0) {
 			return false;
 		}
-		if (Float.compare(y, comp.y) != 0) {
+		if (Float.compare(y, other.y) != 0) {
 			return false;
 		}
-		if (Float.compare(z, comp.z) != 0) {
+		if (Float.compare(z, other.z) != 0) {
 			return false;
 		}
-		return Float.compare(w, comp.w) == 0;
+		return Float.compare(w, other.w) == 0;
 	}
 }
