@@ -2,6 +2,7 @@ package fr.mercury.nucleus.renderer.opengl.shader;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
@@ -59,18 +60,9 @@ public final class ShaderProgram extends GLObject {
 			throw new MercuryException("Error while linking shader program: "
 					+ GL20.glGetProgramInfoLog(id, 1024));
 		}
-	}
-	
-	@OpenGLCall
-	private void create() {
-		if(id == INVALID_ID) {
-			var id = GL20.glCreateProgram();
-			if(id == 0) {
-				throw new MercuryException("Failed to create shader program!");
-			}
-			
-			setID(id);
-		}
+		
+		// TODO: Should be called by a rendering manager.
+		GL20.glUseProgram(id);
 	}
 	
 	/**
@@ -90,13 +82,13 @@ public final class ShaderProgram extends GLObject {
 	
 	@Override
 	@OpenGLCall
-	public void cleanup() {
-		if(getID() == INVALID_ID) {
-			System.err.println("Shader program not yet uploaded to GPU, cannot delete.");
-			return;
-		}
-		
-		GL20.glDeleteProgram(id);
-		setID(-1);
+	protected Integer acquireID() {
+		return GL20.glCreateProgram();
+	}
+	
+	@Override
+	@OpenGLCall
+	protected Consumer<Integer> deleteAction() {
+		return GL20::glDeleteProgram;
 	}
 }

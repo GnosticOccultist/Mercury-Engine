@@ -1,8 +1,14 @@
 package fr.mercury.nucleus.application;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
+
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
+import fr.mercury.nucleus.renderer.opengl.VertexBuffer;
+import fr.mercury.nucleus.renderer.opengl.VertexBufferType;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
-import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 
@@ -62,13 +68,30 @@ public class MercuryApplication implements Application {
 		// to ensure the first time per frame isn't too large...
 		timer.reset();
 		
+		int id = GL30.glGenVertexArrays();
+		GL30.glBindVertexArray(id);
+		
 		// TEST:
 		ShaderProgram program = new ShaderProgram()
-				.attachSource(assetManager.getShaderSource("/shaders/default.vert", ShaderType.VERTEX))
-				.attachSource(assetManager.getShaderSource("/shaders/default.frag", ShaderType.FRAGMENT));
+				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
+				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"));
 		
 		program.upload();
-		program.cleanup();
+		VertexBuffer buffer = new VertexBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW);
+		buffer.storeData(new float[]{
+		        -0.5f,  0.5f, 0.0f,
+		        -0.5f, -0.5f, 0.0f,
+		         0.5f,  0.5f, 0.0f,
+		         0.5f,  0.5f, 0.0f,
+		        -0.5f, -0.5f, 0.0f,
+		         0.5f, -0.5f, 0.0f,
+		});
+
+		buffer.upload();
+		
+		GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 0, 0);
+	
+		GL20.glEnableVertexAttribArray(0);
 	}
 
 	/**
@@ -80,6 +103,8 @@ public class MercuryApplication implements Application {
 	@OpenGLCall
 	public void update() {
 		timer.update();
+		
+		GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
 	}
 
 	/**

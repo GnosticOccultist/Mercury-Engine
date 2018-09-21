@@ -1,7 +1,25 @@
 package fr.mercury.nucleus.renderer.opengl;
 
+import java.util.function.Consumer;
+
+import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
+import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
+import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
+/**
+ * <code>GLObject</code> represent an abstraction layer for every OpenGL objects 
+ * such as {@link ShaderProgram}, {@link ShaderSource},...
+ * <p>
+ * It contains the ID of the object attributed by the OpenGL context, since it's 
+ * a common point to every <code>GLObjects</code>, it just defines the function 
+ * to create and destroy the object.
+ * <p>
+ * Once every parameters for an object are set and you want to use it, you can simply
+ * call {@link #upload()} to send the data to the GPU.
+ * 
+ * @author GnosticOccultist
+ */
 public abstract class GLObject {
 	
 	/*
@@ -17,17 +35,66 @@ public abstract class GLObject {
 	protected int id = INVALID_ID;
 	
 	/**
-	 * Register the object inside the OpenGL context by assigning 
-	 * it an ID.
+	 * Upload the object to the GPU using the OpenGL context.
 	 */
 	@OpenGLCall
 	protected abstract void upload();
 	
 	/**
-	 * Cleanup the object once it isn't need anymore.
+	 * Create the object by assigning it an ID using the
+	 * OpenGL context.
+	 * <p>
+	 * Should be leaved untouched, use {@link #acquireID()} to return 
+	 * the appropriate ID from the OpenGL context.
 	 */
 	@OpenGLCall
-	protected abstract void cleanup();
+	protected void create() {
+		if(id == INVALID_ID) {
+			var id = acquireID();
+			if(id == 0) {
+				throw new MercuryException("Failed to create " + 
+						getClass().getSimpleName() + "!");
+			}
+			
+			setID(id);
+		}
+	}
+	
+	/**
+	 * Acquire an ID for the object using the OpenGL context.
+	 * 
+	 * @return
+	 */
+	@OpenGLCall
+	protected abstract Integer acquireID();
+	
+	/**
+	 * Cleanup the object once it isn't need anymore from the GPU
+	 * and the OpenGL context.
+	 * <p>
+	 * Should be leaved untouched, use {@link #deleteAction()} to return 
+	 * the appropriate action for destroying the object from the OpenGL context.
+	 */
+	@OpenGLCall
+	public void cleanup() {
+		if(getID() == INVALID_ID) {
+			System.err.println(getClass().getSimpleName() + 
+					" not yet uploaded to GPU, cannot delete.");
+			return;
+		}
+		
+		deleteAction().accept(getID());
+		
+		setID(-1);
+	}
+	
+	/**
+	 * Return the deleting action for the object.
+	 * 
+	 * @return The deleting action.
+	 */
+	@OpenGLCall
+	protected abstract Consumer<Integer> deleteAction();
 	
 	/**
 	 * Return the ID of the object assigned by the OpenGL context.
