@@ -1,6 +1,6 @@
 package fr.mercury.nucleus.application;
 
-import fr.mercury.nucleus.utils.OpenGLThread;
+import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
  * <code>Application</code> is an interface to easily implement a usable application,
@@ -15,7 +15,7 @@ public interface Application {
 	 * <p>
 	 * It is mostly used to initialize any OpenGL objects or scene-graph requirements.
 	 */
-	@OpenGLThread
+	@OpenGLCall
 	void initialize();
 	
 	/**
@@ -23,7 +23,7 @@ public interface Application {
 	 * <p>
 	 * All the updating and rendering logic happen here.
 	 */
-	@OpenGLThread
+	@OpenGLCall
 	void update();
 	
 	/**
@@ -32,6 +32,6 @@ public interface Application {
 	 * It is mostly used to delete and free any OpenGL objects ensuring a clean shutdown
 	 * of the <code>Application</code>.
 	 */
-	@OpenGLThread
+	@OpenGLCall
 	void cleanup();
 }

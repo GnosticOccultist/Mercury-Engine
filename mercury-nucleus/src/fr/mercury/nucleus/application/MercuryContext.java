@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
 
 import fr.mercury.nucleus.utils.NanoTimer;
 
@@ -76,6 +77,32 @@ public class MercuryContext implements Runnable {
 	 */
 	private double frameSleepTime;
 
+	/**
+	 * Instantiates and return the <code>MercuryContext</code> bound to the provided application
+	 * and using the provided <code>MercurySettings</code>.
+	 * 
+	 * @param application The application to bound to.
+	 * @param settings	  The settings.
+	 * @return			  The new context.
+	 */
+	public static MercuryContext newContext(Application application, MercurySettings settings) {
+		
+		MercuryContext context = new MercuryContext();
+		context.setSettings(settings);
+		context.setApplication(application);
+		context.initialize();
+		
+		return context;
+	}
+	
+	/**
+	 * Internal use only.
+	 * <p>
+	 * Please use {@link #newContext(Application, MercurySettings)} to create 
+	 * the <code>MercuryContext</code>.
+	 */
+	private MercuryContext() {}
+	
 	public void initialize() {
 		if(initialized.get()) {
 			System.err.println("Warning : The context is already initialized!");
@@ -210,12 +237,12 @@ public class MercuryContext implements Runnable {
 		// Whether the window is going to be resizable or not based on the configs.
 		glfwWindowHint(GLFW_RESIZABLE, settings.isResizable() ? GL_TRUE : GL_FALSE);
 		
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+		
 		// This allow to use OpenGL 3.x and 4.x contexts on OSX.
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-		
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 		
 		long monitor = NULL;
 		
@@ -248,6 +275,8 @@ public class MercuryContext implements Runnable {
 		
 		// Make the OpenGL context current.
         glfwMakeContextCurrent(window);
+        
+        GL.createCapabilities();
         
         // Enabling V-Sync.
         glfwSwapInterval(settings.isVSync() ? 1 : 0);
