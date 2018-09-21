@@ -1,6 +1,9 @@
 package fr.mercury.nucleus.application;
 
-import fr.mercury.nucleus.utils.OpenGLThread;
+import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
+import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
+import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 
 /**
@@ -23,9 +26,14 @@ public class MercuryApplication implements Application {
 	 */
 	protected MercurySettings settings;
 	/**
+	 * The asset manager.
+	 */
+	protected AssetManager assetManager = new AssetManager();
+	/**
 	 * The timer of the application in nanoseconds.
 	 */
 	protected SpeedableNanoTimer timer = new SpeedableNanoTimer();
+	
 	
 	public static void main(String[] args) {
 		MercuryApplication app = new MercuryApplication();
@@ -38,10 +46,7 @@ public class MercuryApplication implements Application {
 		}
 		
 		System.out.println("Starting the application: " + getClass().getSimpleName());
-		context = new MercuryContext();
-		context.setSettings(settings);
-		context.setApplication(this);
-		context.initialize();
+		context = MercuryContext.newContext(this, settings);
 	}
 	
 	/**
@@ -50,12 +55,20 @@ public class MercuryApplication implements Application {
 	 * It is automatically called when the context is initialized.
 	 */
 	@Override
-	@OpenGLThread
+	@OpenGLCall
 	public void initialize() {
 		
 		// Reset the timer before invoking anything else,
 		// to ensure the first time per frame isn't too large...
 		timer.reset();
+		
+		// TEST:
+		ShaderProgram program = new ShaderProgram()
+				.attachSource(assetManager.getShaderSource("/shaders/default.vert", ShaderType.VERTEX))
+				.attachSource(assetManager.getShaderSource("/shaders/default.frag", ShaderType.FRAGMENT));
+		
+		program.upload();
+		program.cleanup();
 	}
 
 	/**
@@ -64,7 +77,7 @@ public class MercuryApplication implements Application {
 	 * It is automatically called during the context updating logic.
 	 */
 	@Override
-	@OpenGLThread
+	@OpenGLCall
 	public void update() {
 		timer.update();
 	}
@@ -76,7 +89,7 @@ public class MercuryApplication implements Application {
 	 * before the context destruction.
 	 */
 	@Override
-	@OpenGLThread
+	@OpenGLCall
 	public void cleanup() {
 		timer.reset();
 	}
