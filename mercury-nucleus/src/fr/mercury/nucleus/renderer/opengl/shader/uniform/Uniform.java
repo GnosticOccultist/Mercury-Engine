@@ -8,7 +8,9 @@ import org.lwjgl.system.MemoryStack;
 
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Matrix4f;
+import fr.mercury.nucleus.math.objects.Vector2f;
 import fr.mercury.nucleus.math.objects.Vector3f;
+import fr.mercury.nucleus.math.objects.Vector4f;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
@@ -87,9 +89,17 @@ public class Uniform {
 				Boolean bool = (Boolean) value;
 				GL20.glUniform1i(location, bool ? GL11.GL_TRUE : GL11.GL_FALSE);
 				break;
+			case VECTOR2F:
+				Vector2f vec2 = (Vector2f) value;
+				GL20.glUniform2f(location, vec2.x, vec2.y);
+				break;
 			case VECTOR3F:
-				Vector3f vec = (Vector3f) value;
-				GL20.glUniform3f(location, vec.x, vec.y, vec.z);
+				Vector3f vec3 = (Vector3f) value;
+				GL20.glUniform3f(location, vec3.x, vec3.y, vec3.z);
+				break;
+			case VECTOR4F:
+				Vector4f vec4 = (Vector4f) value;
+				GL20.glUniform4f(location, vec4.x, vec4.y, vec4.z, vec4.w);
 				break;
 			case MATRIX4F:
 				try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -135,11 +145,21 @@ public class Uniform {
 				}
 				this.value = value;
 				break;
+			case VECTOR2F:
+				this.value = new Vector2f((Vector2f) value);
+				break;
 			case VECTOR3F:
 				if(value instanceof Vector3f) {
 					this.value = new Vector3f((Vector3f) value);
 				} else if (value instanceof Color) { 
 					this.value = ((Color) value).asVector3f();
+				}
+				break;
+			case VECTOR4F:
+				if(value instanceof Vector4f) {
+					this.value = new Vector4f((Vector4f) value);
+				} else if (value instanceof Color) { 
+					this.value = ((Color) value).asVector4f();
 				}
 				break;
 			case MATRIX4F:
@@ -227,9 +247,17 @@ public class Uniform {
 		 */
 		BOOLEAN("bool"),
 		/**
+		 * Store <code>Vector2f</code> data.
+		 */
+		VECTOR2F("vec2"),
+		/**
 		 * Store <code>Vector3f</code> data.
 		 */
 		VECTOR3F("vec3"),
+		/**
+		 * Store <code>Vector4f</code> data.
+		 */
+		VECTOR4F("vec4"),
 		/**
 		 * Store <code>Matrix4f</code> data.
 		 */

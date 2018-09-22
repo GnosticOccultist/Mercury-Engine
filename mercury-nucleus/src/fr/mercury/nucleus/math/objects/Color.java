@@ -136,4 +136,38 @@ public final class Color {
 	public Vector3f asVector3f() {
 		return new Vector3f(r, g, b);
 	}
+	
+	/**
+     * Transform this <code>Color</code> to a <code>Vector4f</code> using
+     * the red, green, blue and alpha components.
+     *
+     * @return A vector containing the RGBA value of this color.
+     */
+	public Vector4f asVector4f() {
+		return new Vector4f(r, g, b, a);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || !(o instanceof Color)) {
+			return false;
+		}
+
+		if (this == o) {
+			return true;
+		}
+
+		Color other = (Color) o;
+		if (Float.compare(r, other.r) != 0) {
+			return false;
+		}
+		if (Float.compare(g, other.g) != 0) {
+			return false;
+		}
+		if (Float.compare(b, other.b) != 0) {
+			return false;
+		}
+		
+		return Float.compare(a, other.a) == 0;
+	}
 }

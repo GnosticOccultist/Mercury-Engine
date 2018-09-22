@@ -1,0 +1,288 @@
+package fr.mercury.nucleus.math.objects;
+
+import fr.alchemy.utilities.Validator;
+
+/**
+ * <code>Vector2f</code> is a mathematical utility class representing a vector with
+ * 2 components on the 2 axis (X;Y) of a 2D space. It contains some utility methods
+ * for fast calculation or physical determination.
+ * <p>
+ * Example of representation:
+ * <i><li>A texture coordinate
+ * <li>A plane
+ * </i></li>
+ * <p>
+ * 
+ * @author GnosticOccultist
+ */
+public final class Vector2f {
+	
+	/**
+	 * The X-component of the vector.
+	 */
+	public float x;
+	/**
+	 * The Y-component of the vector.
+	 */
+	public float y;
+	
+	/**
+	 * Instantiates a new <code>Vector2f</code> with 0 value for 
+	 * each component {0,0}.
+	 */
+	public Vector2f() {
+		set(0, 0);
+	}
+	
+	/**
+	 * Instantiates a new <code>Vector2f</code> with the provided
+	 * components.
+	 * 
+	 * @param x The X-component of the vector.
+	 * @param y The Y-component of the vector.
+	 */
+	public Vector2f(float x, float y) {
+		set(x, y);
+	}
+	
+	/**
+	 * Instantiates a new <code>Vector2f</code> with the provided
+	 * vector's components.
+	 * 
+	 * @param other The other vector to get the components.
+	 */
+	public Vector2f(Vector2f other) {
+		set(other);
+	}
+	
+	/**
+	 * Set the provided components values to this <code>Vector2f</code> 
+	 * components.
+	 * 
+	 * @param x The X-component to copy from.
+	 * @param y The Y-component to copy from.
+	 */
+	public Vector2f set(float x, float y) {
+		this.x = x;
+		this.y = y;
+		return this;
+	}
+	
+	/**
+	 * Set the components values of the provided vector to this 
+	 * <code>Vector2f</code> components.
+	 * <p>
+	 * The provided vector cannot be null.
+	 * 
+	 * @param other The other vector to copy from.
+	 */
+	public Vector2f set(Vector2f other) {
+		Validator.nonNull(other, "The vector cannot be null!");
+		
+		this.x = other.x;
+		this.y = other.y;
+		return this;
+	}
+	
+	/**
+	 * Add the provided components to this <code>Vector2f</code> components.
+	 * 
+	 * @param x The X-component to addition.
+	 * @param y The Y-component to addition.
+	 * 
+	 * @return	The vector with its new components values.
+	 */
+	public Vector2f add(float x, float y) {
+		this.x += x;
+        this.y += y;
+        return this;
+	}
+	
+	/**
+	 * Add the provided vector to this <code>Vector2f</code> components.
+	 * <p>
+	 * The provided vector cannot be null.
+	 * 
+	 * @param other The other vector to addition.
+	 * 
+	 * @return		The vector with its new components values.
+	 */
+	public Vector2f add(Vector2f other) {
+        Validator.nonNull(other, "The vector cannot be null!");
+		
+		this.x += other.x;
+        this.y += other.y;
+        return this;
+	}
+	
+	/**
+	 * Subtracts the provided components to this <code>Vector2f</code> components.
+	 * 
+	 * @param x The X-component to subtract.
+	 * @param y The Y-component to subtract.
+	 * 
+	 * @return	The vector with its new components values.
+	 */
+	public Vector2f sub(float x, float y) {
+		this.x -= x;
+        this.y -= y;
+        return this;
+	}
+	
+	/**
+	 * Subtracts the provided vector to this <code>Vector2f</code> components.
+	 * <p>
+	 * The provided vector cannot be null.
+	 * 
+	 * @param other The other vector to subtract.
+	 * 
+	 * @return		The vector with its new components values.
+	 */
+	public Vector2f sub(Vector2f other) {
+        Validator.nonNull(other, "The vector cannot be null!");
+		
+		this.x -= other.x;
+        this.y -= other.y;
+        return this;
+	}
+	
+	/**
+	 * Multiplies the provided components to this <code>Vector2f</code> components.
+	 * 
+	 * @param x The X-component to multiply.
+	 * @param y The Y-component to multiply.
+	 * 
+	 * @return 	The vector with its new components values. 
+	 */
+    public Vector2f mul(float x, float y) {
+    	this.x *= x;
+        this.y *= y;
+        return this;
+    }
+    
+    /**
+	 * Multiplies the provided vector to this <code>Vector2f</code> components.
+	 * <p>
+	 * The provided vector cannot be null.
+	 * 
+	 * @param other The other vector to multiply.
+	 * 
+	 * @return 		The vector with its new components values. 
+	 */
+    public Vector2f mul(Vector2f other) {
+    	Validator.nonNull(other, "The vector cannot be null!");
+    	
+    	this.x *= other.x;
+        this.y *= other.y;
+        return this;
+    }
+    
+    /**
+	 * Divides the provided components to this <code>Vector2f</code> components.
+	 * 
+	 * @param x The X-component to divide.
+	 * @param y The Y-component to divide.
+	 * 
+	 * @return 	The vector with its new components values. 
+	 */
+    public Vector2f div(float x, float y) {
+    	this.x /= x;
+        this.y /= y;
+        return this;
+    }
+    
+    /**
+	 * Divides the provided vector to this <code>Vector2f</code> components.
+	 * <p>
+	 * The provided vector cannot be null.
+	 * 
+	 * @param other The other vector to divide.
+	 * 
+	 * @return 		The vector with its new components values. 
+	 */
+    public Vector2f div(Vector2f other) {
+    	Validator.nonNull(other, "The vector cannot be null!");
+    	
+    	this.x /= other.x;
+        this.y /= other.y;
+        return this;
+    }
+    
+    /**
+     * Calculates the dot product of the <code>Vector2f</code> with the provided one.
+     * If dot product = 0, the vectors are orthogonal.
+     * <p>
+	 * The provided vector cannot be null.
+     * 
+     * @param other The vector to get the dot product with.
+     * @return		The resulting scalar from the dot product.
+     */
+    public float dot(Vector2f other) {
+    	Validator.nonNull(other, "The vector cannot be null!");
+    	
+    	return x * other.x + y * other.y;
+    }
+	
+	/**
+	 * Return the length of the <code>Vector2f</code>.
+	 * 
+	 * @return The length of the vector.
+	 */
+	public float length() {
+		return (float) Math.sqrt(x * x + y * y);
+	}
+	
+	/**
+	 * Return whether the <code>Vector2f</code> is a unit vector, 
+	 * meaning its norm ({@link #length()}) is equal to 1.
+	 * 
+	 * @return Whether the vector is a unit vector.
+	 */
+	public boolean isUnitVector() {
+		return length() == 1;
+	}
+	
+	/**
+	 * Normalizes the <code>Vector2f</code>. It will will divide
+     * the vector's components by its {@link #length()}, returning 
+     * a unit vector.
+	 * 
+	 * @return The normalized vector (unit vector).
+	 */
+	public Vector2f normalize() {
+        float length = x * x + y * y;
+        if (length != 1f && length != 0f) {
+            length = (float) (1.0f / Math.sqrt(length));
+            x *= length;
+            y *= length;
+        }
+        return this;
+	}
+	
+	/**
+	 * Set each component value of the <code>Vector2f</code> to 0.
+	 * 
+	 * @return The zero vector.
+	 */
+	public Vector2f zero() {
+		x = y = 0;
+		return this;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if(o == null || !(o instanceof Vector2f)) {
+			return false;
+		}
+		
+		if(this == o) {
+			return true;
+		}
+		
+		Vector2f other = (Vector2f) o;
+		if (Float.compare(x, other.x) != 0) {
+			return false;
+		}
+		return Float.compare(y, other.y) == 0;
+	}
+}

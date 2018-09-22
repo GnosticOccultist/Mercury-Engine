@@ -93,7 +93,7 @@ public class MercuryApplication implements Application {
 				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
 				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"))
 				.addUniform("projectionMatrix", UniformType.MATRIX4F, camera.getProjectionMatrix())
-				.addUniform("color", UniformType.VECTOR3F, new Color(1, 1, 0));
+				.addUniform("color", UniformType.VECTOR4F, new Color(1, 0.3f, 0, 1f));
 		
 		program.upload();
 		
