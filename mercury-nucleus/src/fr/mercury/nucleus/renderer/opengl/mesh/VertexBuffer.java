@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.renderer.opengl;
+package fr.mercury.nucleus.renderer.opengl.mesh;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.system.MemoryUtil;
 
+import fr.mercury.nucleus.renderer.opengl.GLBuffer;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 public class VertexBuffer extends GLBuffer {

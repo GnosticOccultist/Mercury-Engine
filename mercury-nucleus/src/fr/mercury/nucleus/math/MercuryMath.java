@@ -1,5 +1,8 @@
 package fr.mercury.nucleus.math;
 
+import fr.alchemy.utilities.LocalVars;
+import fr.mercury.nucleus.math.objects.Vector3f;
+
 /**
  * <code>MercuryMath</code> gathers mathematical functions together, providing fast
  * utilization for the user.
@@ -9,6 +12,15 @@ package fr.mercury.nucleus.math;
  * @author GnosticOccultist
  */
 public final class MercuryMath {
+	
+	/**
+	 * The local vars from the main thread.
+	 */
+	public static final LocalVars LOCAL_VARS = LocalVars.get();
+	
+	static {
+		LOCAL_VARS.register(Vector3f.class, Vector3f::new);
+	}
 	
 	/**
 	 * Return the square root of the provided value.
@@ -32,5 +44,17 @@ public final class MercuryMath {
 	 */
 	public static float invSqrt(float value) {
 		return (float) (1.0f / Math.sqrt(value));
+	}
+
+	/**
+	 * Return the tangent of the provided value.
+	 * <p>
+	 * It uses the {@link Math#tan(double)} function.
+	 * 
+	 * @param value The value in radians.
+	 * @return		The tangent of the value.
+	 */
+	public static float tan(double value) {
+		return (float) Math.tan(value);
 	}
 }

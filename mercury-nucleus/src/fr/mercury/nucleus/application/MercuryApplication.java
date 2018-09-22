@@ -1,13 +1,18 @@
 package fr.mercury.nucleus.application;
 
+import java.nio.FloatBuffer;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.system.MemoryStack;
 
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.renderer.Camera;
+import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
-import fr.mercury.nucleus.renderer.opengl.VertexBuffer;
-import fr.mercury.nucleus.renderer.opengl.VertexBufferType;
+import fr.mercury.nucleus.renderer.opengl.mesh.VertexArray;
+import fr.mercury.nucleus.renderer.opengl.mesh.VertexBuffer;
+import fr.mercury.nucleus.renderer.opengl.mesh.VertexBufferType;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
@@ -39,7 +44,14 @@ public class MercuryApplication implements Application {
 	 * The timer of the application in nanoseconds.
 	 */
 	protected SpeedableNanoTimer timer = new SpeedableNanoTimer();
-	
+	/**
+	 * The camera used for rendering.
+	 */
+	protected Camera camera;
+	/**
+	 * The renderer.
+	 */
+	protected Renderer renderer;
 	
 	public static void main(String[] args) {
 		MercuryApplication app = new MercuryApplication();
@@ -64,12 +76,18 @@ public class MercuryApplication implements Application {
 	@OpenGLCall
 	public void initialize() {
 		
+		// Initialize the camera.
+		camera = new Camera(settings.getWidth(), settings.getHeight());
+		camera.setProjectionMatrix(45f, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
+		
+		renderer = new Renderer(camera);
+		
 		// Reset the timer before invoking anything else,
 		// to ensure the first time per frame isn't too large...
 		timer.reset();
 		
-		int id = GL30.glGenVertexArrays();
-		GL30.glBindVertexArray(id);
+		VertexArray vertexArray = new VertexArray();
+		vertexArray.upload();
 		
 		// TEST:
 		ShaderProgram program = new ShaderProgram()
@@ -77,8 +95,17 @@ public class MercuryApplication implements Application {
 				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"));
 		
 		program.upload();
-		VertexBuffer buffer = new VertexBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW);
-		buffer.storeData(new float[]{
+		
+		int loc = GL20.glGetUniformLocation(program.getID(), "projectionMatrix");
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			FloatBuffer fb = stack.mallocFloat(16);
+			camera.projectionMatrix.fillFloatBuffer(fb, true);
+			fb.clear();
+			GL20.glUniformMatrix4fv(loc, false, fb);
+		}
+		
+		VertexBuffer vertexBuffer = new VertexBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW);
+		vertexBuffer.storeData(new float[]{
 		        -0.5f,  0.5f, 0.0f,
 		        -0.5f, -0.5f, 0.0f,
 		         0.5f,  0.5f, 0.0f,
@@ -87,7 +114,7 @@ public class MercuryApplication implements Application {
 		         0.5f, -0.5f, 0.0f,
 		});
 
-		buffer.upload();
+		vertexBuffer.upload();
 		
 		GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 0, 0);
 	
@@ -104,7 +131,8 @@ public class MercuryApplication implements Application {
 	public void update() {
 		timer.update();
 		
-		GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
+		renderer.update();
+		renderer.drawTriangles(6);
 	}
 
 	/**

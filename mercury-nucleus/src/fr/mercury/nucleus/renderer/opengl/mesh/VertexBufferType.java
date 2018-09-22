@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.renderer.opengl;
+package fr.mercury.nucleus.renderer.opengl.mesh;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
@@ -8,7 +8,7 @@ import fr.mercury.nucleus.renderer.opengl.GLBuffer.BufferType;
 
 /**
  * 
- * @author Stickxy
+ * @author GnosticOccultist
  *
  */
 public enum VertexBufferType {

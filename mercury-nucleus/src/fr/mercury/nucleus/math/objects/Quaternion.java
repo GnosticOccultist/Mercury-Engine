@@ -225,6 +225,57 @@ public final class Quaternion {
 		return this;
 	}
     
+    /**
+     * Return one of the three columns specified by the parameter.
+     * The column is returned as a <code>Vector3f</code> from the normalized
+     * <code>Quaternion</code>.
+     * 
+     * @param index The index of the column to retrieve (between 0-2).
+     * @param store	The vector to store the result in, or a new one if null.
+     * @return		The column specified by the index.
+     */
+    public Vector3f getRotationColumn(int index, Vector3f store) {
+        if (store == null) {
+            store = new Vector3f();
+        }
+
+        float norm = norm();
+        if (norm != 1.0f) {
+            norm = MercuryMath.invSqrt(norm);
+        }
+        
+        float xx = x * x * norm;
+        float xy = x * y * norm;
+        float xz = x * z * norm;
+        float xw = x * w * norm;
+        float yy = y * y * norm;
+        float yz = y * z * norm;
+        float yw = y * w * norm;
+        float zz = z * z * norm;
+        float zw = z * w * norm;
+        
+        switch (index) {
+			case 0:
+				store.x = 1 - 2 * (yy + zz);
+				store.y = 2 * (xy + zw);
+				store.z = 2 * (xz - yw);
+				break;
+			case 1:
+                store.x = 2 * (xy - zw);
+                store.y = 1 - 2 * (xx + zz);
+                store.z = 2 * (yz + xw);
+				break;
+			case 2:
+                store.x = 2 * (xz + yw);
+                store.y = 2 * (yz - xw);
+                store.z = 1 - 2 * (xx + yy);
+				break;
+			default:
+				throw new IllegalArgumentException("Invalid column index: " + index);
+		}
+        return store;
+    }
+    
 	/**
 	 * Return whether the <code>Quaternion</code> is an identity one.
 	 * <p>
