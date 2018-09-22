@@ -4,10 +4,11 @@ import fr.alchemy.utilities.LocalVars;
 import fr.mercury.nucleus.math.objects.Vector3f;
 
 /**
- * <code>MercuryMath</code> gathers mathematical functions together, providing fast
+ * <code>MercuryMath</code> contains mathematical functions, providing fast
  * utilization for the user.
  * <p>
- * It takes over the {@link Math} class and returns often float equivalent values.
+ * It takes over the {@link Math} class and returns often float equivalent values, 
+ * for usability inside mathematical object.
  * 
  * @author GnosticOccultist
  */

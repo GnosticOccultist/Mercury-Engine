@@ -1,7 +1,9 @@
 package fr.mercury.nucleus.renderer.opengl.shader;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.lwjgl.opengl.GL11;
@@ -9,6 +11,8 @@ import org.lwjgl.opengl.GL20;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
@@ -29,6 +33,10 @@ public final class ShaderProgram extends GLObject {
 	 * The list of shader sources.
 	 */
 	private final List<ShaderSource> sources;
+	/**
+	 * The table with the uniforms classed by their name.
+	 */
+	private final Map<String, Uniform> uniforms;
 	
 	/**
 	 * Instantiates a new <code>ShaderProgram</code> with empty sources.
@@ -38,6 +46,7 @@ public final class ShaderProgram extends GLObject {
 	 */
 	public ShaderProgram() {
 		this.sources = new ArrayList<>();
+		this.uniforms = new HashMap<>();
 	}
 	
 	@Override
@@ -63,6 +72,10 @@ public final class ShaderProgram extends GLObject {
 		
 		// TODO: Should be called by a rendering manager.
 		GL20.glUseProgram(id);
+		
+		for(var uniform : uniforms.values()) {
+			uniform.upload(this);
+		}
 	}
 	
 	/**
@@ -77,6 +90,15 @@ public final class ShaderProgram extends GLObject {
 		Validator.nonNull(source, "The shader source cannot be null.");
 		
 		sources.add(source);
+		return this;
+	}
+	
+	public ShaderProgram addUniform(String name, UniformType type, Object value) {
+		Uniform uniform = new Uniform();
+		uniform.setName(name);
+		uniform.setValue(type, value);
+		
+		uniforms.put(name, uniform);
 		return this;
 	}
 	

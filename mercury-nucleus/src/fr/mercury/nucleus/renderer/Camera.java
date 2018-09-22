@@ -115,6 +115,24 @@ public final class Camera {
 	}
 	
 	/**
+	 * Return the projection matrix of the camera.
+	 * 
+	 * @return The projection matrix.
+	 */
+	public Matrix4f getProjectionMatrix() {
+		return projectionMatrix;
+	}
+	
+	/**
+	 * Return the view matrix of the camera.
+	 * 
+	 * @return The view matrix.
+	 */
+	public Matrix4f getViewMatrix() {
+		return viewMatrix;
+	}
+	
+	/**
 	 * Return the width of the camera, usually the
 	 * width of the display.
 	 * 

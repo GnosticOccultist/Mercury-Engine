@@ -2,6 +2,7 @@ package fr.mercury.nucleus.math.objects;
 
 import java.nio.FloatBuffer;
 
+import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.MercuryMath;
 
 /**
@@ -24,14 +25,41 @@ public final class Matrix4f {
     public float m30, m31, m32, m33;
     
     /**
-     * Instantiates a new <code>Matrix4f</code> with
-     * the identity values ({@link #identity()}).
+     * Instantiates a new <code>Matrix4f</code> with the identity 
+     * values ({@link #identity()}).
      */
     public Matrix4f() {
 		identity();
 	}
     
     /**
+	 * Instantiates a new <code>Matrix4f</code> with the provided
+	 * matrixes components.
+	 * 
+	 * @param other The other matrix to get the components.
+	 */
+    public Matrix4f(Matrix4f other) {
+		set(other);
+	}
+
+    /**
+	 * Set the components values of the provided matrix to this 
+	 * <code>Matrix4f</code> components.
+	 * <p>
+	 * The provided matrix cannot be null.
+	 * 
+	 * @param other The other matrix to copy from.
+	 */
+	public void set(Matrix4f other) {
+		Validator.nonNull(other, "The matrix cannot be null!");
+		
+		m00 = other.m00; m01 = other.m01; m02 = other.m02; m03 = other.m03;
+		m10 = other.m10; m11 = other.m11; m12 = other.m12; m13 = other.m13;
+		m20 = other.m20; m21 = other.m21; m22 = other.m22; m23 = other.m23;
+		m30 = other.m30; m31 = other.m31; m32 = other.m32; m33 = other.m33;
+	}
+
+	/**
      * Set the <code>Matrix4f</code> to its identity values.
      * It is all zeros except the diagonal values which are set to 1.
      * <pre>

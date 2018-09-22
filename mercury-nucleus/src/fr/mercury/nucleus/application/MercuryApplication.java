@@ -1,12 +1,10 @@
 package fr.mercury.nucleus.application;
 
-import java.nio.FloatBuffer;
-
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.system.MemoryStack;
 
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
@@ -14,6 +12,7 @@ import fr.mercury.nucleus.renderer.opengl.mesh.VertexArray;
 import fr.mercury.nucleus.renderer.opengl.mesh.VertexBuffer;
 import fr.mercury.nucleus.renderer.opengl.mesh.VertexBufferType;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 
@@ -92,17 +91,11 @@ public class MercuryApplication implements Application {
 		// TEST:
 		ShaderProgram program = new ShaderProgram()
 				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
-				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"));
+				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"))
+				.addUniform("projectionMatrix", UniformType.MATRIX4F, camera.getProjectionMatrix())
+				.addUniform("color", UniformType.VECTOR3F, new Color(1, 1, 0));
 		
 		program.upload();
-		
-		int loc = GL20.glGetUniformLocation(program.getID(), "projectionMatrix");
-		try (MemoryStack stack = MemoryStack.stackPush()) {
-			FloatBuffer fb = stack.mallocFloat(16);
-			camera.projectionMatrix.fillFloatBuffer(fb, true);
-			fb.clear();
-			GL20.glUniformMatrix4fv(loc, false, fb);
-		}
 		
 		VertexBuffer vertexBuffer = new VertexBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW);
 		vertexBuffer.storeData(new float[]{
