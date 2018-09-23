@@ -4,7 +4,10 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.objects.Color;
+import fr.mercury.nucleus.math.objects.Matrix4f;
+import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
@@ -52,6 +55,10 @@ public class MercuryApplication implements Application {
 	 */
 	protected Renderer renderer;
 	
+	private ShaderProgram program;
+	private Matrix4f projectionModelMatrix;
+	private Transform transform;
+	
 	public static void main(String[] args) {
 		MercuryApplication app = new MercuryApplication();
 		app.start();
@@ -64,6 +71,7 @@ public class MercuryApplication implements Application {
 		
 		System.out.println("Starting the application: " + getClass().getSimpleName());
 		context = MercuryContext.newContext(this, settings);
+		context.initialize();
 	}
 	
 	/**
@@ -85,32 +93,69 @@ public class MercuryApplication implements Application {
 		// to ensure the first time per frame isn't too large...
 		timer.reset();
 		
+		transform = new Transform();
+		transform.setTranslation(0, 0, -2);
+		transform.setRotation(0, 0.5f, 0);
+		
+		projectionModelMatrix = MercuryMath.LOCAL_VARS.acquireNext(Matrix4f.class);
+		projectionModelMatrix.set(camera.getProjectionMatrix());
+		projectionModelMatrix.mult(transform.modelMatrix(), projectionModelMatrix);
+		
 		VertexArray vertexArray = new VertexArray();
 		vertexArray.upload();
 		
 		// TEST:
-		ShaderProgram program = new ShaderProgram()
+		program = new ShaderProgram()
 				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
 				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"))
-				.addUniform("projectionMatrix", UniformType.MATRIX4F, camera.getProjectionMatrix())
+				.addUniform("transformMatrix", UniformType.MATRIX4F, projectionModelMatrix)
 				.addUniform("color", UniformType.VECTOR4F, new Color(1, 0.3f, 0, 1f));
 		
 		program.upload();
 		
-		VertexBuffer vertexBuffer = new VertexBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW);
-		vertexBuffer.storeData(new float[]{
-		        -0.5f,  0.5f, 0.0f,
-		        -0.5f, -0.5f, 0.0f,
-		         0.5f,  0.5f, 0.0f,
-		         0.5f,  0.5f, 0.0f,
-		        -0.5f, -0.5f, 0.0f,
-		         0.5f, -0.5f, 0.0f,
+		VertexBuffer positions = new VertexBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW);
+		positions.storeData(new float[] {
+	            // VO
+	            -0.5f,  0.5f,  0.5f,
+	            // V1
+	            -0.5f, -0.5f,  0.5f,
+	            // V2
+	             0.5f, -0.5f,  0.5f,
+	            // V3
+	             0.5f,  0.5f,  0.5f,
+	            // V4
+	            -0.5f,  0.5f, -0.5f,
+	            // V5
+	             0.5f,  0.5f, -0.5f,
+	            // V6
+	            -0.5f, -0.5f, -0.5f,
+	            // V7
+	             0.5f, -0.5f, -0.5f,
 		});
-
-		vertexBuffer.upload();
+		
+		positions.upload();
 		
 		GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 0, 0);
-	
+		
+		VertexBuffer indices = new VertexBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW);
+		indices.storeData(new int[]{
+
+			    // Front face
+			    0, 1, 3, 3, 1, 2,
+			    // Top Face
+			    4, 0, 3, 5, 4, 3,
+			    // Right face
+			    3, 2, 7, 5, 3, 7,
+			    // Left face
+			    6, 1, 0, 6, 0, 4,
+			    // Bottom face
+			    2, 1, 6, 2, 6, 7,
+			    // Back face
+			    7, 6, 4, 7, 4, 5,
+	    });
+
+		indices.upload();
+		
 		GL20.glEnableVertexAttribArray(0);
 	}
 
@@ -125,7 +170,8 @@ public class MercuryApplication implements Application {
 		timer.update();
 		
 		renderer.update();
-		renderer.drawTriangles(6);
+		
+		renderer.drawElements(36);
 	}
 
 	/**

@@ -39,7 +39,11 @@ public final class Camera {
 	/**
 	 * The projection matrix.
 	 */
-	public final Matrix4f projectionMatrix = new Matrix4f();
+	private final Matrix4f projectionMatrix = new Matrix4f();
+	/**
+	 * The view-projection matrix.
+	 */
+	private final Matrix4f viewProjectionMatrix = new Matrix4f();
 	/**
 	 * The frustum planes distance from the camera.
 	 */
@@ -66,6 +70,12 @@ public final class Camera {
 		Vector3f up = getUp(MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class));
 		
 		viewMatrix.viewMatrix(location, direction, up, left);
+		
+		updateViewProjectionMatrix();
+	}
+	
+	public void updateViewProjectionMatrix() {
+		viewProjectionMatrix.set(projectionMatrix).mult(viewMatrix, viewProjectionMatrix);
 	}
 	
 	public void setProjectionMatrix(float fovY, float aspect, float near, float far) {
@@ -112,6 +122,24 @@ public final class Camera {
 	 */	
 	public Vector3f getUp(Vector3f store) {
 		return rotation.getRotationColumn(1, store);
+	}
+	
+	/**
+	 * Return the location of the camera.
+	 * 
+	 * @return The location of the camera.
+	 */
+	public Vector3f getLocation() {
+		return location;
+	}
+	
+	/**
+	 * Return the view-projection matrix of the camera.
+	 * 
+	 * @return The view-projection matrix.
+	 */
+	public Matrix4f getViewProjectionMatrix() {
+		return viewProjectionMatrix;
 	}
 	
 	/**

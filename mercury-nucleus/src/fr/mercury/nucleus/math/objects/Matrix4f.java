@@ -50,13 +50,15 @@ public final class Matrix4f {
 	 * 
 	 * @param other The other matrix to copy from.
 	 */
-	public void set(Matrix4f other) {
+	public Matrix4f set(Matrix4f other) {
 		Validator.nonNull(other, "The matrix cannot be null!");
 		
 		m00 = other.m00; m01 = other.m01; m02 = other.m02; m03 = other.m03;
 		m10 = other.m10; m11 = other.m11; m12 = other.m12; m13 = other.m13;
 		m20 = other.m20; m21 = other.m21; m22 = other.m22; m23 = other.m23;
 		m30 = other.m30; m31 = other.m31; m32 = other.m32; m33 = other.m33;
+		
+		return this;
 	}
 
 	/**
@@ -201,4 +203,206 @@ public final class Matrix4f {
             array[15] = m33;
         }
 	}
+	
+	/**
+	 * Multiplies the <code>Matrix4f</code> with the provided one.
+	 * The result is stored inside the second provided matrix or a new one if null.
+	 * 
+	 * @param other The other matrix to do the multiplication.
+	 * @param store The matrix to store the result.
+	 * @return		The resulting matrix.
+	 */
+	public Matrix4f mult(Matrix4f other, Matrix4f store) {
+        if (store == null) {
+            store = new Matrix4f();
+        }
+       
+        float[] m = new float[16];
+
+        m[0] = m00 * other.m00
+                + m01 * other.m10
+                + m02 * other.m20
+                + m03 * other.m30;
+        m[1] = m00 * other.m01
+                + m01 * other.m11
+                + m02 * other.m21
+                + m03 * other.m31;
+        m[2] = m00 * other.m02
+                + m01 * other.m12
+                + m02 * other.m22
+                + m03 * other.m32;
+        m[3] = m00 * other.m03
+                + m01 * other.m13
+                + m02 * other.m23
+                + m03 * other.m33;
+
+        m[4] = m10 * other.m00
+                + m11 * other.m10
+                + m12 * other.m20
+                + m13 * other.m30;
+        m[5] = m10 * other.m01
+                + m11 * other.m11
+                + m12 * other.m21
+                + m13 * other.m31;
+        m[6] = m10 * other.m02
+                + m11 * other.m12
+                + m12 * other.m22
+                + m13 * other.m32;
+        m[7] = m10 * other.m03
+                + m11 * other.m13
+                + m12 * other.m23
+                + m13 * other.m33;
+        m[8] = m20 * other.m00
+                + m21 * other.m10
+                + m22 * other.m20
+                + m23 * other.m30;
+        m[9] = m20 * other.m01
+                + m21 * other.m11
+                + m22 * other.m21
+                + m23 * other.m31;
+        m[10] = m20 * other.m02
+                + m21 * other.m12
+                + m22 * other.m22
+                + m23 * other.m32;
+        m[11] = m20 * other.m03
+                + m21 * other.m13
+                + m22 * other.m23
+                + m23 * other.m33;
+
+        m[12] = m30 * other.m00
+                + m31 * other.m10
+                + m32 * other.m20
+                + m33 * other.m30;
+        m[13] = m30 * other.m01
+                + m31 * other.m11
+                + m32 * other.m21
+                + m33 * other.m31;
+        m[14] = m30 * other.m02
+                + m31 * other.m12
+                + m32 * other.m22
+                + m33 * other.m32;
+        m[15] = m30 * other.m03
+                + m31 * other.m13
+                + m32 * other.m23
+                + m33 * other.m33;
+
+        store.m00 = m[0];
+        store.m01 = m[1];
+        store.m02 = m[2];
+        store.m03 = m[3];
+        store.m10 = m[4];
+        store.m11 = m[5];
+        store.m12 = m[6];
+        store.m13 = m[7];
+        store.m20 = m[8];
+        store.m21 = m[9];
+        store.m22 = m[10];
+        store.m23 = m[11];
+        store.m30 = m[12];
+        store.m31 = m[13];
+        store.m32 = m[14];
+        store.m33 = m[15];
+        
+        return store;
+    }
+	
+	/**
+	 * Set the translation components of the <code>Matrix4f</code> to the ones
+	 * specified in the provided <code>Vector3f</code>.
+	 * 
+	 * @param translation The translation vector to set.
+	 */
+    public void setTranslation(Vector3f translation) {
+        m03 = translation.x;
+        m13 = translation.y;
+        m23 = translation.z;
+    }
+    
+    /**
+     * Set the rotation components of the <code>Matrix4f</code> to the ones
+	 * specified in the provided <code>Quaternion</code>.
+     * 
+     * @param quaternion The rotation quaternion to set.
+     */
+    public void setRotation(Quaternion quaternion) {
+		quaternion.toRotationMatrix(this);
+	}
+	
+    /**
+     * Set the scaling components of the <code>Matrix4f</code> to the ones
+     * specified in the provided <code>Vector3f</code>.
+     * 
+     * @param scale The scaling vector to set.
+     */
+	public void setScale(Vector3f scale) {
+        setScale(scale.x, scale.y, scale.z);
+	}
+	
+	 /**
+     * Set the scaling components of the <code>Matrix4f</code> to the ones
+     * specified.
+     * 
+     * @param scale The scaling vector to set.
+     */
+	public void setScale(float x, float y, float z) {
+        float length = m00 * m00 + m10 * m10 + m20 * m20;
+        if (length != 0f) {
+            length = length == 1 ? x : (x / MercuryMath.sqrt(length));
+            m00 *= length;
+            m10 *= length;
+            m20 *= length;
+        }
+
+        length = m01 * m01 + m11 * m11 + m21 * m21;
+        if (length != 0f) {
+            length = length == 1 ? y : (y / MercuryMath.sqrt(length));
+            m01 *= length;
+            m11 *= length;
+            m21 *= length;
+        }
+        
+        length = m02 * m02 + m12 * m12 + m22 * m22;
+        if (length != 0f) {
+            length = length == 1 ? z : (z / MercuryMath.sqrt(length));
+            m02 *= length;
+            m12 *= length;
+            m22 *= length;
+        }
+	}
+	
+	/**
+	 * Apply a scale to the <code>Matrix4f</code> using the provided 
+	 * <code>Vector3f</code>.
+	 * 
+	 * @param scale The scale to apply to the matrix.
+	 */
+    public void scale(Vector3f scale) {
+        m00 *= scale.x;
+        m10 *= scale.x;
+        m20 *= scale.x;
+        m30 *= scale.x;
+        m01 *= scale.y;
+        m11 *= scale.y;
+        m21 *= scale.y;
+        m31 *= scale.y;
+        m02 *= scale.z;
+        m12 *= scale.z;
+        m22 *= scale.z;
+        m32 *= scale.z;
+    }
+    
+    /**
+     * Return a scaling <code>Vector3f</code> from the <code>Matrix4f</code>
+     * components.
+     * 
+     * @param store The vector to store the scale into.
+     * @return		The scaling vector.
+     */
+    public Vector3f getScale(Vector3f store) {
+		float scaleX = (float) Math.sqrt(m00 * m00 + m10 * m10 + m20 * m20);
+		float scaleY = (float) Math.sqrt(m01 * m01 + m11 * m11 + m21 * m21);
+		float scaleZ = (float) Math.sqrt(m02 * m02 + m12 * m12 + m22 * m22);
+        store.set(scaleX, scaleY, scaleZ);
+        return store;
+    }
 }

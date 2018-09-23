@@ -5,11 +5,13 @@ import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
+import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
 import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
 import static org.lwjgl.glfw.GLFW.glfwDefaultWindowHints;
 import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
+import static org.lwjgl.glfw.GLFW.glfwGetKey;
 import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
 import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
 import static org.lwjgl.glfw.GLFW.glfwInit;
@@ -31,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL11;
 
 import fr.mercury.nucleus.utils.NanoTimer;
 
@@ -90,7 +93,6 @@ public class MercuryContext implements Runnable {
 		MercuryContext context = new MercuryContext();
 		context.setSettings(settings);
 		context.setApplication(application);
-		context.initialize();
 		
 		return context;
 	}
@@ -281,6 +283,9 @@ public class MercuryContext implements Runnable {
         // Enabling V-Sync.
         glfwSwapInterval(settings.isVSync() ? 1 : 0);
         
+        // Enable depth testing.
+        // GL11.glEnable(GL11.GL_DEPTH_TEST);
+        
         // Finally show the window when finished.
         showWindow();
 	}
@@ -315,6 +320,11 @@ public class MercuryContext implements Runnable {
 	private void showWindow() {
 		glfwShowWindow(window);
 	}
+	
+	// TODO: Remove
+	public boolean isKeyPressed(int keyCode) {
+        return glfwGetKey(window, keyCode) == GLFW_PRESS;
+    }
 	
 	/**
 	 * Set the settings used by the context to the provided ones.

@@ -1,5 +1,7 @@
 package fr.mercury.nucleus.math.objects;
 
+import fr.mercury.nucleus.math.MercuryMath;
+
 /**
  * <code>Transform</code> is a mathematical object representing a translation, a rotation 
  * and a scale for a scene-graph object in a 3D space.
@@ -22,6 +24,10 @@ public final class Transform {
 	 * The scale of the object.
 	 */
 	private final Vector3f scale;
+	/**
+	 * The matrix containing the model transform.
+	 */
+	private final Matrix4f modelMatrix;
 	
 	/**
 	 * Instantiates a new <code>Transform</code> with identity values.
@@ -31,9 +37,7 @@ public final class Transform {
 	 * The scale: {1,1,1}.
 	 */
 	public Transform() {
-		this.translation = new Vector3f();
-		this.rotation = new Quaternion();
-		this.scale = new Vector3f(1, 1, 1);
+		this(new Vector3f(), new Quaternion(), new Vector3f(1, 1, 1));
 	}
 	
 	/**
@@ -44,9 +48,7 @@ public final class Transform {
 	 * The scale: {1,1,1}.
 	 */
 	public Transform(Vector3f translation) {
-		this.translation = new Vector3f(translation);
-		this.rotation = new Quaternion();
-		this.scale = new Vector3f(1, 1, 1);
+		this(translation, new Quaternion(), new Vector3f(1, 1, 1));
 	}
 	
 	/**
@@ -56,9 +58,7 @@ public final class Transform {
 	 * The scale: {1,1,1}.
 	 */
 	public Transform(Vector3f translation, Quaternion rotation) {
-		this.translation = new Vector3f(translation);
-		this.rotation = new Quaternion(rotation);
-		this.scale = new Vector3f(1, 1, 1);
+		this(translation, rotation, new Vector3f(1, 1, 1));
 	}
 	
 	/**
@@ -69,6 +69,7 @@ public final class Transform {
 		this.translation = new Vector3f(translation);
 		this.rotation = new Quaternion(rotation);
 		this.scale = new Vector3f(scale);
+		this.modelMatrix = new Matrix4f();
 	}
 	
 	/**
@@ -261,6 +262,29 @@ public final class Transform {
 	public Transform scale(float x, float y, float z) {
 		this.scale.add(x, y, z);
 		return this;
+	}
+	
+	public Matrix4f modelMatrix() {
+		modelMatrix.identity();
+		
+		modelMatrix.setRotation(rotation);
+		modelMatrix.setTranslation(translation);
+		modelMatrix.mult(scaleMatrix(MercuryMath.LOCAL_VARS
+    			.acquireNext(Matrix4f.class)), modelMatrix);
+    	
+		return modelMatrix;
+	}
+	
+	/**
+	 * Apply the <code>Transform</code> scale to the provided <code>Matrix4f</code>,
+	 * to be used as a scaling matrix.
+	 * 
+	 * @param store The matrix to scale.
+	 * @return		The scaling matrix.
+	 */
+	public Matrix4f scaleMatrix(Matrix4f store) {
+		store.scale(scale);
+		return store;
 	}
 	
 	/**

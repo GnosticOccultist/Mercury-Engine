@@ -276,6 +276,61 @@ public final class Quaternion {
         return store;
     }
     
+    /**
+     * Converts the <code>Quaternion</code> to a rotation <code>Matrix4f</code>, 
+     * stored into the provided matrix.
+     * <p>
+     * Note that the 4th row and columns are leaved untouched and that this operation
+     * preserve the scale of the <code>Matrix4f</code>.
+     * 
+     * @param result The matrix to store the result.
+     * @return		 The rotation matrix with scaling preserved.
+     */
+    public Matrix4f toRotationMatrix(Matrix4f result) {
+       
+    	// Saving the original scale before applying the rotation, to be restored
+    	// at the end.
+    	Vector3f originalScale = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
+        result.getScale(originalScale);
+        result.setScale(1, 1, 1);
+        
+        float norm = norm();
+        // Check first if the norm is equal to one to avoid the division,
+        // don't know if it's really necessary?
+        float s = (norm == 1f) ? 2f : (norm > 0f) ? 2f / norm : 0;
+
+        // Compute xs/ys/zs first to save 6 multiplications, since xs/ys/zs
+        // will be used 2-4 times each.
+        float xs = x * s;
+        float ys = y * s;
+        float zs = z * s;
+        float xx = x * xs;
+        float xy = x * ys;
+        float xz = x * zs;
+        float xw = w * xs;
+        float yy = y * ys;
+        float yz = y * zs;
+        float yw = w * ys;
+        float zz = z * zs;
+        float zw = w * zs;
+
+        // Using s = 2/norm (instead of 1/norm) saves 9 multiplications by 2 here.
+        result.m00 = 1 - (yy + zz);
+        result.m01 = (xy - zw);
+        result.m02 = (xz + yw);
+        result.m10 = (xy + zw);
+        result.m11 = 1 - (xx + zz);
+        result.m12 = (yz - xw);
+        result.m20 = (xz - yw);
+        result.m21 = (yz + xw);
+        result.m22 = 1 - (xx + yy);
+
+        // Finally restore the scale of the matrix.
+        result.setScale(originalScale);
+
+        return result;
+    }
+    
 	/**
 	 * Return whether the <code>Quaternion</code> is an identity one.
 	 * <p>

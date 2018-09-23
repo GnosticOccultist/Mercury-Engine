@@ -47,7 +47,7 @@ public class VertexBuffer extends GLBuffer {
 	
 	@OpenGLCall
 	protected void bind() {
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, getID());
+		GL15.glBindBuffer(getOpenGLType(), getID());
 	}
 	
 	@OpenGLCall
@@ -61,7 +61,7 @@ public class VertexBuffer extends GLBuffer {
 	
 	@OpenGLCall
 	protected void unbind() {
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+		GL15.glBindBuffer(getOpenGLType(), 0);
 	}
 	
 	@Override

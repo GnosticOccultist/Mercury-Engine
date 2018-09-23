@@ -93,13 +93,30 @@ public final class ShaderProgram extends GLObject {
 		return this;
 	}
 	
+	/**
+	 * Add a <code>Uniform</code> to the <code>ShaderProgram</code> with the specified
+	 * name, type and value.
+	 * 
+	 * @param name  The name of the uniform.
+	 * @param type  The value's type of the uniform.
+	 * @param value The value contained by the uniform.
+	 * @return		The program with the new uniform.
+	 */
 	public ShaderProgram addUniform(String name, UniformType type, Object value) {
+		Validator.nonNull(type, "The uniform's type cannot be null!");
+		Validator.nonNull(value, "The uniform's value cannot be null!");
+		Validator.nonNull(name, "The uniform's name cannot be null!");
+		
 		Uniform uniform = new Uniform();
 		uniform.setName(name);
 		uniform.setValue(type, value);
 		
 		uniforms.put(name, uniform);
 		return this;
+	}
+	
+	public Uniform getUniform(String name) {
+		return uniforms.get(name);
 	}
 	
 	@Override
