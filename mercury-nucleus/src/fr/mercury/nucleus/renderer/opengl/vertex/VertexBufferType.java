@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.renderer.opengl.mesh;
+package fr.mercury.nucleus.renderer.opengl.vertex;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
@@ -133,6 +133,10 @@ public enum VertexBufferType {
 	 */
 	public Format getPreferredFormat() {
 		return format;
+	}
+	
+	public int getOpenGLFormat() {
+		return getOpenGLFormat(format);
 	}
 	
 	public static int getOpenGLFormat(Format format) {

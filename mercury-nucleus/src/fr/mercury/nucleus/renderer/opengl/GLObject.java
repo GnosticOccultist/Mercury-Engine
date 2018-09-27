@@ -69,7 +69,7 @@ public abstract class GLObject {
 	protected abstract Integer acquireID();
 	
 	/**
-	 * Cleanup the object once it isn't need anymore from the GPU
+	 * Cleanup the object once it isn't needed anymore from the GPU
 	 * and the OpenGL context.
 	 * <p>
 	 * Should be leaved untouched, use {@link #deleteAction()} to return 

@@ -1,8 +1,5 @@
 package fr.mercury.nucleus.application;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
-
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.objects.Color;
@@ -11,11 +8,10 @@ import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
-import fr.mercury.nucleus.renderer.opengl.mesh.VertexArray;
-import fr.mercury.nucleus.renderer.opengl.mesh.VertexBuffer;
-import fr.mercury.nucleus.renderer.opengl.mesh.VertexBufferType;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
+import fr.mercury.nucleus.scene.Mesh;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 
@@ -101,9 +97,6 @@ public class MercuryApplication implements Application {
 		projectionModelMatrix.set(camera.getProjectionMatrix());
 		projectionModelMatrix.mult(transform.modelMatrix(), projectionModelMatrix);
 		
-		VertexArray vertexArray = new VertexArray();
-		vertexArray.upload();
-		
 		// TEST:
 		program = new ShaderProgram()
 				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
@@ -113,50 +106,41 @@ public class MercuryApplication implements Application {
 		
 		program.upload();
 		
-		VertexBuffer positions = new VertexBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW);
-		positions.storeData(new float[] {
-	            // VO
-	            -0.5f,  0.5f,  0.5f,
-	            // V1
-	            -0.5f, -0.5f,  0.5f,
-	            // V2
-	             0.5f, -0.5f,  0.5f,
-	            // V3
-	             0.5f,  0.5f,  0.5f,
-	            // V4
-	            -0.5f,  0.5f, -0.5f,
-	            // V5
-	             0.5f,  0.5f, -0.5f,
-	            // V6
-	            -0.5f, -0.5f, -0.5f,
-	            // V7
-	             0.5f, -0.5f, -0.5f,
+		Mesh mesh = new Mesh();
+		mesh.setupBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW, new float[] {
+            // VO
+            -0.5f,  0.5f,  0.5f,
+            // V1
+            -0.5f, -0.5f,  0.5f,
+            // V2
+             0.5f, -0.5f,  0.5f,
+            // V3
+             0.5f,  0.5f,  0.5f,
+            // V4
+            -0.5f,  0.5f, -0.5f,
+            // V5
+             0.5f,  0.5f, -0.5f,
+            // V6
+            -0.5f, -0.5f, -0.5f,
+            // V7
+             0.5f, -0.5f, -0.5f
 		});
-		
-		positions.upload();
-		
-		GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 0, 0);
-		
-		VertexBuffer indices = new VertexBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW);
-		indices.storeData(new int[]{
-
-			    // Front face
-			    0, 1, 3, 3, 1, 2,
-			    // Top Face
-			    4, 0, 3, 5, 4, 3,
-			    // Right face
-			    3, 2, 7, 5, 3, 7,
-			    // Left face
-			    6, 1, 0, 6, 0, 4,
-			    // Bottom face
-			    2, 1, 6, 2, 6, 7,
-			    // Back face
-			    7, 6, 4, 7, 4, 5,
+		mesh.setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, new int[] {
+			// Front face
+			0, 1, 3, 3, 1, 2,
+			// Top Face
+			4, 0, 3, 5, 4, 3,
+			// Right face
+			3, 2, 7, 5, 3, 7,
+			// Left face
+			6, 1, 0, 6, 0, 4,
+			// Bottom face
+			2, 1, 6, 2, 6, 7,
+			// Back face
+			7, 6, 4, 7, 4, 5
 	    });
-
-		indices.upload();
 		
-		GL20.glEnableVertexAttribArray(0);
+		mesh.upload();
 	}
 
 	/**

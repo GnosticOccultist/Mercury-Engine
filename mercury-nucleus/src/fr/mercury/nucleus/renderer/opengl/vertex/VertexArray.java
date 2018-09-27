@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.renderer.opengl.mesh;
+package fr.mercury.nucleus.renderer.opengl.vertex;
 
 import java.util.function.Consumer;
 

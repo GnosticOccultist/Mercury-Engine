@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
 
 import fr.mercury.nucleus.utils.NanoTimer;
 
