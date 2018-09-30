@@ -27,7 +27,7 @@ public final class Transform {
 	/**
 	 * The matrix containing the model transform.
 	 */
-	private final Matrix4f modelMatrix;
+	private final Matrix4f transformMatrix;
 	
 	/**
 	 * Instantiates a new <code>Transform</code> with identity values.
@@ -69,7 +69,7 @@ public final class Transform {
 		this.translation = new Vector3f(translation);
 		this.rotation = new Quaternion(rotation);
 		this.scale = new Vector3f(scale);
-		this.modelMatrix = new Matrix4f();
+		this.transformMatrix = new Matrix4f();
 	}
 	
 	/**
@@ -264,15 +264,22 @@ public final class Transform {
 		return this;
 	}
 	
-	public Matrix4f modelMatrix() {
-		modelMatrix.identity();
+	/**
+	 * Return the transformation matrix of the <code>Transform</code>, which
+	 * is used inside a <code>ShaderProgram</code> to compute the correct position,
+	 * rotation and scale.
+	 * 
+	 * @return The transformation matrix.
+	 */
+	public Matrix4f transform() {
+		transformMatrix.identity();
 		
-		modelMatrix.setRotation(rotation);
-		modelMatrix.setTranslation(translation);
-		modelMatrix.mult(scaleMatrix(MercuryMath.LOCAL_VARS
-    			.acquireNext(Matrix4f.class)), modelMatrix);
+		transformMatrix.setRotation(rotation);
+		transformMatrix.setTranslation(translation);
+		transformMatrix.mult(scaleMatrix(MercuryMath.LOCAL_VARS
+    			.acquireNext(Matrix4f.class)), transformMatrix);
     	
-		return modelMatrix;
+		return transformMatrix;
 	}
 	
 	/**

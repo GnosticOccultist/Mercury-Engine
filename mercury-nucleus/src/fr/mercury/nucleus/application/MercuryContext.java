@@ -24,6 +24,7 @@ import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
 import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
+import static org.lwjgl.glfw.GLFW.glfwTerminate;
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -306,6 +307,7 @@ public class MercuryContext implements Runnable {
 			if(window != NULL) {
 				glfwDestroyWindow(window);
 				window = NULL;
+				glfwTerminate();
 			}
 		} catch (Exception e) {
 			System.err.println("Failed to destroy context");

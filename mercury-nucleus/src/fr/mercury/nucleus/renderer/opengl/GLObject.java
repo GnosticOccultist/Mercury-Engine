@@ -4,12 +4,13 @@ import java.util.function.Consumer;
 
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
-import fr.mercury.nucleus.utils.MercuryException;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexArray;
+import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
- * <code>GLObject</code> represent an abstraction layer for every OpenGL objects 
- * such as {@link ShaderProgram}, {@link ShaderSource},...
+ * <code>GLObject</code> represents an abstraction layer for every OpenGL objects 
+ * such as {@link ShaderProgram}, {@link ShaderSource}, {@link GLBuffer}, {@link VertexArray}...
  * <p>
  * It contains the ID of the object attributed by the OpenGL context, since it's 
  * a common point to every <code>GLObjects</code>, it just defines the function 
@@ -52,7 +53,7 @@ public abstract class GLObject {
 		if(id == INVALID_ID) {
 			var id = acquireID();
 			if(id == 0) {
-				throw new MercuryException("Failed to create " + 
+				throw new GLException("Failed to create " + 
 						getClass().getSimpleName() + "!");
 			}
 			

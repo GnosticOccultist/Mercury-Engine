@@ -2,7 +2,6 @@ package fr.mercury.nucleus.renderer.opengl.vertex;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL33;
 
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.BufferType;
 
@@ -51,17 +50,8 @@ public enum VertexBufferType {
 	/**
 	 * Defines the index for constructing the vertices with 1 uint component.
 	 */
-	INDEX(BufferType.VERTEX_INDEXING, 1, Format.UNSIGNED_INT),
-	/**
-	 * Defines an information per specified number of instances (1, 2, 3, ...) or per vertex,
-	 * this is defined by calling {@link GL33#glVertexAttribDivisor(int, int)}. 
-	 * It should be used whenever you create a new {@link InstancedAttribute}.
-	 * <p>
-	 * The data can be a matrix, a vector, an integer, a float...
-	 */
-	INSTANCE_DATA(BufferType.VERTEX_DATA, Format.FLOAT);
+	INDEX(BufferType.VERTEX_INDEXING, 1, Format.UNSIGNED_INT);
 	
-	private InstancedDataType dataType;
 	private BufferType bufferType;
 	private Format format;
 	private int size;
@@ -78,36 +68,20 @@ public enum VertexBufferType {
 	}
 	
 	/**
-	 * Sets the type of instance information. Either a float, vector, matrix...
+	 * Return the buffer type of the vertex buffer. Either {@link BufferType#VERTEX_DATA} or 
+	 * {@link BufferType#VERTEX_INDEXING}
 	 * 
-	 * @param dataType The instanced data type to store.
-	 * @return		   The instance data type with the size of the information.
-	 */
-	public VertexBufferType setType(InstancedDataType dataType) {
-		this.dataType = dataType;
-		this.size = dataType.size;
-		return VertexBufferType.INSTANCE_DATA;
-	}
-	
-	/**
-	 * @return The instance data type that the instance data store.
-	 *		   (float, vector, matrix...)
-	 */		   
-	public InstancedDataType getDataType() {
-		return dataType;
-	}
-	
-	/**
-	 * @return The buffer type of the vertex buffer. Either {@link BufferType#VERTEX_DATA} or 
-	 * 		   {@link BufferType#VERTEX_INDEXING}
+	 * @return The vertex buffer's type.
 	 */
 	public BufferType getBufferType() {
 		return bufferType;
 	}
 	
 	/**
-	 * @return The equivalent OpenGL buffer type. Either {@link GL15#GL_ARRAY_BUFFER} or
-	 * 		   {@link GL15#GL_ELEMENT_ARRAY_BUFFER}.
+	 * Return the equivalent OpenGL buffer type. Either {@link GL15#GL_ARRAY_BUFFER} or
+	 * {@link GL15#GL_ELEMENT_ARRAY_BUFFER}.
+	 * 
+	 * @return The equivalent OpenGL buffer type.
 	 */
 	public int getOpenGLType() {
 		switch (bufferType) {
@@ -121,15 +95,19 @@ public enum VertexBufferType {
 	}
 	
 	/**
-	 * @return The size per component of the <code>VertexBufferType</code>. 
+	 * Return the size per component of the <code>VertexBufferType</code>. 
+	 * 
+	 * @return The size per component.
 	 */
 	public int getSize() {
 		return size;
 	}
 	
 	/**
-	 * @return The format for each values of the <code>VertexBufferType</code>.
-	 *		   It's only the recommended format that is used by default if not declared in the <code>VertexBuffer</code>.
+	 * Return the format for each values of the <code>VertexBufferType</code>.
+	 * It's only the recommended format that is used by default if not declared in the <code>VertexBuffer</code>.
+	 * 
+	 * @return The preferred format.
 	 */
 	public Format getPreferredFormat() {
 		return format;
@@ -169,68 +147,6 @@ public enum VertexBufferType {
 		 */
 		public int getSizeInByte() {
 			return byteSize;
-		}
-		
-	}
-	
-	public enum InstancedDataType {
-		/**
-		 * The instance data type as a signed byte.
-		 */
-		BYTE(1, 1),
-		/**
-		 * The instance data type as a float.
-		 */
-		FLOAT(1, 4),
-		/**
-		 * The instance data type as a signed integer.
-		 */
-		INTEGER(1, 4),
-		/**
-		 * The instance data type as a signed short.
-		 */
-		SHORT(1, 2),
-		/**
-		 * The instance data type as a <code>Vector2f</code>.
-		 */
-		VECTOR2F(2, 8),
-		/**
-		 * The instance data type as a <code>Vector3f</code>.
-		 */
-		VECTOR3F(3, 12),
-		/**
-		 * The instance data type as a <code>Vector4f</code>.
-		 */
-		VECTOR4F(4, 16),
-		/**
-		 * The instance data type as a <code>Matrix3f</code>.
-		 */
-		MATRIX3F(9, 36),
-		/**
-		 * The instance data type as a <code>Matrix4f</code>.
-		 */
-		MATRIX4F(16, 64);
-		
-		private int size;
-		private int sizeBytes;
-		
-		InstancedDataType(int size, int sizeBytes) {
-			this.size = size;
-			this.sizeBytes = sizeBytes;
-		}
-		
-		/**
-		 * @return The size of the instance data type.
-		 */
-		public int getSize() {
-			return size;
-		}
-		
-		/**
-		 * @return The size in bytes of the instance data type.
-		 */
-		public int getSizeBytes() {
-			return sizeBytes;
-		}
+		}	
 	}
 }

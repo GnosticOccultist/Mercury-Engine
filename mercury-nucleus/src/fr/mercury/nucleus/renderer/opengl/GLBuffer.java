@@ -4,8 +4,20 @@ import java.nio.Buffer;
 
 import org.lwjgl.opengl.GL15;
 
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
+/**
+ * <code>GLBuffer</code> represents an abstraction layer for every OpenGL buffers 
+ * such as the {@link VertexBuffer}.
+ * <p>
+ * It extends the {@link GLObject} class and provides and internal data buffer to keep track
+ * of the stored data. The {@link BufferType} and {@link Usage} for the OpenGL buffer are also defined.
+ * Note, however, that before performing any action with the <code>GLBuffer</code> you must bind it to
+ * the OpenGL context using {@link #bind()}, you can also {@link #unbind()} the currently bound buffer.
+ * 
+ * @author GnosticOccultist
+ */
 public abstract class GLBuffer extends GLObject {
 	
 	/**
@@ -17,11 +29,25 @@ public abstract class GLBuffer extends GLObject {
 	 */
 	protected Buffer data = null;
 
+	/**
+	 * Binds the <code>GLBuffer</code> to the OpenGL context, allowing it to be used or updated. 
+	 * <p>
+	 * Note that there is only one bound buffer per {@link BufferType}.
+	 */
+	// TODO: Prevent useless binding with a manager.
 	@OpenGLCall
 	protected void bind() {
 		GL15.glBindBuffer(getOpenGLType(), getID());
 	}
 	
+	/**
+	 * Unbinds the currently bound <code>GLBuffer</code> from the OpenGL context.
+	 * <p>
+	 * This methods is mainly used for proper cleaning of the OpenGL context or to avoid errors of
+	 * misbindings, because it doesn't need to be called before binding a new buffer.
+	 * Note that it works even if the currently bound buffer isn't the one invoking this method 
+	 * (<i>maybe it should be static, or handled by a manager?</i>).
+	 */
 	@OpenGLCall
 	protected void unbind() {
 		GL15.glBindBuffer(getOpenGLType(), 0);
@@ -50,6 +76,14 @@ public abstract class GLBuffer extends GLObject {
 		VERTEX_INDEXING,
 	}
 	
+	/**
+	 * Return the <code>BufferType</code> of the <code>GLBuffer</code>, it must
+	 * be changed when implementing a sub-class.
+	 * <p>
+	 * By default: {@link BufferType#VERTEX_DATA}.
+	 * 
+	 * @return The buffer's type.
+	 */
 	protected BufferType getType() {
 		return BufferType.VERTEX_DATA;
 	}
@@ -100,6 +134,11 @@ public abstract class GLBuffer extends GLObject {
 		DYNAMIC_READ;
 	}
 	
+	/**
+	 * Return the <code>Usage</code> of the <code>GLBuffer</code>.
+	 * 
+	 * @return The usage of the buffer.
+	 */
 	protected Usage getUsage() {
 		return usage;
 	}
