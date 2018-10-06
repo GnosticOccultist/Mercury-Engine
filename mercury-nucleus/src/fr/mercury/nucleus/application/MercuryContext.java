@@ -5,19 +5,20 @@ import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
-import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
+import static org.lwjgl.glfw.GLFW.GLFW_REFRESH_RATE;
 import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
 import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
 import static org.lwjgl.glfw.GLFW.glfwDefaultWindowHints;
 import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
-import static org.lwjgl.glfw.GLFW.glfwGetKey;
 import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
 import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
 import static org.lwjgl.glfw.GLFW.glfwShowWindow;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
@@ -25,8 +26,6 @@ import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.glfw.GLFW.glfwTerminate;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
 import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
-import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback;
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -81,7 +80,7 @@ public class MercuryContext implements Runnable {
 	/**
 	 * The frame-rate limit.
 	 */
-	private int frameRateLimit;
+	private int frameRateLimit = -1;
 	/**
 	 * The sleeping time of the frame.
 	 */
@@ -245,6 +244,8 @@ public class MercuryContext implements Runnable {
 		glfwWindowHint(GLFW_VISIBLE, GL_FALSE); 		    
 		// Whether the window is going to be resizable or not based on the configs.
 		glfwWindowHint(GLFW_RESIZABLE, settings.isResizable() ? GL_TRUE : GL_FALSE);
+		// Set the refresh rate of the window (frequency).
+		glfwWindowHint(GLFW_REFRESH_RATE, 60);
 		
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -347,16 +348,13 @@ public class MercuryContext implements Runnable {
 	private void showWindow() {
 		glfwShowWindow(window);
 	}
-	
-	// TODO: Remove
-	public boolean isKeyPressed(int keyCode) {
-        return glfwGetKey(window, keyCode) == GLFW_PRESS;
-    }
-	
+
 	/**
-	 * Set the settings used by the context to the provided ones.
+	 * Set the settings used by the context to the provided ones. It copies the settings
+	 * without altering the provided instance of <code>MercurySettings</code>.
 	 * <p>
-	 * Note that the settings won't be
+	 * Note that the settings won't be applied until you {@link #restart()}
+	 * the <code>MercuryContext</code>.
 	 * 
 	 * @param settings The settings to use. 
 	 */

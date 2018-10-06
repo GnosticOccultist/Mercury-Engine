@@ -135,6 +135,15 @@ public abstract class GLBuffer extends GLObject {
 	}
 	
 	/**
+	 * Return the data stored in the <code>GLBuffer</code>.
+	 * 
+	 * @return The stored data in the buffer.
+	 */
+	public Buffer getData() {
+		return data;
+	}
+	
+	/**
 	 * Return the <code>Usage</code> of the <code>GLBuffer</code>.
 	 * 
 	 * @return The usage of the buffer.

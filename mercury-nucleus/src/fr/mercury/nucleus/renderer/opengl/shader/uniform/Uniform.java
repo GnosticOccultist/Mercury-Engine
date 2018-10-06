@@ -71,12 +71,12 @@ public class Uniform {
 			return;
 		}
 		
+		create(program);
+		
 		if(getLocation() == UNDEFINED_LOCATION || getUniformType() == null) {
 			System.err.println("The uniform: " + name + " is inactive or has no type!");
 			return;
 		}
-		
-		create(program);
 		
 		switch (getUniformType()) {
 			case FLOAT:
@@ -163,7 +163,11 @@ public class Uniform {
 				}
 				break;
 			case MATRIX4F:
-				this.value = new Matrix4f((Matrix4f) value);
+				if(value instanceof Matrix4f) {
+					this.value = ((Matrix4f) value).set((Matrix4f) value);
+				} else {
+					this.value = new Matrix4f((Matrix4f) value);
+				}
 				break;
 			default:
 				throw new UnsupportedOperationException(

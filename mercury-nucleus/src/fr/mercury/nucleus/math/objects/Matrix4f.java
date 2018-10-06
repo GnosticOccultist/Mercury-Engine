@@ -19,6 +19,11 @@ import fr.mercury.nucleus.math.MercuryMath;
  */
 public final class Matrix4f {
 	
+	/**
+	 * The <code>Matrix4f</code> identity &rarr; {@link #identity()}
+	 */
+	public static final Matrix4f IDENTITY_MATRIX = new Matrix4f();
+	
     public float m00, m01, m02, m03;
     public float m10, m11, m12, m13;
     public float m20, m21, m22, m23;
@@ -80,41 +85,61 @@ public final class Matrix4f {
 	}
 
     /**
-     * Build the view matrix with the <code>Matrix4f</code> with the location, direction,
-     * up-axis and left-axis of the <code>Camera</code>.
+     * Build the view <code>Matrix4f</code> with the provided location and rotation
+     * of the <code>Camera</code>. 
+     * <pre>X component &rarr; roll.<p>Y component &rarr; pitch.<p>Z component &rarr; yaw.</pre>
      * <p>
      * It is used in the shader to adjust the <code>Transform</code> of an object depending
-     * on the <code>Camera</code>.
+     * on the <code>Camera</code> position or rotation.
      * 
-     * @param location	The location of the camera.
-     * @param direction The direction the camera is facing.
-     * @param up		The up-axis of the camera.
-     * @param left      The left-axis of the camera.
+     * @param location The location of the camera.
+     * @param rotation The rotation of the camera.
+     * 
+     * @return The builded view matrix.
      */
-	public void viewMatrix(Vector3f location, Vector3f direction, Vector3f up, Vector3f left) {
-    	Vector3f vec1 = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class).set(direction);
-    	Vector3f vec2 = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class).set(vec1).cross(up);
-    	Vector3f vec3 = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class).set(vec2).cross(vec1);
-    	
-    	m00 = vec2.x;
-    	m01 = vec2.y;
-    	m02 = vec2.z;
-    	m03 = -vec2.dot(location);
-    	
-    	m10 = vec3.x;
-    	m11 = vec3.y;
-    	m12 = vec3.z;
-    	m13 = -vec3.dot(location);
-    	
-    	m20 = -vec1.x;
-    	m21 = -vec1.y;
-    	m22 = -vec1.z;
-    	m23 = vec1.dot(location);
-    	
-    	m30 = 0f;
-    	m31 = 0f;
-    	m32 = 0f;
-    	m33 = 0f;
+	public Matrix4f viewMatrix(Vector3f location, Quaternion rotation) {
+		
+        float sinX = (float) Math.sin(rotation.x);
+        float cosX = (float) Math.cos(rotation.x);
+        float sinY = (float) Math.sin(rotation.y);
+        float cosY = (float) Math.cos(rotation.y);
+        float sinZ = (float) Math.sin(rotation.z);
+        float cosZ = (float) Math.cos(rotation.z);
+        
+        float negSinX = -sinX;
+        float negSinY = -sinY;
+        float negSinZ = -sinZ;
+
+        // Rotate on the X-axis.
+        float nm11 = cosX;
+        float nm12 = sinX;
+        float nm21 = negSinX;
+        float nm22 = cosX;
+        
+        // Rotate on the Y-axis.
+        float nm00 = cosY;
+        float nm01 = nm21 * negSinY;
+        float nm02 = nm22 * negSinY;
+        
+        m20 = sinY;
+        m21 = nm21 * cosY;
+        m22 = nm22 * cosY;
+        
+        // Rotate on the Z-axis.
+        m00 = nm00 * cosZ;
+        m01 = nm01 * cosZ + nm11 * sinZ;
+        m02 = nm02 * cosZ + nm12 * sinZ;
+        m10 = nm00 * negSinZ;
+        m11 = nm01 * negSinZ + nm11 * cosZ;
+        m12 = nm02 * negSinZ + nm12 * cosZ;
+        
+        // Set last column to identity.
+        m30 = 0.0f;
+        m31 = 0.0f;
+        m32 = 0.0f;
+        
+        setTranslation(-location.x, -location.y, -location.z);
+        return this;
     }
 
 	/**
@@ -212,100 +237,118 @@ public final class Matrix4f {
 	 * @param store The matrix to store the result.
 	 * @return		The resulting matrix.
 	 */
-	public Matrix4f mult(Matrix4f other, Matrix4f store) {
+    public Matrix4f mult(Matrix4f in2, Matrix4f store) {
         if (store == null) {
             store = new Matrix4f();
         }
-       
-        float[] m = new float[16];
 
-        m[0] = m00 * other.m00
-                + m01 * other.m10
-                + m02 * other.m20
-                + m03 * other.m30;
-        m[1] = m00 * other.m01
-                + m01 * other.m11
-                + m02 * other.m21
-                + m03 * other.m31;
-        m[2] = m00 * other.m02
-                + m01 * other.m12
-                + m02 * other.m22
-                + m03 * other.m32;
-        m[3] = m00 * other.m03
-                + m01 * other.m13
-                + m02 * other.m23
-                + m03 * other.m33;
+        float temp00, temp01, temp02, temp03;
+        float temp10, temp11, temp12, temp13;
+        float temp20, temp21, temp22, temp23;
+        float temp30, temp31, temp32, temp33;
 
-        m[4] = m10 * other.m00
-                + m11 * other.m10
-                + m12 * other.m20
-                + m13 * other.m30;
-        m[5] = m10 * other.m01
-                + m11 * other.m11
-                + m12 * other.m21
-                + m13 * other.m31;
-        m[6] = m10 * other.m02
-                + m11 * other.m12
-                + m12 * other.m22
-                + m13 * other.m32;
-        m[7] = m10 * other.m03
-                + m11 * other.m13
-                + m12 * other.m23
-                + m13 * other.m33;
-        m[8] = m20 * other.m00
-                + m21 * other.m10
-                + m22 * other.m20
-                + m23 * other.m30;
-        m[9] = m20 * other.m01
-                + m21 * other.m11
-                + m22 * other.m21
-                + m23 * other.m31;
-        m[10] = m20 * other.m02
-                + m21 * other.m12
-                + m22 * other.m22
-                + m23 * other.m32;
-        m[11] = m20 * other.m03
-                + m21 * other.m13
-                + m22 * other.m23
-                + m23 * other.m33;
+        temp00 = m00 * in2.m00
+                 + m01 * in2.m10
+                 + m02 * in2.m20
+                 + m03 * in2.m30;
+        temp01 = m00 * in2.m01
+                 + m01 * in2.m11
+                 + m02 * in2.m21
+                 + m03 * in2.m31;
+        temp02 = m00 * in2.m02
+                 + m01 * in2.m12
+                 + m02 * in2.m22
+                 + m03 * in2.m32;
+        temp03 = m00 * in2.m03
+                 + m01 * in2.m13
+                 + m02 * in2.m23
+                 + m03 * in2.m33;
 
-        m[12] = m30 * other.m00
-                + m31 * other.m10
-                + m32 * other.m20
-                + m33 * other.m30;
-        m[13] = m30 * other.m01
-                + m31 * other.m11
-                + m32 * other.m21
-                + m33 * other.m31;
-        m[14] = m30 * other.m02
-                + m31 * other.m12
-                + m32 * other.m22
-                + m33 * other.m32;
-        m[15] = m30 * other.m03
-                + m31 * other.m13
-                + m32 * other.m23
-                + m33 * other.m33;
+        temp10 = m10 * in2.m00
+                 + m11 * in2.m10
+                 + m12 * in2.m20
+                 + m13 * in2.m30;
+        temp11 = m10 * in2.m01
+                 + m11 * in2.m11
+                 + m12 * in2.m21
+                 + m13 * in2.m31;
+        temp12 = m10 * in2.m02
+                 + m11 * in2.m12
+                 + m12 * in2.m22
+                 + m13 * in2.m32;
+        temp13 = m10 * in2.m03
+                 + m11 * in2.m13
+                 + m12 * in2.m23
+                 + m13 * in2.m33;
 
-        store.m00 = m[0];
-        store.m01 = m[1];
-        store.m02 = m[2];
-        store.m03 = m[3];
-        store.m10 = m[4];
-        store.m11 = m[5];
-        store.m12 = m[6];
-        store.m13 = m[7];
-        store.m20 = m[8];
-        store.m21 = m[9];
-        store.m22 = m[10];
-        store.m23 = m[11];
-        store.m30 = m[12];
-        store.m31 = m[13];
-        store.m32 = m[14];
-        store.m33 = m[15];
-        
+        temp20 = m20 * in2.m00
+                 + m21 * in2.m10
+                 + m22 * in2.m20
+                 + m23 * in2.m30;
+        temp21 = m20 * in2.m01
+                 + m21 * in2.m11
+                 + m22 * in2.m21
+                 + m23 * in2.m31;
+        temp22 = m20 * in2.m02
+                 + m21 * in2.m12
+                 + m22 * in2.m22
+                 + m23 * in2.m32;
+        temp23 = m20 * in2.m03
+                 + m21 * in2.m13
+                 + m22 * in2.m23
+                 + m23 * in2.m33;
+
+        temp30 = m30 * in2.m00
+                 + m31 * in2.m10
+                 + m32 * in2.m20
+                 + m33 * in2.m30;
+        temp31 = m30 * in2.m01
+                 + m31 * in2.m11
+                 + m32 * in2.m21
+                 + m33 * in2.m31;
+        temp32 = m30 * in2.m02
+                 + m31 * in2.m12
+                 + m32 * in2.m22
+                 + m33 * in2.m32;
+        temp33 = m30 * in2.m03
+                 + m31 * in2.m13
+                 + m32 * in2.m23
+                 + m33 * in2.m33;
+
+        store.m00 = temp00;
+        store.m01 = temp01;
+        store.m02 = temp02;
+        store.m03 = temp03;
+        store.m10 = temp10;
+        store.m11 = temp11;
+        store.m12 = temp12;
+        store.m13 = temp13;
+        store.m20 = temp20;
+        store.m21 = temp21;
+        store.m22 = temp22;
+        store.m23 = temp23;
+        store.m30 = temp30;
+        store.m31 = temp31;
+        store.m32 = temp32;
+        store.m33 = temp33;
+
         return store;
     }
 	
+    /**
+	 * Set the translation components of the <code>Matrix4f</code> to the ones
+	 * provided.
+	 * 
+	 * @param x The X-component of the translation.
+	 * @param y The Y-component of the translation.
+	 * @param z The Z-component of the translation.
+	 */
+    public void setTranslation(float x, float y, float z) {
+        m03 = x;
+        m13 = y;
+        m23 = z;
+    }
+    
 	/**
 	 * Set the translation components of the <code>Matrix4f</code> to the ones
 	 * specified in the provided <code>Vector3f</code>.
@@ -313,9 +356,7 @@ public final class Matrix4f {
 	 * @param translation The translation vector to set.
 	 */
     public void setTranslation(Vector3f translation) {
-        m03 = translation.x;
-        m13 = translation.y;
-        m23 = translation.z;
+       setTranslation(translation.x, translation.y, translation.z);
     }
     
     /**

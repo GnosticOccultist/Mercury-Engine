@@ -62,19 +62,25 @@ public final class Camera {
 		this.rotation = new Quaternion();
 		this.width = width;
 		this.height = height;
+		
+		updateViewMatrix();
+	}
+	
+	public void resize(int width, int height) {
+		this.width = width;
+		this.height = height;
+		
+		setProjectionMatrix(70f, (float) width / height, 1f, 1000f);
+		updateViewMatrix();
 	}
 	
 	public void updateViewMatrix() {
-		Vector3f left = getLeft(MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class));
-		Vector3f direction = getDirection(MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class));
-		Vector3f up = getUp(MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class));
-		
-		viewMatrix.viewMatrix(location, direction, up, left);
+		viewMatrix.viewMatrix(location, rotation);
 		
 		updateViewProjectionMatrix();
 	}
 	
-	public void updateViewProjectionMatrix() {
+	private void updateViewProjectionMatrix() {
 		viewProjectionMatrix.set(projectionMatrix).mult(viewMatrix, viewProjectionMatrix);
 	}
 	
@@ -94,34 +100,38 @@ public final class Camera {
 	    		frustumRight, frustumTop, frustumBottom);
 	}
 	
-	/**
-	 * Retrieves the direction vector the camera is facing.
-	 * 
-	 * @param store The store in which the direction is stored.
-	 * @return		The direction the camera is facing.
-	 */	
-	public Vector3f getDirection(Vector3f store) {
-		return rotation.getRotationColumn(2, store);
+	public void lookAt(Vector3f pos, Vector3f worldUpVector) {
+		Vector3f newDirection = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
+		Vector3f newUp = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
+		Vector3f newLeft = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
+		
+		newDirection.set(pos).sub(location).normalize();
+		newUp.set(worldUpVector).normalize();
+		if(newUp.equals(Vector3f.ZERO)) {
+			newUp.set(Vector3f.UNIT_Y);
+		}
+		
+		newLeft.set(newUp).cross(newDirection).normalize();
+		if (newLeft.equals(Vector3f.ZERO)) {
+			if (newDirection.x != 0) {
+				newLeft.set(newDirection.y, -newDirection.x, 0f);
+			} else {
+				newLeft.set(0f, newDirection.z, -newDirection.y);
+			}
+	    }
+		
+		newUp.set(newDirection).cross(newLeft).normalize();
+		this.rotation.fromAxes(newLeft, newUp, newDirection);
+		this.rotation.normalize();
 	}
 	
 	/**
-	 * Retrieves the left-axis of the camera.
+	 * Return the rotation of the camera.
 	 * 
-	 * @param store The store in which the left-axis is stored.
-	 * @return		The left-axis of the camera.
-	 */	
-	public Vector3f getLeft(Vector3f store) {
-		return rotation.getRotationColumn(0, store);
-	}
-	
-	/**
-	 * Retrieves the up-axis of the camera.
-	 * 
-	 * @param store The store in which the up-axis is stored.
-	 * @return		The up-axis of the camera.
-	 */	
-	public Vector3f getUp(Vector3f store) {
-		return rotation.getRotationColumn(1, store);
+	 * @return The rotation of the camera.
+	 */
+	public Quaternion getRotation() {
+		return rotation;
 	}
 	
 	/**

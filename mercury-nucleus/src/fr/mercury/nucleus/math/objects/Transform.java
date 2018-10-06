@@ -13,6 +13,11 @@ import fr.mercury.nucleus.math.MercuryMath;
 public final class Transform {
 	
 	/**
+	 * The <code>Transform</code> identity &rarr; Translation: [0,0,0] | Rotation: [0,0,0,1] | Scale: [1,1,1].
+	 */
+	public static final Transform IDENTITY_TRANSFORM = new Transform();
+	
+	/**
 	 * The translation of the object.
 	 */
 	private final Vector3f translation;
@@ -276,9 +281,12 @@ public final class Transform {
 		
 		transformMatrix.setRotation(rotation);
 		transformMatrix.setTranslation(translation);
-		transformMatrix.mult(scaleMatrix(MercuryMath.LOCAL_VARS
-    			.acquireNext(Matrix4f.class)), transformMatrix);
-    	
+		
+		Matrix4f scaleMatrix = MercuryMath.LOCAL_VARS.acquireNext(Matrix4f.class);
+		scaleMatrix.identity();
+		scaleMatrix.scale(scale);
+		transformMatrix.mult(scaleMatrix, transformMatrix);
+		
 		return transformMatrix;
 	}
 	

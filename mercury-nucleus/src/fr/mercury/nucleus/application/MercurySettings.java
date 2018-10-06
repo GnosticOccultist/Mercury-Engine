@@ -26,6 +26,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 		DEFAULT.put("Resizable", true);
 		DEFAULT.put("VSync", true);
 		DEFAULT.put("FrameRate", -1);
+		DEFAULT.put("ShowFPS", true);
 	}
 	
 	/**

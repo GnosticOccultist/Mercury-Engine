@@ -207,7 +207,7 @@ public final class Quaternion {
      * @return The norm of the quaternion.
      */
     public float norm() {
-    	return x * x + y * y + z * z + w * w;
+    	return w * w + x * x + y * y + z * z;
     }
 	
     /**
@@ -226,57 +226,6 @@ public final class Quaternion {
 	}
     
     /**
-     * Return one of the three columns specified by the parameter.
-     * The column is returned as a <code>Vector3f</code> from the normalized
-     * <code>Quaternion</code>.
-     * 
-     * @param index The index of the column to retrieve (between 0-2).
-     * @param store	The vector to store the result in, or a new one if null.
-     * @return		The column specified by the index.
-     */
-    public Vector3f getRotationColumn(int index, Vector3f store) {
-        if (store == null) {
-            store = new Vector3f();
-        }
-
-        float norm = norm();
-        if (norm != 1.0f) {
-            norm = MercuryMath.invSqrt(norm);
-        }
-        
-        float xx = x * x * norm;
-        float xy = x * y * norm;
-        float xz = x * z * norm;
-        float xw = x * w * norm;
-        float yy = y * y * norm;
-        float yz = y * z * norm;
-        float yw = y * w * norm;
-        float zz = z * z * norm;
-        float zw = z * w * norm;
-        
-        switch (index) {
-			case 0:
-				store.x = 1 - 2 * (yy + zz);
-				store.y = 2 * (xy + zw);
-				store.z = 2 * (xz - yw);
-				break;
-			case 1:
-                store.x = 2 * (xy - zw);
-                store.y = 1 - 2 * (xx + zz);
-                store.z = 2 * (yz + xw);
-				break;
-			case 2:
-                store.x = 2 * (xz + yw);
-                store.y = 2 * (yz - xw);
-                store.z = 1 - 2 * (xx + yy);
-				break;
-			default:
-				throw new IllegalArgumentException("Invalid column index: " + index);
-		}
-        return store;
-    }
-    
-    /**
      * Converts the <code>Quaternion</code> to a rotation <code>Matrix4f</code>, 
      * stored into the provided matrix.
      * <p>
@@ -291,6 +240,7 @@ public final class Quaternion {
     	// Saving the original scale before applying the rotation, to be restored
     	// at the end.
     	Vector3f originalScale = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
+    	originalScale.set(0, 0, 0);
         result.getScale(originalScale);
         result.setScale(1, 1, 1);
         
@@ -328,6 +278,41 @@ public final class Quaternion {
         // Finally restore the scale of the matrix.
         result.setScale(originalScale);
 
+        return result;
+    }
+    
+    public Matrix4f rotationMatrix(Matrix4f result) {
+        float norm = norm();
+        // Check first if the norm is equal to one to avoid the division,
+        // don't know if it's really necessary?
+        float s = (norm == 1f) ? 2f : (norm > 0f) ? 2f / norm : 0;
+
+        // Compute xs/ys/zs first to save 6 multiplications, since xs/ys/zs
+        // will be used 2-4 times each.
+        float xs = x * s;
+        float ys = y * s;
+        float zs = z * s;
+        float xx = x * xs;
+        float xy = x * ys;
+        float xz = x * zs;
+        float xw = w * xs;
+        float yy = y * ys;
+        float yz = y * zs;
+        float yw = w * ys;
+        float zz = z * zs;
+        float zw = w * zs;
+
+        // Using s = 2/norm (instead of 1/norm) saves 9 multiplications by 2 here.
+        result.m00 = 1 - (yy + zz);
+        result.m01 = (xy - zw);
+        result.m02 = (xz + yw);
+        result.m10 = (xy + zw);
+        result.m11 = 1 - (xx + zz);
+        result.m12 = (yz - xw);
+        result.m20 = (xz - yw);
+        result.m21 = (yz + xw);
+        result.m22 = 1 - (xx + yy);
+        
         return result;
     }
     
@@ -386,5 +371,77 @@ public final class Quaternion {
 			return false;
 		}
 		return Float.compare(w, other.w) == 0;
+	}
+
+	public Quaternion fromAxes(Vector3f xAxis, Vector3f yAxis, Vector3f zAxis) {
+		return fromRotationMatrix(xAxis.x, yAxis.x, zAxis.x, xAxis.y, yAxis.y,
+                zAxis.y, xAxis.z, yAxis.z, zAxis.z);
+	}
+
+	public Quaternion fromRotationMatrix(float m00, float m01, float m02,
+            float m10, float m11, float m12, float m20, float m21, float m22) {
+        // first normalize the forward (F), up (U) and side (S) vectors of the rotation matrix
+        // so that the scale does not affect the rotation
+        float lengthSquared = m00 * m00 + m10 * m10 + m20 * m20;
+        if (lengthSquared != 1f && lengthSquared != 0f) {
+            lengthSquared = 1.0f / MercuryMath.sqrt(lengthSquared);
+            m00 *= lengthSquared;
+            m10 *= lengthSquared;
+            m20 *= lengthSquared;
+        }
+        lengthSquared = m01 * m01 + m11 * m11 + m21 * m21;
+        if (lengthSquared != 1f && lengthSquared != 0f) {
+            lengthSquared = 1.0f / MercuryMath.sqrt(lengthSquared);
+            m01 *= lengthSquared;
+            m11 *= lengthSquared;
+            m21 *= lengthSquared;
+        }
+        lengthSquared = m02 * m02 + m12 * m12 + m22 * m22;
+        if (lengthSquared != 1f && lengthSquared != 0f) {
+            lengthSquared = 1.0f / MercuryMath.sqrt(lengthSquared);
+            m02 *= lengthSquared;
+            m12 *= lengthSquared;
+            m22 *= lengthSquared;
+        }
+
+        // Use the Graphics Gems code, from 
+        // ftp://ftp.cis.upenn.edu/pub/graphics/shoemake/quatut.ps.Z
+        // *NOT* the "Matrix and Quaternions FAQ", which has errors!
+
+        // the trace is the sum of the diagonal elements; see
+        // http://mathworld.wolfram.com/MatrixTrace.html
+        float t = m00 + m11 + m22;
+
+        // we protect the division by s by ensuring that s>=1
+        if (t >= 0) { // |w| >= .5
+            float s = MercuryMath.sqrt(t + 1); // |s|>=1 ...
+            w = 0.5f * s;
+            s = 0.5f / s;                // so this division isn't bad
+            x = (m21 - m12) * s;
+            y = (m02 - m20) * s;
+            z = (m10 - m01) * s;
+        } else if ((m00 > m11) && (m00 > m22)) {
+            float s = MercuryMath.sqrt(1.0f + m00 - m11 - m22); // |s|>=1
+            x = s * 0.5f; // |x| >= .5
+            s = 0.5f / s;
+            y = (m10 + m01) * s;
+            z = (m02 + m20) * s;
+            w = (m21 - m12) * s;
+        } else if (m11 > m22) {
+            float s = MercuryMath.sqrt(1.0f + m11 - m00 - m22); // |s|>=1
+            y = s * 0.5f; // |y| >= .5
+            s = 0.5f / s;
+            x = (m10 + m01) * s;
+            z = (m21 + m12) * s;
+            w = (m02 - m20) * s;
+        } else {
+            float s = MercuryMath.sqrt(1.0f + m22 - m00 - m11); // |s|>=1
+            z = s * 0.5f; // |z| >= .5
+            s = 0.5f / s;
+            x = (m02 + m20) * s;
+            y = (m21 + m12) * s;
+            w = (m10 - m01) * s;
+        }
+        return this;
 	}
 }

@@ -1,5 +1,7 @@
 package fr.mercury.nucleus.application;
 
+import org.lwjgl.opengl.GL11;
+
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.objects.Color;
@@ -55,11 +57,18 @@ public class MercuryApplication implements Application {
 	private Matrix4f projectionModelMatrix;
 	private PhysicaMundi cube;
 	
+	// TODO: Remove this, only used when concrete application are created.
 	public static void main(String[] args) {
 		MercuryApplication app = new MercuryApplication();
 		app.start();
 	}
 	
+	/**
+	 * Starts the <code>MercuryApplication</code> and creates the <code>MercuryContext</code>.
+	 * While initializing the context, it will start the main application loop and show the configured window.
+	 * <p>
+	 * If no <code>MercurySettings</code> are set, it will use the default ones.
+	 */
 	public void start() {
 		if(settings == null) {
 			settings = new MercurySettings(true);
@@ -82,8 +91,7 @@ public class MercuryApplication implements Application {
 		// Initialize the camera.
 		camera = new Camera(settings.getWidth(), settings.getHeight());
 		camera.getLocation().set(0f, 0f, 10f);
-		camera.getRotation().set(0, 0, 0, 1);
-		camera.setProjectionMatrix(80f, (float) camera.getWidth() / camera.getHeight(), 0.01f, 10000f);
+		camera.setProjectionMatrix(45f, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
 		
 		renderer = new Renderer(camera);
 		
@@ -92,23 +100,21 @@ public class MercuryApplication implements Application {
 		timer.reset();
 		
 		cube = new PhysicaMundi();
-		cube.getTransform().setTranslation(0, 0, -6);
-		cube.getTransform().setRotation(0.3f, 0.3f, -0.3f);
-		cube.getTransform().setScale(3f, 3f, 3f);
+		cube.getTransform().setRotation(0.3f, 0, 0.3f).setScale(3f, 3f, 3f);
 		camera.lookAt(cube.getTransform().getTranslation(), Vector3f.UNIT_Y);
 		
-		camera.updateViewMatrix();
-		
 		projectionModelMatrix = MercuryMath.LOCAL_VARS.acquireNext(Matrix4f.class);
-		projectionModelMatrix.set(camera.getProjectionMatrix());
+		projectionModelMatrix.set(camera.getViewProjectionMatrix());
 		projectionModelMatrix.mult(cube.getTransform().transform(), projectionModelMatrix);
+		
+		GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
 		
 		// TEST:
 		program = new ShaderProgram()
 				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
 				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"))
 				.addUniform("projectionMatrix", UniformType.MATRIX4F, projectionModelMatrix)
-				.addUniform("color", UniformType.VECTOR4F, new Color(1, 0.3f, 0, 1f));
+				.addUniform("color", UniformType.VECTOR4F, new Color(0, 0.8f, 0, 1f));
 		
 		program.upload();
 		
@@ -178,8 +184,11 @@ public class MercuryApplication implements Application {
 	}
 	
 	@Override
+	@OpenGLCall
 	public void resize(int width, int height) {
-		
+		if(renderer != null) {
+			renderer.resize(width, height);
+		}
 	}
 
 	/**
@@ -190,11 +199,26 @@ public class MercuryApplication implements Application {
 	@Override
 	@OpenGLCall
 	public void update() {
+		
+		if(timer.isPaused()) {
+			return;
+		}
+		
 		timer.update();
+
+		if(settings.getBoolean("ShowFPS")) {
+			context.setTitle(settings.getTitle() + " - " + (int) (timer.getFrameRate()) + " FPS");
+		}
 		
-		renderer.update();
+		// TODO: Manage this automatically, somehow...
+		projectionModelMatrix.identity();
+		projectionModelMatrix.set(camera.getViewProjectionMatrix());
+		projectionModelMatrix.mult(cube.getTransform().transform(), projectionModelMatrix);
+		program.getUniform("projectionMatrix").setValue(UniformType.MATRIX4F, projectionModelMatrix);
+		program.getUniform("projectionMatrix").upload(program);
+		program.getUniform("color").upload(program);
 		
-		renderer.drawElements(cube.getMesh());
+		renderer.update(cube.getMesh());
 	}
 
 	/**
@@ -207,6 +231,10 @@ public class MercuryApplication implements Application {
 	@OpenGLCall
 	public void cleanup() {
 		timer.reset();
+		program.cleanup();
+		cube.getMesh().cleanup();
+		
+		System.out.println("Closing the application: " + getClass().getSimpleName());
 	}
 	
 	/**

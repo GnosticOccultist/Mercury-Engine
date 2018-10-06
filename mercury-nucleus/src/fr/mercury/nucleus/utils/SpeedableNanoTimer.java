@@ -18,18 +18,6 @@ public class SpeedableNanoTimer extends NanoTimer {
 	private boolean paused = false;
 	
 	/**
-	 * Update the timer by changing its values.
-	 */
-	@Override
-	public void update() {
-		if(isPaused()) {
-			return;
-		}
-		
-		super.update();
-	}
-	
-	/**
 	 * Return the speed of the timer.
 	 * 
 	 * @return The speed of the timer.

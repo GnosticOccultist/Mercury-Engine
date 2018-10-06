@@ -120,6 +120,12 @@ public final class ShaderProgram extends GLObject {
 	}
 	
 	@Override
+	public void cleanup() {
+		uniforms.values().forEach(Uniform::cleanup);
+		super.cleanup();
+	}
+	
+	@Override
 	@OpenGLCall
 	protected Integer acquireID() {
 		return GL20.glCreateProgram();

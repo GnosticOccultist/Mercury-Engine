@@ -138,9 +138,43 @@ public class Mesh {
 	 */
 	@OpenGLCall
 	public void cleanup() {
-		vao.cleanup();
 		buffers.values().forEach(VertexBuffer::cleanup);
 		buffers.clear();
+		
+		vao.cleanup();
+	}
+	
+	/**
+	 * Return the <code>VertexBuffer</code> from the {@link VertexBufferType type}, 
+	 * or null if it isn't present.
+	 * 
+	 * @param type The vertex buffer type.
+	 * @return	   The vertex buffer corresponding to the specified type.
+	 */
+	public VertexBuffer getBuffer(VertexBufferType type) {
+		return buffers.get(type);
+	}
+	
+	/**
+	 * Return the number of vertices defined in the <code>Mesh</code> using
+	 * the indices <code>VertexBuffer</code> or the position <code>VertexBuffer</code>.
+	 * <p>
+	 * If none of those buffers are present it will return -1.
+	 * 
+	 * @return The number of vertices or -1 for undetermined count.
+	 */
+	public int getVertexCount() {
+		var indices = getBuffer(VertexBufferType.INDEX).getData();
+		if(indices != null) {
+			return indices.limit();
+		}
+		
+		var vertices = getBuffer(VertexBufferType.POSITION).getData();
+		if(vertices != null) {
+			return vertices.limit() / VertexBufferType.POSITION.getSize();
+		}
+		
+		return -1;
 	}
 	
 	/**
@@ -212,7 +246,7 @@ public class Mesh {
      * 
      * @return The OpenGL equivalent as an integer.
      */
-    protected int toOpenGLMode() {
+    public int toOpenGLMode() {
     	switch(mode) {
     		case POINTS:
     			return GL11.GL_POINT;
