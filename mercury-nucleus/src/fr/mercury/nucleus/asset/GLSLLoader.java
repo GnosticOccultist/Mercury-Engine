@@ -14,7 +14,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
  * 
  * @author GnosticOccultist
  */
-public final class GLSLLoader {
+public final class GLSLLoader implements AssetLoader<ShaderSource> {
 	
 	/**
 	 * Load the <code>ShaderSource</code> from the provided file path.
