@@ -22,9 +22,11 @@ import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
 import static org.lwjgl.glfw.GLFW.glfwShowWindow;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
+import static org.lwjgl.glfw.GLFW.glfwTerminate;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
 import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
-import static org.lwjgl.glfw.GLFW.glfwTerminate;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback;
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -34,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL11;
 
 import fr.mercury.nucleus.utils.NanoTimer;
 
@@ -63,6 +66,10 @@ public class MercuryContext implements Runnable {
 	 * The boolean to notify about a needed restart.
 	 */
 	private final AtomicBoolean needRestart = new AtomicBoolean(false);
+	/**
+	 * Whether the context window is focused or maximized/minimized.
+	 */
+	private boolean focused;
 	/**
 	 * The window handle value.
 	 */
@@ -268,6 +275,25 @@ public class MercuryContext implements Runnable {
 			throw new RuntimeException("Failed to create the GLFW window");
 		}
 		
+		// Setup window size callback to update framebuffers resolutions, view or projection matrix.
+		glfwSetWindowSizeCallback(window, (window, width, height) -> {
+			settings.setResolution(width, height);
+			application.resize(width, height);
+		});
+		
+		// Setup window focus callback to stop updating or rendering when minimized.
+		glfwSetWindowFocusCallback(window, (window, focus) -> {
+			if(focused != focus) {
+				if(!focused) {
+					application.gainFocus();
+					timer.reset();
+				} else {
+					application.looseFocus();
+				}
+				focused = !focused;
+			}
+		});
+		
 		// Center the window
 		if(!settings.isFullscreen()) {
 			glfwSetWindowPos(window,  
@@ -284,7 +310,7 @@ public class MercuryContext implements Runnable {
         glfwSwapInterval(settings.isVSync() ? 1 : 0);
         
         // Enable depth testing.
-        // GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
         
         // Finally show the window when finished.
         showWindow();

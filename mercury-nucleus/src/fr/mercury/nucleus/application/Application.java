@@ -34,4 +34,31 @@ public interface Application {
 	 */
 	@OpenGLCall
 	void cleanup();
+	
+	/**
+	 * Notify the <code>Application</code> about a resizing <code>MercuryContext</code>.
+	 * The new width and height are passed as arguments.
+	 * 
+	 * @param width  The new width.
+	 * @param height The new height.
+	 */
+	void resize(int width, int height);
+	
+	/**
+	 * Notify the <code>Application</code> about a maximized or focused 
+	 * <code>MercuryContext</code>.
+	 * <p>
+	 * By default the function doesn't do anything and is purely optional,
+	 * you can implement your own code by overriding the function.
+	 */
+	default void gainFocus() {}
+
+	/**
+	 * Notify the <code>Application</code> about a minimized or unfocused 
+	 * <code>MercuryContext</code>.
+	 * <p>
+	 * By default the function doesn't do anything and is purely optional,
+	 * you can implement your own code by overriding the function.
+	 */
+	default void looseFocus() {}
 }
