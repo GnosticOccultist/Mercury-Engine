@@ -1,9 +1,12 @@
 package fr.mercury.nucleus.scene;
 
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 
 import fr.alchemy.utilities.Validator;
@@ -52,6 +55,41 @@ public class Mesh {
 	public Mesh() {
 		this.vao = new VertexArray();
 		this.buffers = new HashMap<>();
+	}
+	
+	public void bind() {
+		vao.bind();
+		
+		buffers.values().forEach(VertexBuffer::bind);
+	}
+	
+	public void unbind() {
+		
+		vao.unbind();
+		
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+	}
+	
+	public void setupBuffer(VertexBufferType type, Usage usage, FloatBuffer data) {
+		var vbo = buffers.get(type);
+		if(vbo == null) {
+			vbo = new VertexBuffer(type, usage);
+			vbo.storeData(data);
+			buffers.put(type, vbo);
+		} else {
+			vbo.storeData(data);
+		}
+	}
+
+	public void setupBuffer(VertexBufferType type, Usage usage, IntBuffer data) {
+		var vbo = buffers.get(type);
+		if(vbo == null) {
+			vbo = new VertexBuffer(type, usage);
+			vbo.storeData(data);
+			buffers.put(type, vbo);
+		} else {
+			vbo.storeData(data);
+		}
 	}
 	
 	/**
@@ -119,13 +157,17 @@ public class Mesh {
 	@OpenGLCall
 	public void upload() {
 		vao.upload();
-		buffers.values().forEach(VertexBuffer::upload);
 		
 		// Sets the vertex attributes and enable it.
-		for(VertexBufferType type : buffers.keySet()) {
+		for(VertexBuffer vertexBuffer : buffers.values()) {
+			
+			vertexBuffer.upload();
+			VertexBufferType type = vertexBuffer.getVertexBufferType();
+			
 			if(!type.equals(VertexBufferType.INDEX)) {
+				System.err.println(type.ordinal());
 				GL20.glVertexAttribPointer(type.ordinal(), type.getSize(), type.getOpenGLFormat(), false, 0, 0);
-				GL20.glEnableVertexAttribArray(type.ordinal());
+				//GL20.glEnableVertexAttribArray(type.ordinal());
 			}
 		}
 	}
@@ -164,6 +206,7 @@ public class Mesh {
 	 * @return The number of vertices or -1 for undetermined count.
 	 */
 	public int getVertexCount() {
+		
 		var indices = getBuffer(VertexBufferType.INDEX).getData();
 		if(indices != null) {
 			return indices.limit();
