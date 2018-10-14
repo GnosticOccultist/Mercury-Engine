@@ -163,8 +163,8 @@ public class Uniform {
 				}
 				break;
 			case MATRIX4F:
-				if(value instanceof Matrix4f) {
-					this.value = ((Matrix4f) value).set((Matrix4f) value);
+				if(this.value instanceof Matrix4f) {
+					((Matrix4f) this.value).set((Matrix4f) value);
 				} else {
 					this.value = new Matrix4f((Matrix4f) value);
 				}

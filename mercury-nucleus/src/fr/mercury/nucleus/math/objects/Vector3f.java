@@ -319,6 +319,20 @@ public final class Vector3f {
 	}
 	
 	/**
+     * Calculates the squared distance between the <code>Vector3f</code> and 
+     * the provided one.
+     *
+     * @param other The vector to determine the distance squared from.
+     * @return 		The distance squared between the two vectors.
+     */
+    public float distanceSquared(Vector3f other) {
+        double dx = x - other.x;
+        double dy = y - other.y;
+        double dz = z - other.z;
+        return (float) (dx * dx + dy * dy + dz * dz);
+    }
+	
+	/**
 	 * Set each component value of the <code>Vector3f</code> to 0.
 	 * 
 	 * @return The zero vector.

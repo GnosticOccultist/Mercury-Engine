@@ -134,13 +134,14 @@ public class MercuryContext implements Runnable {
 	
 	@Override
 	public void run() {
-		if(!initializeInMercury()) {
-			System.err.println("Error: The context initialization failed. Stopping...");
-			return;
-		}
 		
 		if(application == null) {
 			throw new IllegalArgumentException("The bounded application cannot be null !");
+		}
+		
+		if(!initializeInMercury()) {
+			System.err.println("Error: The context initialization failed. Stopping...");
+			return;
 		}
 		
 		while (true) {

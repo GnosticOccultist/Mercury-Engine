@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import org.lwjgl.opengl.GL30;
 
 import fr.mercury.nucleus.renderer.opengl.GLObject;
+import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
@@ -20,13 +21,39 @@ import fr.mercury.nucleus.utils.OpenGLCall;
  */
 public final class VertexArray extends GLObject {
 
+	/**
+	 * Determines if the provided ID correspond to an OpenGL <code>VertexArray</code>.
+	 * 
+	 * @param id The ID of the GLObject to check.
+	 * @return	 Whether the ID correspond to a vertex array.
+	 */
+	public static boolean valid(int id) {
+		return GL30.glIsVertexArray(id);
+	}
+	
+	/**
+	 * Binds the <code>VertexArray</code> to the OpenGL context, allowing it to 
+	 * be used or updated. 
+	 */
 	@OpenGLCall
-	protected void bind() {
+	public void bind() {
+		if(getID() == INVALID_ID) {
+			throw new GLException("The vertex array isn't created yet!");
+		}
+		
 		GL30.glBindVertexArray(getID());
 	}
 	
+	/**
+	 * Unbinds the currently bound <code>VertexArray</code> from the OpenGL context.
+	 * <p>
+	 * This methods is mainly used for proper cleaning of the OpenGL context or to avoid errors of
+	 * misbindings, because it doesn't need to be called before binding a vertex array.
+	 * Note that it works even if the currently bound buffer isn't the one invoking this method 
+	 * (<i>maybe it should be static, or handled by a manager?</i>).
+	 */
 	@OpenGLCall
-	protected void unbind() {
+	public void unbind() {
 		GL30.glBindVertexArray(0);
 	}
 	
@@ -36,6 +63,13 @@ public final class VertexArray extends GLObject {
 		create();
 		
 		bind();
+	}
+	
+	@Override
+	public void cleanup() {
+		unbind();
+		
+		super.cleanup();
 	}
 
 	@Override

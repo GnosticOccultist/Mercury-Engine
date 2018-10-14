@@ -3,8 +3,10 @@ package fr.mercury.nucleus.renderer.opengl;
 import java.nio.Buffer;
 
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL30;
 
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
+import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
@@ -30,13 +32,26 @@ public abstract class GLBuffer extends GLObject {
 	protected Buffer data = null;
 
 	/**
+	 * Determines if the provided ID correspond to an OpenGL <code>GLBuffer</code>.
+	 * 
+	 * @param id The ID of the GLObject to check.
+	 * @return	 Whether the ID correspond to a GLBuffer.
+	 */
+	public static boolean valid(int id) {
+		return GL30.glIsBuffer(id);
+	}
+	
+	/**
 	 * Binds the <code>GLBuffer</code> to the OpenGL context, allowing it to be used or updated. 
 	 * <p>
 	 * Note that there is only one bound buffer per {@link BufferType}.
 	 */
-	// TODO: Prevent useless binding with a manager.
 	@OpenGLCall
-	protected void bind() {
+	public void bind() {
+		if(getID() == INVALID_ID) {
+			throw new GLException("The " + getClass().getSimpleName() + " isn't created yet!");
+		}
+		
 		GL15.glBindBuffer(getOpenGLType(), getID());
 	}
 	
@@ -49,8 +64,15 @@ public abstract class GLBuffer extends GLObject {
 	 * (<i>maybe it should be static, or handled by a manager?</i>).
 	 */
 	@OpenGLCall
-	protected void unbind() {
+	public void unbind() {
 		GL15.glBindBuffer(getOpenGLType(), 0);
+	}
+	
+	@Override
+	public void cleanup() {
+		unbind();
+		
+		super.cleanup();
 	}
 	
 	/**

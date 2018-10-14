@@ -102,6 +102,10 @@ public class VertexBuffer extends GLBuffer {
 		}
 	}
 	
+	public void storeData(IntBuffer data) {
+		this.data = data;
+	}
+	
 	/**
 	 * Store the provided float data array to the <code>VertexBuffer</code>.
 	 * <p>
@@ -121,6 +125,14 @@ public class VertexBuffer extends GLBuffer {
                 MemoryUtil.memFree(buffer);
             }
 		}
+	}
+	
+	public void storeData(FloatBuffer data) {
+		this.data = data;
+	}
+	
+	public VertexBufferType getVertexBufferType() {
+		return vertexBufferType;
 	}
 
 	@Override
