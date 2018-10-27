@@ -1,15 +1,22 @@
 package fr.mercury.nucleus.texture;
 
+/**
+ * <code>TextureState</code> is a utility class used to keep track of a loaded 
+ * {@link Texture} options inside the OpenGL context.
+ * <p>
+ * It prevents changing unused or unchanged state of the {@link Texture} in order to save 
+ * on performance.
+ * 
+ * @author GnosticOccultist
+ */
 public class TextureState implements Comparable<TextureState> {
 	
-	public Format format;
 	public WrapMode sWrap, tWrap, rWrap;
 	public MagFilter magFilter;
 	public MinFilter minFilter;
 	public CompareMode shadowCompareMode;
 	
 	public void reset() {
-		format = null;
 		sWrap = null;
 		tWrap = null;
 		rWrap = null;
@@ -17,86 +24,19 @@ public class TextureState implements Comparable<TextureState> {
 	
 	@Override
 	public int compareTo(TextureState other) {
-		return -1;
-	}
-	
-	/**
-	 * <code>Format</code> represents the format use for the <code>Texture</code> creation.
-	 * <p>
-	 * This can be used to describe the way the data are stored inside a <code>Texture</code> or
-	 * a <code>RenderBuffer</code>.
-	 * <p>
-	 * There are three basic kinds of image formats : color, depth or depth/stencil with different 
-	 * bits depth per component (8, 16, 24, 32, etc...).
-	 */
-	public enum Format {
-		/**
-		 * 
-		 */
-		RGB8(24),
-		/**
-		 * 
-		 */
-		RGBA8(32),
-		/**
-		 * 
-		 */
-		RGB16F(48),
-		/**
-		 * 
-		 */
-		RGBA16F(64),
-		/**
-		 * 
-		 */
-		RGB32F(96),
-		/**
-		 * 
-		 */
-		RGBA32F(128),
-		/**
-		 * 
-		 */
-		DEPTH16(16, true),
-		/**
-		 * 
-		 */
-		DEPTH24(24, true),
-		/**
-		 * 
-		 */
-		DEPTH32(32, true),
-		/**
-		 * 
-		 */
-		DEPTH32F(32, true);
+		int changes = 0;
 		
-		private boolean isDepthFormat;
-		private int bitsPerPixel;
-		
-		private Format(int bitsPerPixel, boolean isDepth) {
-			this.bitsPerPixel = bitsPerPixel;
-			this.isDepthFormat = isDepth;
+		if(sWrap != other.sWrap || tWrap != other.tWrap || rWrap != other.rWrap) {
+			changes++;
+		}
+		if(magFilter != other.magFilter || minFilter != other.minFilter) {
+			changes++;
+		}
+		if(shadowCompareMode != other.shadowCompareMode) {
+			changes++;
 		}
 		
-		private Format(int bitsPerPixel) {
-			this.bitsPerPixel = bitsPerPixel;
-			this.isDepthFormat = false;
-		}
-		
-		/**
-		 * @return Whether the <code>Format</code> is a depth format.
-		 */
-		public boolean isDepthFormat() {
-			return isDepthFormat;
-		}
-		
-		/**
-		 * @return The number of bits per pixel for the <code>Format</code>.
-		 */
-		public int getBitsPerPixel() {
-			return bitsPerPixel;
-		}
+		return changes;
 	}
 	
 	/**
@@ -156,7 +96,7 @@ public class TextureState implements Comparable<TextureState> {
 	
 	/**
 	 * <code>WrapMode</code> defines the wrap mode used for texture coordinates. This wrap mode is
-	 * applied to the 'u' (horizontal) wrap and the 'v' (vertical) wrap independtly from each other.
+	 * applied to the 'u' (horizontal) wrap, the 'v' (vertical) wrap and the 'w' (depth) wrap independtly from each other.
 	 * <p>
 	 * OpenGL Correspondance: <code>GL_TEXTURE_WRAP_S</code> or <code>GL_TEXTURE_WRAP_T</code>.
 	 * 

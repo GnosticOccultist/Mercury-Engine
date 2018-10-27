@@ -62,6 +62,8 @@ public class Renderer {
 		
 		mesh.bind();
 		
+		mesh.texture.bindToUnit(0);
+		
 		GL20.glEnableVertexAttribArray(0);
 		GL20.glEnableVertexAttribArray(1);
 		GL20.glEnableVertexAttribArray(2);
@@ -71,6 +73,8 @@ public class Renderer {
 		GL20.glDisableVertexAttribArray(0);
 		GL20.glDisableVertexAttribArray(1);
 		GL20.glDisableVertexAttribArray(2);
+		
+		mesh.texture.unbind();
 		
 		mesh.unbind();
 	}

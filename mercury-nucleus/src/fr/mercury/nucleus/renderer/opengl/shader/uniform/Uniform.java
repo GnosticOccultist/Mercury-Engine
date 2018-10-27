@@ -51,6 +51,12 @@ public class Uniform {
 	 */
 	private UniformType type = null;
 	
+	/**
+	 * Creates the <code>Uniform</code> by acquiring its location from the provided
+	 * {@link ShaderProgram} and set it as its ID.
+	 * 
+	 * @param program The program to be queried.
+	 */
 	@OpenGLCall
 	protected void create(ShaderProgram program) {
 		if(location == UNKNOWN_LOCATION) {
@@ -64,6 +70,12 @@ public class Uniform {
 		}
 	}
 	
+	/**
+	 * Uploads the <code>Uniform</code> with its stored value to be used inside 
+	 * the {@link ShaderProgram} currently bounded.
+	 * 
+	 * @param program
+	 */
 	@OpenGLCall
 	public void upload(ShaderProgram program) {
 		if(program.getID() == ShaderProgram.INVALID_ID) {
@@ -109,6 +121,9 @@ public class Uniform {
 					GL20.glUniformMatrix4fv(location, false, fb);
 				}
 				break;
+			case TEXTURE2D:
+				GL20.glUniform1i(location, (int) value);
+				break;
 			default:
 				throw new UnsupportedOperationException(
 						"Unsupported uniform type: " + getUniformType());
@@ -131,6 +146,7 @@ public class Uniform {
 		if(getLocation() == UNDEFINED_LOCATION) {
 			return;
 		}
+		
 		if(value == null || type == null) {
 			throw new IllegalStateException("The uniform: " + name + 
 					" cannot have a value or type null!");
@@ -168,6 +184,9 @@ public class Uniform {
 				} else {
 					this.value = new Matrix4f((Matrix4f) value);
 				}
+				break;
+			case TEXTURE2D:
+				this.value = value;	
 				break;
 			default:
 				throw new UnsupportedOperationException(
@@ -265,7 +284,11 @@ public class Uniform {
 		/**
 		 * Store <code>Matrix4f</code> data.
 		 */
-		MATRIX4F("mat4");
+		MATRIX4F("mat4"),
+		/**
+		 * Store <code>Texture2D</code> data.
+		 */
+		TEXTURE2D("sampler2D");
 		
 		private String GLSLType;
 		

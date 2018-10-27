@@ -15,6 +15,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexArray;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
+import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
@@ -45,6 +46,9 @@ public class Mesh {
 	 * The primitive mode, by default {@link Mode#TRIANGLES}.
 	 */
 	private Mode mode = Mode.TRIANGLES;
+	
+	// TODO: Move to a material class.
+	public Texture2D texture;
 	
 	/**
 	 * Instantiates a new <code>Mesh</code> with no <code>VertexBuffer</code> set.
@@ -165,7 +169,6 @@ public class Mesh {
 			VertexBufferType type = vertexBuffer.getVertexBufferType();
 			
 			if(!type.equals(VertexBufferType.INDEX)) {
-				System.err.println(type.ordinal());
 				GL20.glVertexAttribPointer(type.ordinal(), type.getSize(), type.getOpenGLFormat(), false, 0, 0);
 				//GL20.glEnableVertexAttribArray(type.ordinal());
 			}
@@ -182,6 +185,8 @@ public class Mesh {
 	public void cleanup() {
 		buffers.values().forEach(VertexBuffer::cleanup);
 		buffers.clear();
+		
+		texture.cleanup();
 		
 		vao.cleanup();
 	}
