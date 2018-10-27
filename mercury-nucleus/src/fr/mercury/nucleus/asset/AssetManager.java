@@ -10,6 +10,9 @@ import fr.alchemy.utilities.file.FileUtils;
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
+import fr.mercury.nucleus.scene.PhysicaMundi;
+import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.utils.MercuryException;
 
 /**
@@ -33,6 +36,36 @@ public class AssetManager {
 	 */
 	public AssetManager() {
 		registerLoader(GLSLLoader.class, FileExtensions.SHADER_FILE_EXTENSIONS);
+		registerLoader(SimpleOBJLoader.class, new String[] {FileExtensions.OBJ_MODEL_FORMAT});
+		registerLoader(ImageReader.class, FileExtensions.TEXTURE_FILE_EXTENSION);
+	}
+	
+	public PhysicaMundi loadPhysicaMundi(String path) {
+		AssetLoader<PhysicaMundi> loader = acquireLoader(path);
+		if(loader != null) {
+			return loader.load(path);
+		}
+		
+		throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
+	}
+	
+	/**
+	 * Loads the provided asset by translating it into a <code>Texture2D</code>
+	 * using a {@link ImageReader}. The texture can then be used inside a <code>ShaderProgram</code>,
+	 * by creating an adapted {@link Uniform}.
+	 * <p>
+	 * If no loader is found it will throw an exception.
+	 * 
+	 * @param path The path of the asset to load, must be a texture file extension.
+	 * @return	   The loaded texture or null.
+	 */
+	public Texture2D loadTexture2D(String path) {
+		AssetLoader<Texture2D> loader = acquireLoader(path);
+		if(loader != null) {
+			return loader.load(path);
+		}
+		
+		throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
 	}
 	
 	/**

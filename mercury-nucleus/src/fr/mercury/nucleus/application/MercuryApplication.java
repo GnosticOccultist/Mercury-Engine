@@ -1,7 +1,5 @@
 package fr.mercury.nucleus.application;
 
-import org.lwjgl.opengl.GL11;
-
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.objects.Color;
@@ -9,11 +7,10 @@ import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Renderer;
-import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
-import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
 import fr.mercury.nucleus.scene.PhysicaMundi;
+import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 
@@ -90,7 +87,7 @@ public class MercuryApplication implements Application {
 		
 		// Initialize the camera.
 		camera = new Camera(settings.getWidth(), settings.getHeight());
-		camera.getLocation().set(0f, 0f, 10f);
+		camera.getLocation().set(0f, 0f, 8f);
 		camera.setProjectionMatrix(45f, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
 		
 		renderer = new Renderer(camera);
@@ -99,88 +96,29 @@ public class MercuryApplication implements Application {
 		// to ensure the first time per frame isn't too large...
 		timer.reset();
 		
-		cube = new PhysicaMundi();
-		cube.getTransform().setRotation(0.3f, 0, 0.3f).setScale(3f, 3f, 3f);
+		Texture2D texture = assetManager.loadTexture2D("/model/octostone.png");
+		//texture.fromColor(new Color(0, 0, 1), 256, 256);
+		texture.upload();
+		
+		cube = assetManager.loadPhysicaMundi("/model/cube.obj");
+		cube.getTransform().setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
 		camera.lookAt(cube.getTransform().getTranslation(), Vector3f.UNIT_Y);
 		
 		projectionModelMatrix = MercuryMath.LOCAL_VARS.acquireNext(Matrix4f.class);
-		projectionModelMatrix.set(camera.getViewProjectionMatrix());
-		projectionModelMatrix.mult(cube.getTransform().transform(), projectionModelMatrix);
+		projectionModelMatrix.identity();
+		projectionModelMatrix.set(camera.getViewProjectionMatrix().mult(cube.getTransform().transform(), projectionModelMatrix));
 		
-		GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
+		cube.getMesh().texture = texture;
 		
 		// TEST:
 		program = new ShaderProgram()
 				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
 				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"))
 				.addUniform("projectionMatrix", UniformType.MATRIX4F, projectionModelMatrix)
-				.addUniform("color", UniformType.VECTOR4F, new Color(0, 0.8f, 0, 1f));
+				.addUniform("color", UniformType.VECTOR4F, new Color(0.1f, 0.3f, 0.1f, 1f))
+				.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
 		
 		program.upload();
-		
-		cube.getMesh().setupBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW, new float[] {
-	            // V0
-	            -0.5f, 0.5f, 0.5f,
-	            // V1
-	            -0.5f, -0.5f, 0.5f,
-	            // V2
-	            0.5f, -0.5f, 0.5f,
-	            // V3
-	            0.5f, 0.5f, 0.5f,
-	            // V4
-	            -0.5f, 0.5f, -0.5f,
-	            // V5
-	            0.5f, 0.5f, -0.5f,
-	            // V6
-	            -0.5f, -0.5f, -0.5f,
-	            // V7
-	            0.5f, -0.5f, -0.5f,
-	            // For text coords in top face
-	            // V8: V4 repeated
-	            -0.5f, 0.5f, -0.5f,
-	            // V9: V5 repeated
-	            0.5f, 0.5f, -0.5f,
-	            // V10: V0 repeated
-	            -0.5f, 0.5f, 0.5f,
-	            // V11: V3 repeated
-	            0.5f, 0.5f, 0.5f,
-	            // For text coords in right face
-	            // V12: V3 repeated
-	            0.5f, 0.5f, 0.5f,
-	            // V13: V2 repeated
-	            0.5f, -0.5f, 0.5f,
-	            // For text coords in left face
-	            // V14: V0 repeated
-	            -0.5f, 0.5f, 0.5f,
-	            // V15: V1 repeated
-	            -0.5f, -0.5f, 0.5f,
-	            // For text coords in bottom face
-	            // V16: V6 repeated
-	            -0.5f, -0.5f, -0.5f,
-	            // V17: V7 repeated
-	            0.5f, -0.5f, -0.5f,
-	            // V18: V1 repeated
-	            -0.5f, -0.5f, 0.5f,
-	            // V19: V2 repeated
-	            0.5f, -0.5f, 0.5f,
-		});
-		cube.getMesh().setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, new int[] {
-
-			// Front face
-			0, 1, 3, 3, 1, 2,
-			// Top Face
-			8, 10, 11, 9, 8, 11,
-			// Right face
-			12, 13, 7, 5, 12, 7,
-			// Left face
-			14, 15, 6, 4, 14, 6,
-			// Bottom face
-			16, 18, 19, 17, 16, 19,
-			// Back face
-			4, 6, 7, 5, 4, 7,
-	    });
-		
-		cube.getMesh().upload();
 	}
 	
 	@Override
@@ -208,17 +146,14 @@ public class MercuryApplication implements Application {
 
 		if(settings.getBoolean("ShowFPS")) {
 			context.setTitle(settings.getTitle() + " - " + (int) (timer.getFrameRate()) + " FPS");
-		}
-		
-		// TODO: Manage this automatically, somehow...
+		}	
+	
 		projectionModelMatrix.identity();
-		projectionModelMatrix.set(camera.getViewProjectionMatrix());
-		projectionModelMatrix.mult(cube.getTransform().transform(), projectionModelMatrix);
+		projectionModelMatrix.set(camera.getViewProjectionMatrix().mult(cube.getTransform().transform(), projectionModelMatrix));
 		program.getUniform("projectionMatrix").setValue(UniformType.MATRIX4F, projectionModelMatrix);
 		program.getUniform("projectionMatrix").upload(program);
-		program.getUniform("color").upload(program);
 		
-		renderer.update(cube.getMesh());
+		renderer.render(cube.getMesh());
 	}
 
 	/**

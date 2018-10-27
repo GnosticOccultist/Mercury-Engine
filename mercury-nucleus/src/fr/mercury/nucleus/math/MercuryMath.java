@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.math;
 
 import fr.alchemy.utilities.LocalVars;
+import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Vector3f;
 
@@ -23,6 +24,7 @@ public final class MercuryMath {
 	static {
 		LOCAL_VARS.register(Vector3f.class, Vector3f::new);
 		LOCAL_VARS.register(Matrix4f.class, Matrix4f::new);
+		LOCAL_VARS.register(Color.class, Color::new);
 	}
 	
 	/**
