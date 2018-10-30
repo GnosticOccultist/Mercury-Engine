@@ -67,6 +67,27 @@ public class Mesh {
 		buffers.values().forEach(VertexBuffer::bind);
 	}
 	
+	public void bindBeforeRender() {
+		bind();
+		
+		if(texture != null) {
+			texture.bindToUnit(0);
+		}
+		
+		buffers.keySet().forEach(t -> GL20.glEnableVertexAttribArray(t.ordinal()));
+	}
+	
+	public void unbindAfterRender() {
+		
+		buffers.keySet().forEach(t -> GL20.glDisableVertexAttribArray(t.ordinal()));
+		
+		if(texture != null) {
+			texture.unbind();
+		}
+		
+		unbind();
+	}
+	
 	public void unbind() {
 		
 		vao.unbind();

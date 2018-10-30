@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
+import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
@@ -106,7 +107,8 @@ public class AssetManager {
 			}
 		}
 		
-		System.err.println("No asset loaders are registered for the extension: '" + extension + "'.");
+		FactoryLogger.getLogger("mercury.app")
+				.warning("No asset loaders are registered for the extension: '" + extension + "'.");
 		return null;
 	}
 	
@@ -122,7 +124,7 @@ public class AssetManager {
 			instance = type.getConstructor().newInstance();
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			System.err.println("Failed to instantiate the loader: " + type + 
+			FactoryLogger.getLogger("mercury.app").error("Failed to instantiate the loader: " + type + 
 					". Please check that the constructor arguments are empty.");
 			e.printStackTrace();
 		}

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 import fr.alchemy.utilities.file.FileUtils;
+import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
 
@@ -34,7 +35,8 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
 			}
 			
 		} catch (IOException ex) {
-			System.err.println("Failed to load shader source: " + path);
+			FactoryLogger.getLogger("mercury.app")
+					.error("Failed to load shader source: " + path);
 			ex.printStackTrace();
         }
 		

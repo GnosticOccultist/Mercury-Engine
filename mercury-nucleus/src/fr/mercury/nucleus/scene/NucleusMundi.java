@@ -49,11 +49,25 @@ public class NucleusMundi extends AnimaMundi {
 	 * @param child The anima-mundi to detach.
 	 */
 	public void detach(AnimaMundi child) {
-		Validator.nonNull(child, "The child to attach cannot be null!");
+		Validator.nonNull(child, "The child to detach cannot be null!");
 		
 		if(child.getParent() == this) {
 			children.remove(child);
 			child.setParent(null);
 		}
+	}
+	
+	public List<AnimaMundi> children() {
+		return children;
+	}
+	
+	/**
+	 * Return whether the <code>NucleusMundi</code> is an external one,
+	 * meaning it has no children.
+	 * 
+	 * @return Whether the node is external.
+	 */
+	public boolean isLeaf() {
+		return children.isEmpty();
 	}
 }

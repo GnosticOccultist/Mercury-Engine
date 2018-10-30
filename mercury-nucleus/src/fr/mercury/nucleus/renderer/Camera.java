@@ -27,11 +27,11 @@ public final class Camera {
 	 /**
      * The camera's location.
      */
-    private Vector3f location;
+    private final Vector3f location;
     /**
      * The orientation of the camera.
      */
-    private Quaternion rotation;
+    private final Quaternion rotation;
 	/**
 	 * The view matrix.
 	 */
