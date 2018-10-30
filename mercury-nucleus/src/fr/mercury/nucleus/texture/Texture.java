@@ -102,15 +102,21 @@ public abstract class Texture extends GLObject {
 	@OpenGLCall
 	protected void uploadImage() {
 		
-		// Don't know if it's really useful...
-		GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
-		
-		ByteBuffer buffer = MemoryUtil.memAlloc(image.sizeInPixel() * Float.BYTES);
-		
-		GL11.glTexImage2D(getOpenGLType(), 0, image.determineInternalFormat(), image.getWidth(), 
-				image.getHeight(), 0, image.determineFormat(), GL11.GL_UNSIGNED_BYTE, image.toByteBuffer(buffer));
+		if(image.isNeedUpdate()) {
+			// Don't know if it's really useful...
+			GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
+			
+			ByteBuffer buffer = MemoryUtil.memAlloc(image.sizeInPixel() * Float.BYTES);
+			
+			GL11.glTexImage2D(getOpenGLType(), 0, image.determineInternalFormat(), image.getWidth(), 
+					image.getHeight(), 0, image.determineFormat(), GL11.GL_UNSIGNED_BYTE, image.toByteBuffer(buffer));
 
-		MemoryUtil.memFree(buffer);
+			MemoryUtil.memFree(buffer);
+			
+			// FIXME: If the image is used by multiple textures, it can conflict.
+			// Maybe add an atomic counter which decrements for each texture, until it reaches 0?
+			image.setNeedUpdate(false);
+		}
 	}
 	
 	/**

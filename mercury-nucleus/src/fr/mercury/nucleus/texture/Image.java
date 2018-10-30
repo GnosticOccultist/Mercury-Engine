@@ -12,7 +12,7 @@ import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.objects.Color;
 
 public class Image {
-	
+
 	/**
 	 * The width of the image.
 	 */
@@ -22,13 +22,17 @@ public class Image {
 	 */
 	private int height;
 	/**
-	 * The data of the image.
-	 */
-	private ByteBuffer data;
-	/**
 	 * The image format.
 	 */
 	private Format format;
+	/**
+	 * The data of the image.
+	 */
+	private final ByteBuffer data;
+	/**
+	 * Whether a texture which uses the image needs to be updated.
+	 */
+	private boolean needUpdate;
 	
 	/**
 	 * Instantiates a new <code>Image</code> with the provided 
@@ -202,6 +206,8 @@ public class Image {
         	.putFloat((start + 2) * Float.BYTES, pixelColor.b)
         	.putFloat((start + 3) * Float.BYTES, pixelColor.a);
         
+        this.needUpdate = true;
+        
         return this;
 	}
 	
@@ -249,6 +255,36 @@ public class Image {
 	 */
 	public Format getFormat() {
 		return format;
+	}
+	
+	/**
+	 * Sets the format of the <code>Image</code>.
+	 * 
+	 * @param format The image's format.
+	 */
+	public void setFormat(Format format) {
+		this.format = format;
+		setNeedUpdate(true);
+	}
+	
+	/**
+	 * Return whether the <code>Image</code> data's has been changed,
+	 * and needs to be updated if used in the OpenGL context.
+	 * 
+	 * @return Whether the image needs to be updated.
+	 */
+	public boolean isNeedUpdate() {
+		return needUpdate;
+	}
+	
+	/**
+	 * Sets whether the <code>Image</code> data's has been changed,
+	 * and needs to be updated if used in the OpenGL context.
+	 * 
+	 * @param needUpdate Whether the image needs to be updated.
+	 */
+	public void setNeedUpdate(boolean needUpdate) {
+		this.needUpdate = needUpdate;
 	}
 	
 	/**
