@@ -11,6 +11,9 @@ import org.lwjgl.system.MemoryUtil;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
+import fr.mercury.nucleus.texture.TextureState.MagFilter;
+import fr.mercury.nucleus.texture.TextureState.MinFilter;
+import fr.mercury.nucleus.texture.TextureState.WrapMode;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
@@ -33,6 +36,10 @@ public abstract class Texture extends GLObject {
 	 * The currently used texture state.
 	 */
 	protected TextureState currentState;
+	/**
+	 * The state with changes to apply.
+	 */
+	protected TextureState toApply;
 	
 	/**
 	 * Constructor instantiates a new <code>Texture</code>.
@@ -42,7 +49,10 @@ public abstract class Texture extends GLObject {
 	 * @param id	The id of the texture.
 	 * @param size  The size of the texture, same for the width and height.
 	 */
-	protected Texture() {}
+	protected Texture() {
+		this.currentState = new TextureState();
+		this.toApply = new TextureState();
+	}
 	
 	@OpenGLCall
 	protected void bind() {
@@ -59,10 +69,11 @@ public abstract class Texture extends GLObject {
 		
 		bind();
 		
-		// TODO: Prevent uploading the image, if it hasn't change.
 		uploadImage();
+		
+		applyParameters();
 	}
-	
+
 	/**
 	 * <code>bindToUnit</code> binds this specific <code>Texture</code> to
 	 * the specified OpenGL Texture Unit.
@@ -90,6 +101,7 @@ public abstract class Texture extends GLObject {
 	 */
 	@OpenGLCall
 	protected void uploadImage() {
+		
 		// Don't know if it's really useful...
 		GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
 		
@@ -99,14 +111,102 @@ public abstract class Texture extends GLObject {
 				image.getHeight(), 0, image.determineFormat(), GL11.GL_UNSIGNED_BYTE, image.toByteBuffer(buffer));
 
 		MemoryUtil.memFree(buffer);
+	}
+	
+	/**
+	 * Applies the changed parameters for the <code>Texture</code>.
+	 */
+	@OpenGLCall
+	protected void applyParameters() {
 		
-		GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
-		GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR);
-		GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		if(currentState.minFilter != toApply.minFilter) {
+			GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_MIN_FILTER, toApply.determineMinFilter());
+			currentState.minFilter = toApply.minFilter;
+		}
 		
-		GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
-		GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
+		if(currentState.magFilter != toApply.magFilter) {
+			GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_MAG_FILTER, toApply.determineMagFilter());
+			currentState.magFilter = toApply.magFilter;
+		}
 		
+		if(currentState.sWrap != toApply.sWrap) {
+			GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_WRAP_S, toApply.determineSWrapMode());
+			currentState.sWrap = toApply.sWrap;
+		}
+		
+		if(currentState.tWrap != toApply.tWrap) {
+			GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_WRAP_T, toApply.determineTWrapMode());
+			currentState.tWrap = toApply.tWrap;
+		}
+		
+		if(!toApply.isGeneratedMipMaps() && toApply.isNeedMipmaps()) {
+			GL30.glGenerateMipmap(getOpenGLType());
+			currentState.setGeneratedMipMaps(true);
+			currentState.setNeedMipmaps(true);
+		}
+	}
+	
+	/**
+	 * Sets the {@link WrapMode} for the S et T axis of the <code>Texture</code>.
+	 * <p>
+	 * For the changes to occur, {@link #upload()} needs to be invoked.
+	 * 
+	 * @param sWrap The wrap mode for the S-axis.
+	 * @param tWrap The wrap mode for the T-axis.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Texture> T setWrapMode(WrapMode sWrap, WrapMode tWrap) {
+		if(sWrap != currentState.sWrap) {
+			toApply.sWrap = sWrap;
+		}
+		
+		if(tWrap != currentState.tWrap) {
+			toApply.tWrap = tWrap;
+		}
+		
+		return (T) this;
+	}
+	
+	/**
+	 * Sets the {@link MinFilter} and {@link MagFilter} for the <code>Texture</code>.
+	 * <p>
+	 * For the changes to occur, {@link #upload()} needs to be invoked.
+	 * 
+	 * @param minFilter The minifying filter to apply to the texture.
+	 * @param magFilter The magnification filter to apply to the texture.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Texture> T setFilter(MinFilter minFilter, MagFilter magFilter) {
+		if(minFilter != currentState.minFilter) {
+			
+			toApply.minFilter = minFilter;
+			// Force applying mipmapping for trilinear.
+			if(minFilter.equals(MinFilter.TRILINEAR)) {
+				setNeedMipMaps(true);
+			}
+		}
+		
+		if(magFilter != currentState.magFilter) {
+			toApply.magFilter = magFilter;
+		}
+		
+		return (T) this;
+	}
+	
+	/**
+	 * Notify that the <code>Texture</code> needs to generate mipmaps.
+	 * <p>
+	 * The generation of the mipmaps will occur when invoking {@link #upload()}.
+	 * 
+	 * @param mipmaps Whether the texture needs mipmapping.
+	 */
+	public void setNeedMipMaps(boolean mipmaps) {
+		if(currentState.isNeedMipmaps() != mipmaps) {
+			toApply.setNeedMipmaps(mipmaps);
+			if(mipmaps) {
+				toApply.setGeneratedMipMaps(false);
+			}
+		}
 	}
 	
 	/**
@@ -116,8 +216,11 @@ public abstract class Texture extends GLObject {
 	 * @param color	 The color to apply inside the image.
 	 * @param width	 The width of the modification.
 	 * @param height The height of the modification.
+	 * 
+	 * @return The colored texture.
 	 */
-	public void color(Color color, int width, int height) {
+	@SuppressWarnings("unchecked")
+	public <T extends Texture> T color(Color color, int width, int height) {
 
 		if(image == null) {
 			image = new Image(width, height);
@@ -128,7 +231,22 @@ public abstract class Texture extends GLObject {
                 image.setPixel(x, y, color);
             }
         }    
+        
+        return (T) this;
     }
+	
+	/**
+	 * Cleanup the object once it isn't needed anymore from the GPUand the OpenGL context.
+	 * It also {@link TextureState#reset() reset} the state of the <code>Texture</code> for later utilization.
+	 */
+	@Override
+	public void cleanup() {
+		super.cleanup();
+		
+		// Reset the state of the texture.
+		currentState.reset();
+		toApply.reset();
+	}
 	
 	/**
 	 * Sets the {@link Image} contained in the <code>Texture</code>.

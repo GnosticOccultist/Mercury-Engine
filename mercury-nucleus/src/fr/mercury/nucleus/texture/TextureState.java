@@ -1,8 +1,12 @@
 package fr.mercury.nucleus.texture;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL13;
+
 /**
  * <code>TextureState</code> is a utility class used to keep track of a loaded 
- * {@link Texture} options inside the OpenGL context.
+ * {@link Texture} parameters inside the OpenGL context.
  * <p>
  * It prevents changing unused or unchanged state of the {@link Texture} in order to save 
  * on performance.
@@ -14,14 +18,90 @@ public class TextureState implements Comparable<TextureState> {
 	public WrapMode sWrap, tWrap, rWrap;
 	public MagFilter magFilter;
 	public MinFilter minFilter;
-	public CompareMode shadowCompareMode;
+	public CompareMode compareMode;
 	
+	/**
+	 * Whether the mipmaps are needed.
+	 */
+	protected boolean needMipmaps;
+	/**
+	 * Whether the mipmaps were generated.
+	 */
+	protected boolean generatedMipMaps;
+	
+	/**
+	 * Instantiates a new <code>TextureState</code> and 
+	 * {@link #reset() resetting} its state.
+	 */
+	protected TextureState() {
+		reset();
+	}
+	
+	/**
+	 * Return whether the mipmaps are needed.
+	 * 
+	 * @return Whether the mipmaps are needed.
+	 */
+	public boolean isNeedMipmaps() {
+		return needMipmaps;
+	}
+	
+	/**
+	 * Sets whether the mipmaps are needed.
+	 * 
+	 * @param mipmaps Whether the mipmaps are needed.
+	 */
+	public void setNeedMipmaps(boolean mipmaps) {
+		this.needMipmaps = mipmaps;
+	}
+	
+	/**
+	 * Sets whether the mipmaps are generated and not outdated.
+	 * 
+	 * @param generatedMipMaps Whether the mipmaps are generated.
+	 */
+	public void setGeneratedMipMaps(boolean generatedMipMaps) {
+		this.generatedMipMaps = generatedMipMaps;
+	}
+	
+	/**
+	 * Return whether the mipmaps are generated and not outdated.
+	 * 
+	 * @return Whether the mipmaps are generated.
+	 */
+	public boolean isGeneratedMipMaps() {
+		return generatedMipMaps;
+	}
+	
+	/**
+	 * Reset the state of the <code>TextureState</code>.
+	 */
 	public void reset() {
 		sWrap = null;
 		tWrap = null;
 		rWrap = null;
+		
+		magFilter = null;
+		minFilter = null;
+		
+		needMipmaps = false;
+		generatedMipMaps = false;
+		
+		compareMode = CompareMode.NONE;
 	}
 	
+	/**
+	 * Compares each <code>TextureState</code> parameters and return 
+	 * the number of parameter changes.
+	 * <p>
+	 * The parameters checked are the following:
+	 * <pre>
+	 * <li>{@link WrapMode}
+	 * <li>{@link MinFilter} & {@link MagFilter}
+	 * <li>{@link CompareMode}
+	 * <li><code>Mipmapping</code>
+	 * </pre>
+	 */
 	@Override
 	public int compareTo(TextureState other) {
 		int changes = 0;
@@ -32,7 +112,10 @@ public class TextureState implements Comparable<TextureState> {
 		if(magFilter != other.magFilter || minFilter != other.minFilter) {
 			changes++;
 		}
-		if(shadowCompareMode != other.shadowCompareMode) {
+		if(compareMode != other.compareMode) {
+			changes++;
+		}
+		if(needMipmaps != other.needMipmaps || generatedMipMaps != other.generatedMipMaps) {
 			changes++;
 		}
 		
@@ -189,5 +272,93 @@ public class TextureState implements Comparable<TextureState> {
 		 * OpenGL Correspondance: <code>GL_COMPARE_R_TO_TEXTURE</code> | <code>GL_GEQUAL</code>.
 		 */
 		GREATER_OR_EQUAL;
+	}
+	
+	/**
+	 * Return the corresponding OpenGL value for the specified {@link MinFilter}.
+	 * 
+	 * @return The OpenGL equivalent for the min filter.
+	 */
+	public int determineMinFilter() {
+		switch(minFilter) {
+			case NEAREST:
+				return GL11.GL_NEAREST;
+			case BILINEAR:
+				return GL11.GL_LINEAR;
+			case TRILINEAR:
+				return GL11.GL_LINEAR_MIPMAP_LINEAR;
+			default: 
+				throw new UnsupportedOperationException("Unknown min filter: " + minFilter);
+		}
+	}
+	
+	/**
+	 * Return the corresponding OpenGL value for the specified {@link MagFilter}.
+	 * 
+	 * @return The OpenGL equivalent for the mag filter.
+	 */
+	public int determineMagFilter() {
+		switch(magFilter) {
+			case NEAREST:
+				return GL11.GL_NEAREST;
+			case BILINEAR:
+				return GL11.GL_LINEAR;
+			default: 
+				throw new UnsupportedOperationException("Unknown mag filter: " + magFilter);
+		}
+	}
+	
+	/**
+	 * Return the corresponding OpenGL value for the specified S {@link WrapMode}.
+	 * 
+	 * @return The OpenGL equivalent for S wrapping mode.
+	 */
+	public int determineSWrapMode() {
+		switch(sWrap) {
+			case REPEAT:
+				return GL11.GL_REPEAT;
+			case CLAMP_BORDER:
+				return GL13.GL_CLAMP_TO_BORDER;
+			case CLAMP_EDGES:
+				return GL12.GL_CLAMP_TO_EDGE;
+			default: 
+				throw new UnsupportedOperationException("Unknown wrapping mode: " + sWrap);
+		}
+	}
+	
+	/**
+	 * Return the corresponding OpenGL value for the specified T {@link WrapMode}.
+	 * 
+	 * @return The OpenGL equivalent for T wrapping mode.
+	 */
+	public int determineTWrapMode() {
+		switch(tWrap) {
+			case REPEAT:
+				return GL11.GL_REPEAT;
+			case CLAMP_BORDER:
+				return GL13.GL_CLAMP_TO_BORDER;
+			case CLAMP_EDGES:
+				return GL12.GL_CLAMP_TO_EDGE;
+			default: 
+				throw new UnsupportedOperationException("Unknown wrapping mode: " + tWrap);
+		}
+	}
+	
+	/**
+	 * Return the corresponding OpenGL value for the specified R {@link WrapMode}.
+	 * 
+	 * @return The OpenGL equivalent for R wrapping mode.
+	 */
+	public int determineRWrapMode() {
+		switch(rWrap) {
+			case REPEAT:
+				return GL11.GL_REPEAT;
+			case CLAMP_BORDER:
+				return GL13.GL_CLAMP_TO_BORDER;
+			case CLAMP_EDGES:
+				return GL12.GL_CLAMP_TO_EDGE;
+			default: 
+				throw new UnsupportedOperationException("Unknown wrapping mode: " + rWrap);
+		}
 	}
 }
