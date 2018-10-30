@@ -9,6 +9,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.file.FileUtils;
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.texture.Texture;
 import fr.mercury.nucleus.texture.Texture2D;
@@ -23,6 +25,11 @@ import fr.mercury.nucleus.utils.MercuryException;
  */
 public class ImageReader implements AssetLoader<Texture> {
 
+	/**
+	 * The logger of the application.
+	 */
+	private static final Logger logger = FactoryLogger.getLogger("mercury.app");
+	
 	@Override
 	public Texture load(String path) {
 		
@@ -36,7 +43,9 @@ public class ImageReader implements AssetLoader<Texture> {
 		// Prevent setting the image if null, to limit OpenGL calls.
 		if(image != null) {
 			texture.setImage(image);
+			logger.info("Successfully loaded texture with image file: " + path);
 		}
+		
 		return texture;
 	}
 	
