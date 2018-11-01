@@ -1,9 +1,11 @@
-package fr.mercury.nucleus.scene;
+package fr.mercury.nucleus.scenegraph;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.scenegraph.visitor.VisitType;
+import fr.mercury.nucleus.scenegraph.visitor.Visitor;
 
 /**
  * <code>NucleusMundi</code> represents a node ('<i>nucleus</i>') constituting a manifestation of the <code>AnimaMundi</code>.
@@ -57,8 +59,23 @@ public class NucleusMundi extends AnimaMundi {
 		}
 	}
 	
+	/**
+	 * Return the children of the <code>NucleusMundi</code>.
+	 * 
+	 * @return All the children of the nucleus-mundi.
+	 */
 	public List<AnimaMundi> children() {
 		return children;
+	}
+	
+	/**
+	 * Return the number of {@link AnimaMundi} contained in the
+	 * <code>NucleusMundi</code>.
+	 * 
+	 * @return The number of elements.
+	 */
+	public int size() {
+		return children.size();
 	}
 	
 	/**
@@ -69,5 +86,31 @@ public class NucleusMundi extends AnimaMundi {
 	 */
 	public boolean isLeaf() {
 		return children.isEmpty();
+	}
+	
+	/**
+	 * Visit the <code>NucleusMundi</code> with the specified {@link Visitor} and {@link VisitType}.
+	 * <br>
+	 * If the type corresponds to {@link VisitType#PRE_ORDER}, it will first visit the node and then
+	 * its children otherwise, if the type equals to {@link VisitType#POST_ORDER}, it will first visit 
+	 * each children and then the node itself.
+	 */
+	@Override
+	public void visit(Visitor visitor, VisitType type) {
+		Validator.nonNull(type);
+		Validator.nonNull(visitor);
+		
+		if(type.equals(VisitType.PRE_ORDER)) {
+			visitor.visit(this);
+		}
+		
+		for(int i = 0; i < size(); i++) {
+			AnimaMundi child = children.get(i);
+			child.visit(visitor, type);
+		}
+		
+		if(type.equals(VisitType.POST_ORDER)) {
+			visitor.visit(this);
+		}
 	}
 }

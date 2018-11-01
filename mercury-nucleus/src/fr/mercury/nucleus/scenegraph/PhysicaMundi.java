@@ -1,7 +1,6 @@
-package fr.mercury.nucleus.scene;
+package fr.mercury.nucleus.scenegraph;
 
 import fr.alchemy.utilities.Validator;
-import fr.mercury.nucleus.math.objects.Transform;
 
 /**
  * <code>PhysicaMundi</code> represents a physical object constituting a manifestation of the <code>AnimaMundi</code>.
@@ -11,11 +10,7 @@ import fr.mercury.nucleus.math.objects.Transform;
  * @author GnosticOccultist
  */
 public class PhysicaMundi extends AnimaMundi {
-	
-	/**
-	 * The transform of the physica-mundi.
-	 */
-	private final Transform transform;
+
 	/**
 	 * The mesh of the physica-mundi.
 	 */
@@ -38,17 +33,8 @@ public class PhysicaMundi extends AnimaMundi {
 	 * @param mesh The mesh to use.
 	 */
 	public PhysicaMundi(Mesh mesh) {
+		super();
 		setMesh(mesh);
-		this.transform = new Transform();
-	}
-	
-	/**
-	 * Return the <code>Transform</code> used by the <code>PhysicaMundi</code>.
-	 * 
-	 * @return The transform of the physica-mundi.
-	 */
-	public Transform getTransform() {
-		return transform;
 	}
 	
 	/**

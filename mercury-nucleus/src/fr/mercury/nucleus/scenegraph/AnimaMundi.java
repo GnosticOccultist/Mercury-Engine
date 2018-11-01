@@ -1,7 +1,9 @@
-package fr.mercury.nucleus.scene;
+package fr.mercury.nucleus.scenegraph;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Transform;
+import fr.mercury.nucleus.scenegraph.visitor.VisitType;
+import fr.mercury.nucleus.scenegraph.visitor.Visitor;
 
 /**
  * <code>AnimaMundi</code> is an abstraction layer for the <code>Tree-Data-Structure</code> representing 
@@ -23,9 +25,26 @@ import fr.mercury.nucleus.math.objects.Transform;
 public abstract class AnimaMundi {
 	
 	/**
+	 * The transform of the anima-mundi.
+	 */
+	private final Transform transform;
+	/**
 	 * The parent of the anima-mundi.
 	 */
 	protected NucleusMundi parent = null;
+	
+	public AnimaMundi() {
+		this.transform = new Transform();
+	}
+	
+	/**
+	 * Return the {@link Transform} used by the <code>PhysicaMundi</code>.
+	 * 
+	 * @return The transform of the physica-mundi.
+	 */
+	public Transform getTransform() {
+		return transform;
+	}
 	
 	/**
 	 * Return the parent of the <code>AnimaMundi</code>.
@@ -68,5 +87,16 @@ public abstract class AnimaMundi {
 	 */
 	public boolean hasAncestor(NucleusMundi ancestor) {
 		return parent != null && (parent.equals(ancestor) || parent.hasAncestor(ancestor));
+	}
+	
+	/**
+	 * Visit the <code>AnimaMundi</code> with the given {@link Visitor} and {@link VisitType}.
+	 * The visit type defines in which order the concerned mundi should be visited.
+	 * 
+	 * @param visitor The visitor.
+	 * @param type	  The type of visit to execute.
+	 */
+	public void visit(Visitor visitor, VisitType type) {
+		visitor.visit(this);
 	}
 }

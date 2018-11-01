@@ -9,8 +9,8 @@ import fr.mercury.nucleus.math.objects.Vector2f;
 import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
-import fr.mercury.nucleus.scene.Mesh;
-import fr.mercury.nucleus.scene.PhysicaMundi;
+import fr.mercury.nucleus.scenegraph.Mesh;
+import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 
 public class SimpleOBJLoader implements AssetLoader<PhysicaMundi> {
 

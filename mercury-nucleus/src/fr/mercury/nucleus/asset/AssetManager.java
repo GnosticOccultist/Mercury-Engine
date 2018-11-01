@@ -12,7 +12,7 @@ import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
-import fr.mercury.nucleus.scene.PhysicaMundi;
+import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.utils.MercuryException;
 
