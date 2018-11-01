@@ -37,6 +37,8 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.utils.NanoTimer;
 
 /**
@@ -48,6 +50,11 @@ import fr.mercury.nucleus.utils.NanoTimer;
  * @author GnosticOccultist
  */
 public class MercuryContext implements Runnable {
+	
+	/**
+	 * The application logger.
+	 */
+	private static final Logger logger = FactoryLogger.getLogger("mercury.app");
 	
 	/**
 	 * The application which manages the context.
@@ -113,7 +120,7 @@ public class MercuryContext implements Runnable {
 	
 	public void initialize() {
 		if(initialized.get()) {
-			System.err.println("Warning : The context is already initialized!");
+			logger.warning("The context is already initialized!");
 			return;
 		}
 		
@@ -128,7 +135,7 @@ public class MercuryContext implements Runnable {
 		if(initialized.get()) {
 			needRestart.set(true);
 		} else {
-			System.err.println("Warning: The context isn't initialized, cannot restart!");
+			logger.warning("The context isn't initialized, cannot restart!");
 		}
 	}
 	
@@ -140,7 +147,7 @@ public class MercuryContext implements Runnable {
 		}
 		
 		if(!initializeInMercury()) {
-			System.err.println("Error: The context initialization failed. Stopping...");
+			logger.error("The context initialization failed. Stopping...");
 			return;
 		}
 		
@@ -164,11 +171,11 @@ public class MercuryContext implements Runnable {
     	// If a restart is required, recreate the context.
     	if(needRestart.getAndSet(false)) {
     		try {
-    			System.out.println("Restarting the application: " + application.getClass().getSimpleName());
+    			logger.info("Restarting the application: " + application.getClass().getSimpleName());
     			destroyContext();
     			createContext(settings);
     		} catch (Exception ex) {
-    			System.err.println("Error: Failed to set display settings!" + ex.getMessage());
+    			logger.error("Failed to set display settings!" + ex.getMessage());
     		}
     	}
 		
@@ -313,6 +320,8 @@ public class MercuryContext implements Runnable {
         
         // Enable depth testing.
         GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL11.GL_CULL_FACE);
+        GL11.glCullFace(GL11.GL_BACK);
         
         // Finally show the window when finished.
         showWindow();
@@ -338,7 +347,7 @@ public class MercuryContext implements Runnable {
 				glfwTerminate();
 			}
 		} catch (Exception e) {
-			System.err.println("Failed to destroy context");
+			logger.error("Failed to destroy context !");
 			e.printStackTrace();
 		}
 	}

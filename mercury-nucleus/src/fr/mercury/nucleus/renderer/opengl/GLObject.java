@@ -2,6 +2,8 @@ package fr.mercury.nucleus.renderer.opengl;
 
 import java.util.function.Consumer;
 
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexArray;
@@ -22,6 +24,11 @@ import fr.mercury.nucleus.utils.OpenGLCall;
  * @author GnosticOccultist
  */
 public abstract class GLObject {
+	
+	/**
+	 * The logger of the OpenGL context.
+	 */
+	protected static final Logger logger = FactoryLogger.getLogger("mercury.opengl");
 	
 	/*
 	 * The invalid ID for an object, usually if the object
@@ -79,7 +86,7 @@ public abstract class GLObject {
 	@OpenGLCall
 	public void cleanup() {
 		if(getID() == INVALID_ID) {
-			System.err.println(getClass().getSimpleName() + 
+			logger.error(getClass().getSimpleName() + 
 					" not yet uploaded to GPU, cannot delete.");
 			return;
 		}

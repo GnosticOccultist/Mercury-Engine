@@ -1,7 +1,6 @@
-package fr.mercury.nucleus.scene;
+package fr.mercury.nucleus.scenegraph;
 
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
+import java.nio.Buffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,7 +60,7 @@ public class Mesh {
 		this.buffers = new HashMap<>();
 	}
 	
-	public void bind() {
+	protected void bind() {
 		vao.bind();
 		
 		buffers.values().forEach(VertexBuffer::bind);
@@ -88,14 +87,30 @@ public class Mesh {
 		unbind();
 	}
 	
-	public void unbind() {
+	protected void unbind() {
 		
 		vao.unbind();
 		
+		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 	}
 	
-	public void setupBuffer(VertexBufferType type, Usage usage, FloatBuffer data) {
+	/**
+	 * Setup the {@link VertexBuffer} for the specified type and usage and store into
+	 * it the given buffer containing vertex data.
+	 * <p>
+	 * <b>Only one buffer can be set for each {@link VertexBufferType type}</b>, but don't worry this method
+	 * automatically update the stored data for the buffer type if it's already set.
+	 * <p>
+	 * If you want to use the <code>VertexBuffer</code>, you need to upload it to the GPU with the
+	 * OpenGL context using {@link #upload()}. Note that this function will upload all the buffers already
+	 * setup on this <code>Mesh</code>.
+	 * 
+	 * @param type	The buffer type.
+	 * @param usage The usage for the buffer (how often it will be updated).
+	 * @param data  The buffer containing the vertex data.
+	 */
+	public void setupBuffer(VertexBufferType type, Usage usage, Buffer data) {
 		var vbo = buffers.get(type);
 		if(vbo == null) {
 			vbo = new VertexBuffer(type, usage);
@@ -106,19 +121,8 @@ public class Mesh {
 		}
 	}
 
-	public void setupBuffer(VertexBufferType type, Usage usage, IntBuffer data) {
-		var vbo = buffers.get(type);
-		if(vbo == null) {
-			vbo = new VertexBuffer(type, usage);
-			vbo.storeData(data);
-			buffers.put(type, vbo);
-		} else {
-			vbo.storeData(data);
-		}
-	}
-	
 	/**
-	 * Setup the <code>VertexBuffer</code> for the specified type and usage and store into
+	 * Setup the {@link VertexBuffer} for the specified type and usage and store into
 	 * it the given array of float values.
 	 * <p>
 	 * <b>Only one buffer can be set for each {@link VertexBufferType type}</b>, but don't worry this method
@@ -144,7 +148,7 @@ public class Mesh {
 	}
 	
 	/**
-	 * Setup the <code>VertexBuffer</code> for the specified type and usage and store into
+	 * Setup the {@link VertexBuffer} for the specified type and usage and store into
 	 * it the given array of integer values.
 	 * <p>
 	 * <b>Only one buffer can be set for each {@link VertexBufferType type}</b>, but don't worry this method
@@ -171,8 +175,8 @@ public class Mesh {
 	
 	/**
 	 * Upload the <code>Mesh</code> to the GPU using the OpenGL context. It means each correctly 
-	 * setup <code>VertexBuffer</code> will be uploaded and defined with an attribute pointer 
-	 * to use in a <code>ShaderSource</code>.
+	 * setup {@link VertexBuffer} will be uploaded and defined with an attribute pointer 
+	 * to use in a {@link ShaderProgram}.
 	 * After invoking this function, the <code>Mesh</code> can be properly rendered onto the screen
 	 * using the currently bound shader (if any).
 	 * <p>
@@ -200,7 +204,7 @@ public class Mesh {
 	 * Cleanup the <code>Mesh</code> once it isn't needed anymore from the GPU
 	 * and the OpenGL context.
 	 * <p>
-	 * It will cleanup the <code>VertexArray</code> and each <code>VertexBuffer</code>.
+	 * It will cleanup the {@link VertexArray} and each {@link VertexBuffer}.
 	 */
 	@OpenGLCall
 	public void cleanup() {
@@ -213,7 +217,7 @@ public class Mesh {
 	}
 	
 	/**
-	 * Return the <code>VertexBuffer</code> from the {@link VertexBufferType type}, 
+	 * Return the {@link VertexBuffer} from the {@link VertexBufferType type}, 
 	 * or null if it isn't present.
 	 * 
 	 * @param type The vertex buffer type.
@@ -247,7 +251,7 @@ public class Mesh {
 	}
 	
 	/**
-	 * Return the primitive mode to represent with the vertices.
+	 * Return the {@link Mode} of the primitive to render with the vertices.
 	 * 
 	 * @return The primitive mode.
 	 */
@@ -256,7 +260,7 @@ public class Mesh {
 	}
 	
 	/**
-	 * Sets the primitive mode to represent with the vertices.
+	 * Sets the {@link Mode} of the primitive to render with the vertices.
 	 * <p>
 	 * The mode cannot be null.
 	 * 

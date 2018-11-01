@@ -1,10 +1,15 @@
 package fr.mercury.nucleus.renderer.opengl;
 
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
+import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
@@ -53,6 +58,24 @@ public abstract class GLBuffer extends GLObject {
 		}
 		
 		GL15.glBindBuffer(getOpenGLType(), getID());
+	}
+	
+	/**
+	 * Store the data of the <code>GLBuffer</code> to the GPU using the OpenGL context.
+	 * This method should be called internally in {@link #upload()} to update the stored data,
+	 * for each implementation of this class.
+	 * <p>
+	 * Note that the stored data cannot be null.
+	 */
+	@OpenGLCall
+	protected void storeData() {
+		Validator.nonNull(data, "Can't upload vertex buffer with null data.");
+		
+		if(data instanceof FloatBuffer) {
+			GL15.glBufferData(getOpenGLType(), (FloatBuffer) data, getOpenGLUsage());
+		} else if(data instanceof IntBuffer) {
+			GL15.glBufferData(getOpenGLType(), (IntBuffer) data, getOpenGLUsage());
+		}
 	}
 	
 	/**
@@ -158,11 +181,45 @@ public abstract class GLBuffer extends GLObject {
 	
 	/**
 	 * Return the data stored in the <code>GLBuffer</code>.
+	 * <p>
+	 * Note that this return the raw internal buffer of the <code>GLBuffer</code>
+	 * and isn't thread-safe. If you want to access it from multiple thread, use {@link #getReadOnlyData()}.
 	 * 
 	 * @return The stored data in the buffer.
 	 */
 	public Buffer getData() {
 		return data;
+	}
+	
+	/**
+	 * Returns a safe readable-only {@link Buffer} of the content of the <code>GLBuffer</code>.
+	 * Since the two buffers' position, limit, and markvalues are independent, the returned duplicate
+	 * is safe to read in other thread. 
+	 * 
+	 * @return A rewound buffer representing the readable-only data of the <code>GLBuffer</code>.
+	 */
+	public Buffer getReadOnlyData() {
+		if(data == null) {
+			return null;
+		}
+		
+		Buffer readOnly = null;
+		if(data instanceof ByteBuffer) {
+			readOnly = ((ByteBuffer) data).asReadOnlyBuffer();
+		} else if(data instanceof FloatBuffer) {
+			readOnly = ((FloatBuffer) data).asReadOnlyBuffer();
+		} else if(data instanceof ShortBuffer) {
+			readOnly = ((ShortBuffer) data).asReadOnlyBuffer();
+		} else if( data instanceof IntBuffer ) {
+			readOnly = ((IntBuffer) data).asReadOnlyBuffer();
+        } else {
+        	throw new UnsupportedOperationException("Cannot get a readable-only for type: " + data);
+        }
+		
+		// Rewinding before returning the readable-data.
+		readOnly.rewind();
+		
+		return readOnly;
 	}
 	
 	/**

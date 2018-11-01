@@ -22,7 +22,7 @@ import fr.mercury.nucleus.utils.OpenGLCall;
  * @author GnosticOccultist
  */
 public final class ShaderSource extends GLObject {
-
+	
 	/**
 	 * The type of shader for the source.
 	 */
@@ -47,7 +47,7 @@ public final class ShaderSource extends GLObject {
 	@OpenGLCall
 	protected void upload() {
 		if(source.isEmpty() || source == null) {
-			System.err.println("Warning: The source code is null or empty for " + type);
+			logger.warning("The source code is null or empty for " + type);
 			return;
 		}
 		

@@ -6,6 +6,8 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.system.MemoryStack;
 
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Vector2f;
@@ -24,6 +26,11 @@ import fr.mercury.nucleus.utils.OpenGLCall;
  * @author GnosticOccultist
  */
 public class Uniform {
+	
+	/**
+	 * The logger of the OpenGL context.
+	 */
+	private static final Logger logger = FactoryLogger.getLogger("mercury.opengl");
 	
 	/**
 	 * The location for an inactive uniform or with syntax error.
@@ -63,7 +70,7 @@ public class Uniform {
 			var location = GL20.glGetUniformLocation(program.getID(), name);
 			if(location < 0) {
 				setLocation(-1);
-				System.err.println("The uniform '" + name + "' isn't declared in the shader: " + program + ".");
+				logger.warning("The uniform '" + name + "' isn't declared in the shader: " + program + ".");
 				return;
 			}
 			setLocation(location);
@@ -79,14 +86,14 @@ public class Uniform {
 	@OpenGLCall
 	public void upload(ShaderProgram program) {
 		if(program.getID() == ShaderProgram.INVALID_ID) {
-			System.err.println("ShaderProgram isn't yet created, cannot add uniform to it!");
+			logger.error("ShaderProgram isn't yet created, cannot add uniform to it!");
 			return;
 		}
 		
 		create(program);
 		
 		if(getLocation() == UNDEFINED_LOCATION || getUniformType() == null) {
-			System.err.println("The uniform: " + name + " is inactive or has no type!");
+			logger.error("The uniform: " + name + " is inactive or has no type!");
 			return;
 		}
 		

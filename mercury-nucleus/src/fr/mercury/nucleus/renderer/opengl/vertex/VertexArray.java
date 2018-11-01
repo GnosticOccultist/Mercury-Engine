@@ -22,13 +22,14 @@ import fr.mercury.nucleus.utils.OpenGLCall;
 public final class VertexArray extends GLObject {
 
 	/**
-	 * Determines if the provided ID correspond to an OpenGL <code>VertexArray</code>.
+	 * Determines if the provided {@link VertexArray} correspond to an OpenGL 
+	 * vertex array object.
 	 * 
-	 * @param id The ID of the GLObject to check.
-	 * @return	 Whether the ID correspond to a vertex array.
+	 * @param vao The vertex array to validate.
+	 * @return	  Whether the vertex array is valid.
 	 */
-	public static boolean valid(int id) {
-		return GL30.glIsVertexArray(id);
+	public static boolean valid(VertexArray vao) {
+		return GL30.glIsVertexArray(vao.getID());
 	}
 	
 	/**

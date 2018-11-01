@@ -1,5 +1,6 @@
 package fr.mercury.nucleus.renderer.opengl.vertex;
 
+import java.nio.Buffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.function.Consumer;
@@ -9,6 +10,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer;
+import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
@@ -54,23 +56,6 @@ public class VertexBuffer extends GLBuffer {
 	}
 	
 	/**
-	 * Store the data of the <code>VertexBuffer</code> to the GPU using the OpenGL context.
-	 * This method is called internally in {@link #upload()} to update the stored data.
-	 * <p>
-	 * Note that the stored data cannot be null.
-	 */
-	@OpenGLCall
-	protected void storeData() {
-		Validator.nonNull(data, "Can't upload vertex buffer with null data.");
-		
-		if(data instanceof FloatBuffer) {
-			GL15.glBufferData(getOpenGLType(), (FloatBuffer) data, getOpenGLUsage());
-		} else if(data instanceof IntBuffer) {
-			GL15.glBufferData(getOpenGLType(), (IntBuffer) data, getOpenGLUsage());
-		}
-	}
-	
-	/**
 	 * Return the <code>VertexBuffer</code> {@link BufferType type}.
 	 * It corresponds to {@link VertexBufferType#getBufferType()}.
 	 * 
@@ -94,7 +79,7 @@ public class VertexBuffer extends GLBuffer {
 		try {
 			buffer = MemoryUtil.memAllocInt(data.length);
 			buffer.put(data).flip();
-			this.data = buffer;
+			storeData(buffer);
 		} finally {
 			if (buffer != null) {
                 MemoryUtil.memFree(buffer);
@@ -102,7 +87,20 @@ public class VertexBuffer extends GLBuffer {
 		}
 	}
 	
-	public void storeData(IntBuffer data) {
+	/**
+	 * Sets the provided {@link Buffer} as the data of the <code>VertexBuffer</code>.
+	 * <p>
+	 * Note that the buffer cannot be {@link Buffer#isReadOnly() readable-only} and won't 
+	 * be usable until you call {@link #upload()}, to update the stored value.
+	 * 
+	 * @param data The buffer storing vertex data.
+	 */
+	public void storeData(Buffer data) {
+		if(data != null && data.isReadOnly()) {
+			throw new MercuryException("Stored data inside a VertexBuffer "
+					+ "cannot be readable-only!");
+		}
+		
 		this.data = data;
 	}
 	
@@ -119,7 +117,7 @@ public class VertexBuffer extends GLBuffer {
 		try {
 			buffer = MemoryUtil.memAllocFloat(data.length);
 			buffer.put(data).flip();
-			this.data = buffer;
+			storeData(buffer);
 		} finally {
 			if (buffer != null) {
                 MemoryUtil.memFree(buffer);
@@ -127,10 +125,11 @@ public class VertexBuffer extends GLBuffer {
 		}
 	}
 	
-	public void storeData(FloatBuffer data) {
-		this.data = data;
-	}
-	
+	/**
+	 * Return the {@link VertexBufferType} of the <code>VertexBuffer</code>.
+	 * 
+	 * @return The type of vertex data contained in the vertex buffer.
+	 */
 	public VertexBufferType getVertexBufferType() {
 		return vertexBufferType;
 	}
