@@ -1,16 +1,19 @@
 package fr.mercury.nucleus.application;
 
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
+import fr.alchemy.utilities.logging.LoggerLevel;
 import fr.mercury.nucleus.asset.AssetManager;
-import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.objects.Color;
-import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Renderer;
-import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
-import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
-import fr.mercury.nucleus.scene.PhysicaMundi;
+import fr.mercury.nucleus.scenegraph.NucleusMundi;
+import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.Texture2D;
+import fr.mercury.nucleus.texture.TextureState.MagFilter;
+import fr.mercury.nucleus.texture.TextureState.MinFilter;
+import fr.mercury.nucleus.texture.TextureState.WrapMode;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 
@@ -25,6 +28,11 @@ import fr.mercury.nucleus.utils.SpeedableNanoTimer;
  */
 public class MercuryApplication implements Application {
 
+	/**
+	 * The logger for the Mercury Application.
+	 */
+	protected static final Logger logger = FactoryLogger.getLogger("mercury.app");
+	
 	/**
 	 * The current context of the application.
 	 */
@@ -49,10 +57,15 @@ public class MercuryApplication implements Application {
 	 * The renderer.
 	 */
 	protected Renderer renderer;
+	/**
+	 * The root node for the scene.
+	 */
+	protected NucleusMundi scene;
 	
-	private ShaderProgram program;
-	private Matrix4f projectionModelMatrix;
+	
 	private PhysicaMundi cube;
+	
+	private NucleusMundi nucleus;
 	
 	// TODO: Remove this, only used when concrete application are created.
 	public static void main(String[] args) {
@@ -71,7 +84,7 @@ public class MercuryApplication implements Application {
 			settings = new MercurySettings(true);
 		}
 		
-		System.out.println("Starting the application: " + getClass().getSimpleName());
+		logger.info("Starting the application: " + getClass().getSimpleName());
 		context = MercuryContext.newContext(this, settings);
 		context.initialize();
 	}
@@ -90,35 +103,45 @@ public class MercuryApplication implements Application {
 		camera.getLocation().set(0f, 0f, 8f);
 		camera.setProjectionMatrix(45f, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
 		
-		renderer = new Renderer(camera);
+		renderer = new Renderer(camera, assetManager);
 		
 		// Reset the timer before invoking anything else,
 		// to ensure the first time per frame isn't too large...
 		timer.reset();
 		
-		Texture2D texture = assetManager.loadTexture2D("/model/octostone.png");
-		//texture.fromColor(new Color(0, 0, 1), 256, 256);
+		scene = new NucleusMundi("root-nucleus");
+		
+		Texture2D texture = assetManager.loadTexture2D("/model/octostone.png")
+				.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
+				.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
 		texture.upload();
 		
 		cube = assetManager.loadPhysicaMundi("/model/cube.obj");
-		cube.getTransform().setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
-		camera.lookAt(cube.getTransform().getTranslation(), Vector3f.UNIT_Y);
+		cube.setName("cube-1");
+		cube.getLocalTransform().setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
 		
-		projectionModelMatrix = MercuryMath.LOCAL_VARS.acquireNext(Matrix4f.class);
-		projectionModelMatrix.identity();
-		projectionModelMatrix.set(camera.getViewProjectionMatrix().mult(cube.getTransform().transform(), projectionModelMatrix));
+		PhysicaMundi cube1 = assetManager.loadPhysicaMundi("/model/cube.obj");
+		cube1.setName("cube-2");
+		cube1.getLocalTransform().setTranslation(2.5f, 0, 0).setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
+		
+		camera.lookAt(cube.getLocalTransform().getTranslation(), Vector3f.UNIT_Y);
 		
 		cube.getMesh().texture = texture;
 		
-		// TEST:
-		program = new ShaderProgram()
-				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
-				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"))
-				.addUniform("projectionMatrix", UniformType.MATRIX4F, projectionModelMatrix)
-				.addUniform("color", UniformType.VECTOR4F, new Color(0.1f, 0.3f, 0.1f, 1f))
-				.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
+		Texture2D texture2 = new Texture2D().color(new Color(0, 0, 1), 2048, 2048)
+				.setFilter(MinFilter.BILINEAR, MagFilter.BILINEAR)
+				.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
+		texture2.upload();
 		
-		program.upload();
+		cube1.getMesh().texture = texture2;
+		
+		FactoryLogger.getLogger("mercury.scenegraph").setActive(LoggerLevel.DEBUG, true);
+		
+		nucleus = new NucleusMundi("sub-nucleus");
+		
+		nucleus.attach(cube);
+		nucleus.attach(cube1);
+		scene.attach(nucleus);
 	}
 	
 	@Override
@@ -143,17 +166,17 @@ public class MercuryApplication implements Application {
 		}
 		
 		timer.update();
+		
+		scene.rotate(.007f, 0.007f, 0);
+		cube.rotate(0.0f, 0.03f, 0);
+		
+		scene.updateGeometricState();
 
 		if(settings.getBoolean("ShowFPS")) {
 			context.setTitle(settings.getTitle() + " - " + (int) (timer.getFrameRate()) + " FPS");
 		}	
-	
-		projectionModelMatrix.identity();
-		projectionModelMatrix.set(camera.getViewProjectionMatrix().mult(cube.getTransform().transform(), projectionModelMatrix));
-		program.getUniform("projectionMatrix").setValue(UniformType.MATRIX4F, projectionModelMatrix);
-		program.getUniform("projectionMatrix").upload(program);
 		
-		renderer.render(cube.getMesh());
+		renderer.renderScene(scene);
 	}
 
 	/**
@@ -166,10 +189,10 @@ public class MercuryApplication implements Application {
 	@OpenGLCall
 	public void cleanup() {
 		timer.reset();
-		program.cleanup();
+		renderer.cleanup();
 		cube.getMesh().cleanup();
 		
-		System.out.println("Closing the application: " + getClass().getSimpleName());
+		logger.info("Closing the application: " + getClass().getSimpleName());
 	}
 	
 	/**

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.math.objects.Transform;
+import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
 import fr.mercury.nucleus.scenegraph.visitor.Visitor;
 
@@ -22,6 +24,26 @@ public class NucleusMundi extends AnimaMundi {
 	 * The children of the nucleus-mundi (either another node or a physica-mundi).
 	 */
 	private final List<AnimaMundi> children = new ArrayList<>();
+	
+	/**
+	 * Instantiates a new <code>NucleusMundi</code> with the {@link Transform}
+	 * set to identity values.
+	 */
+	public NucleusMundi() {
+		super();
+	}
+	
+	/**
+	 * Instantiates a new <code>AnimaMundi</code> with the {@link Transform}
+	 * set to identity values and the given name.
+	 * <p>
+	 * The name cannot be null.
+	 * 
+	 * @param name The name of the nucleus-mundi.
+	 */
+	public NucleusMundi(String name) {
+		super(name);
+	}
 	
 	/**
 	 * Attach an <code>AnimaMundi</code> to the <code>NucleusMundi</code>.
@@ -56,6 +78,16 @@ public class NucleusMundi extends AnimaMundi {
 		if(child.getParent() == this) {
 			children.remove(child);
 			child.setParent(null);
+		}
+	}
+	
+	@Override
+	protected void propagateDown(DirtyType type) {
+		super.propagateDown(type);
+		
+		for(int i = 0; i < size(); i++) {
+			var child = children.get(i);
+			child.propagateDown(type);
 		}
 	}
 	

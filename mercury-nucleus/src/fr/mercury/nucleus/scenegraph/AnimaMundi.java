@@ -1,7 +1,17 @@
 package fr.mercury.nucleus.scenegraph;
 
+import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.Queue;
+
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.math.objects.Quaternion;
 import fr.mercury.nucleus.math.objects.Transform;
+import fr.mercury.nucleus.math.objects.Vector3f;
+import fr.mercury.nucleus.scenegraph.visitor.AbstractVisitor;
+import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
 import fr.mercury.nucleus.scenegraph.visitor.Visitor;
 
@@ -25,25 +35,341 @@ import fr.mercury.nucleus.scenegraph.visitor.Visitor;
 public abstract class AnimaMundi {
 	
 	/**
-	 * The transform of the anima-mundi.
+	 * The logger for the scene-graph.
 	 */
-	private final Transform transform;
+	protected static final Logger logger = FactoryLogger.getLogger("mercury.scenegraph");
+	
+	/**
+	 * An implementation of a visitor to update the transform of a hierarchy of anima-mundi.
+	 */
+	protected static final AbstractVisitor TRANSFORM_UPDATER = new AbstractVisitor() {
+		
+		@Override
+		public void onVisit(AnimaMundi anima) {
+			anima.updateWorldTransform();
+		}
+	};
+	
+	/**
+	 * The name of the spatial, mainly used for debugging.
+	 */
+	protected String name;
+	/**
+	 * The transform of the anima-mundi relative to its parent.
+	 */
+	protected final Transform localTransform;
+	/**
+	 * The transform of the anima-mundi in the global scene-graph.
+	 */
+	protected final Transform worldTransform;
 	/**
 	 * The parent of the anima-mundi.
 	 */
 	protected NucleusMundi parent = null;
+	/**
+	 * The accumulated dirty marks by the anima-mundi. At instantiation
+	 * it will contain {@link DirtyType#TRANSFORM}.
+	 */
+	protected EnumSet<DirtyType> dirtyMarks = EnumSet.of(DirtyType.TRANSFORM);
 	
-	public AnimaMundi() {
-		this.transform = new Transform();
+	/**
+	 * Instantiates a new <code>AnimaMundi</code> with the {@link Transform}
+	 * set to identity values.
+	 */
+	protected AnimaMundi() {
+		this.localTransform = new Transform();
+		this.worldTransform = new Transform();
 	}
 	
 	/**
-	 * Return the {@link Transform} used by the <code>PhysicaMundi</code>.
+	 * Instantiates a new <code>AnimaMundi</code> with the {@link Transform}
+	 * set to identity values and the given name.
+	 * <p>
+	 * The name cannot be null.
 	 * 
-	 * @return The transform of the physica-mundi.
+	 * @param name The name of the anima-mundi.
 	 */
-	public Transform getTransform() {
-		return transform;
+	protected AnimaMundi(String name) {
+		this();
+		setName(name);
+	}
+	
+	/**
+	 * Update all geometric informations about the <code>AnimaMundi</code>.
+	 * <p>
+	 * If the implementation calling this method is a {@link NucleusMundi}, it will
+	 * also update the geometric state of its children.
+	 */
+	public void updateGeometricState() {
+		if(isDirty(DirtyType.TRANSFORM)) {
+			visit(TRANSFORM_UPDATER, VisitType.PRE_ORDER);
+		}
+	}
+	
+	/**
+	 * Update the world {@link Transform} by combining the local transform
+	 * of this <code>AnimaMundi</code> with the world one of its parent.
+	 * <p>
+	 * If the anima-mundi is {@link #isOrphan() orphan} it will just set 
+	 * the local transform as the world transform.
+	 */
+	protected void updateWorldTransform() {
+		logger.debug("Update world transform for " + name);
+        if(parent != null) {
+        	assert !parent.isDirty(DirtyType.TRANSFORM);
+        	worldTransform.set(localTransform);
+            worldTransform.worldTransform(parent.worldTransform);
+        } else {
+            worldTransform.set(localTransform);
+        }
+        dirtyMarks.remove(DirtyType.TRANSFORM);
+	}
+	
+	/**
+	 * Return whether the <code>AnimaMundi</code> contains the specified
+	 * {@link DirtyType} mark, meaning it has to refresh this type of data.
+	 * <p>
+	 * The provided dirty type cannot be null.
+	 * 
+	 * @param type The data type to check for dirtiness.
+	 * @return	   Whether the specified data type is dirty.
+	 */
+	protected boolean isDirty(DirtyType type) {
+		Validator.nonNull(type);
+		return dirtyMarks.contains(type);
+	}
+	
+	/**
+	 * Sets the dirty mark for the specified {@link DirtyType} to this
+	 * <code>AnimaMundi</code> and all of its hierarchy.
+	 * <p>
+	 * The provided dirty type cannot be null.
+	 * 
+	 * @param type The dirty mark to apply.
+	 */
+	protected void dirty(DirtyType type) {
+		Validator.nonNull(type);
+		
+		switch (type) {
+			case TRANSFORM:
+				propagateDown(type);
+                
+                if(parent != null) {
+                	parent.dirty(type);
+                }
+                break;
+		}
+	}
+	
+	
+	protected void propagateDown(DirtyType type) {
+		dirtyMarks.add(type);
+	}
+	
+	/**
+	 * Return the local {@link Transform} used by the <code>AnimaMundi</code>.
+	 * This transform is relative to the parent of this anima-mundi.
+	 * 
+	 * @return The local transform of the anima-mundi.
+	 * 
+	 * @see #getWorldTransform
+	 */
+	public Transform getLocalTransform() {
+		dirty(DirtyType.TRANSFORM);
+		return localTransform;
+	}
+	
+	/**
+	 * Return the world {@link Transform} used by the <code>AnimaMundi</code>.
+	 * This transform is relative to the whole scene-graph.
+	 * 
+	 * @return The world transform of the anima-mundi.
+	 * @throws IllegalStateException Thrown if the world transform is dirty and 
+	 * 								 should be first refresh.
+	 * 
+	 * @see #getLocalTransform() 
+	 */
+	public Transform getWorldTransform() {
+		if(isDirty(DirtyType.TRANSFORM)) {
+			throw new IllegalStateException("The world transform hasn't been computed yet!");
+		}
+		
+		return worldTransform;
+	}
+	
+	/**
+	 * Sets the translation of this <code>AnimaMundi</code> to the provided {@link Vector3f} in
+	 * the local coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * <p>
+	 * The provided vector cannot be null.
+	 * 
+	 * @param translation The translation vector to set.
+	 * @return			  The changed anima-mundi.
+	 */
+	public AnimaMundi setTranslation(Vector3f translation) {
+		localTransform.setTranslation(translation);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
+	 * Translates the <code>AnimaMundi</code> by the provided {@link Vector3f} in the local 
+	 * coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * <p>
+	 * The provided vector cannot be null.
+	 * 
+	 * @param translation The translation vector.
+	 * @return			  The changed anima-mundi.
+	 */
+	public AnimaMundi translate(Vector3f translate) {
+		localTransform.translate(translate);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
+	 * Translates the <code>AnimaMundi</code> by the provided components in the local 
+	 * coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * 
+	 * @param x The X-axis component of the translation.
+	 * @param y The Y-axis component of the translation.
+	 * @param z The Z-axis component of the translation.
+	 * @return	The changed anima-mundi.
+	 */
+	public AnimaMundi translate(float x, float y, float z) {
+		localTransform.translate(x, y, z);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
+	 * Sets the rotation of this <code>AnimaMundi</code> to the provided {@link Quaternion} in
+	 * the local coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * <p>
+	 * The provided quaternion cannot be null.
+	 * 
+	 * @param translation The rotation quaternion to set.
+	 * @return			  The changed anima-mundi.
+	 */
+	public AnimaMundi setRotation(Quaternion rotation) {
+		localTransform.setRotation(rotation);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
+	 * Rotates the <code>AnimaMundi</code> by the provided {@link Quaternion} in the local 
+	 * coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * <p>
+	 * The provided quaternion cannot be null.
+	 * 
+	 * @param rotation The rotation quaternion.
+	 * @return		   The changed anima-mundi.
+	 */
+	public AnimaMundi rotate(Quaternion rotation) {
+		localTransform.rotate(rotation);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
+	 * Rotates the <code>AnimaMundi</code> by the provided x, y and z angles in radians in 
+	 * the local coordinate space. Note that the {@link #getWorldTransform() world transform} 
+	 * won't  be updated until {@link #updateGeometricState()} has been called.
+	 * 
+	 * @param x The X-axis angle aka pitch (in radians).
+	 * @param y The Y-axis angle aka yaw (in radians).
+	 * @param z The Z-axis angle aka roll (in radians).
+	 * 
+	 * @return	The rotated anima-mundi.
+	 */
+    public AnimaMundi rotate(float x, float y, float z) {
+        localTransform.rotate(x, y, z);
+        dirty(DirtyType.TRANSFORM);
+        
+        return this;
+    }
+    
+    /**
+	 * Sets the scale of this <code>AnimaMundi</code> to the provided {@link Vector3f} in
+	 * the local coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * <p>
+	 * The provided vector cannot be null.
+	 * 
+	 * @param translation The scaling vector to set.
+	 * @return			  The changed anima-mundi.
+	 */
+    public AnimaMundi setScale(Vector3f scale) {
+		localTransform.setScale(scale);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+    
+	/**
+	 * Scales the <code>AnimaMundi</code> by the provided {@link Vector3f} in the local 
+	 * coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * <p>
+	 * The provided vector cannot be null.
+	 * 
+	 * @param scale The scaling vector.
+	 * @return		The changed anima-mundi.
+	 */
+	public AnimaMundi scale(Vector3f scale) {
+		localTransform.scale(scale);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
+	 * Scales the <code>AnimaMundi</code> by the provided components in the local 
+	 * coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * 
+	 * @param x The X-axis component of the scaling.
+	 * @param y The Y-axis component of the scaling.
+	 * @param z The Z-axis component of the scaling.
+	 * @return	The changed anima-mundi.
+	 */
+	public AnimaMundi scale(float x, float y, float z) {
+		localTransform.scale(x, y, z);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
+	 * Return the name of the <code>AnimaMundi</code>.
+	 * 
+	 * @return The name of the anima-mundi.
+	 */
+	public String getName() {
+		return name;
+	}
+	
+	/**
+	 * Sets the name of the <code>AnimaMundi</code>.
+	 * <p>
+	 * The name cannot be null.
+	 * 
+	 * @param name The name of the anima-mundi.
+	 */
+	public void setName(String name) {
+		Validator.nonNull(name);
+		this.name = name;
 	}
 	
 	/**
@@ -56,13 +382,14 @@ public abstract class AnimaMundi {
 	}
 	
 	/**
-	 * Sets the parent of the <code>AnimaMundi</code>.
+	 * Sets the parent of the <code>AnimaMundi</code>. The method should be
+	 * called internally by the {@link NucleusMundi} implementation.
 	 * <p>
 	 * The parent cannot be null.
 	 * 
 	 * @param parent The parent of the anima-mundi.
 	 */
-	public void setParent(NucleusMundi parent) {
+	protected void setParent(NucleusMundi parent) {
 		Validator.nonNull(parent);
 		this.parent = parent;
 	}
@@ -97,6 +424,17 @@ public abstract class AnimaMundi {
 	 * @param type	  The type of visit to execute.
 	 */
 	public void visit(Visitor visitor, VisitType type) {
+		if(type.equals(VisitType.DEPTH_LAYER)) {
+			Queue<AnimaMundi> queue = new LinkedList<AnimaMundi>();
+	        queue.add(this);
+
+	        while (!queue.isEmpty()) {
+	        	AnimaMundi anima = queue.poll();
+	            visitor.visit(anima);
+	            if(anima instanceof NucleusMundi) 
+	            	queue.addAll(((NucleusMundi) anima).children());
+	        }
+		}
 		visitor.visit(this);
 	}
 }

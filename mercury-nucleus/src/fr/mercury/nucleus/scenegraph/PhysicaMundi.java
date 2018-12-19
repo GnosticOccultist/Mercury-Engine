@@ -17,16 +17,16 @@ public class PhysicaMundi extends AnimaMundi {
 	private Mesh mesh;
 	
 	/**
-	 * Instantiates a new <code>PhysicaMundi</code> by creating an
-	 * empty <code>Mesh</code> so no rendering will occur.
+	 * Instantiates a new <code>PhysicaMundi</code> with no {@link Mesh}
+	 * so no rendering will occur.
 	 */
 	public PhysicaMundi() {
-		this(new Mesh());
+		super();
 	}
 	
 	/**
-	 * Instantiates a new <code>PhysicaMundi</code> by setting its 
-	 * <code>Mesh</code> to the provided one.
+	 * Instantiates a new <code>PhysicaMundi</code> by setting its {@link Mesh} 
+	 * to the provided one.
 	 * <p>
 	 * The provided mesh cannot be null.
 	 * 
@@ -34,6 +34,19 @@ public class PhysicaMundi extends AnimaMundi {
 	 */
 	public PhysicaMundi(Mesh mesh) {
 		super();
+		setMesh(mesh);
+	}
+	
+	/**
+	 * Instantiates a new <code>PhysicaMundi</code> with the given name and 
+	 * by setting its {@link Mesh} to the provided one.
+	 * <p>
+	 * The provided mesh cannot be null.
+	 * 
+	 * @param mesh The mesh to use.
+	 */
+	public PhysicaMundi(String name, Mesh mesh) {
+		super(name);
 		setMesh(mesh);
 	}
 	
