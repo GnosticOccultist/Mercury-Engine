@@ -1,46 +1,39 @@
 package fr.mercury.nucleus.renderer;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
 
 import fr.alchemy.utilities.Validator;
-import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
-import fr.mercury.nucleus.scene.Mesh;
+import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.math.objects.Color;
+import fr.mercury.nucleus.renderer.logic.DefaultRenderLogic;
+import fr.mercury.nucleus.renderer.logic.RenderLogic;
+import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
+import fr.mercury.nucleus.scenegraph.NucleusMundi;
+import fr.mercury.nucleus.scenegraph.PhysicaMundi;
+import fr.mercury.nucleus.scenegraph.visitor.VisitType;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
-public class Renderer {
+public class Renderer extends AbstractRenderer {
 	
 	private final Camera camera;
 	
-	public Renderer(Camera camera) {
+	private final RenderLogic defaultLogic;
+	
+	public Renderer(Camera camera, AssetManager assetManager) {
 		Validator.nonNull(camera);
 		
 		this.camera = camera;
-	}
-	
-	@OpenGLCall
-	public void drawTriangles(int vertices) {
-		GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, vertices);
-	}
-	
-	/**
-	 * Transfer the <code>VertexBuffer</code> to the bound <code>ShaderProgram</code> as attributes.
-	 * The currently bound element array buffer (if any) will determine the amount of data to pass 
-	 * through the <code>ShaderProgram</code>.
-	 */
-	@OpenGLCall
-	public void drawElements(Mesh mesh) {
-		GL11.glDrawElements(mesh.toOpenGLMode(), mesh.getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
-	}
-	
-	/**
-	 * Transfer the <code>VertexBuffer</code> to the bound <code>ShaderProgram</code> as attributes.
-	 * The currently bound element array buffer (if any) will determine the amount of data to pass 
-	 * through the <code>ShaderProgram</code>.
-	 */
-	@OpenGLCall
-	public void drawRangeElements(Mesh mesh) {
-		GL20.glDrawRangeElements(mesh.toOpenGLMode(), 0, mesh.getVertexCount(), mesh.getBuffer(VertexBufferType.INDEX).getData().limit(), GL11.GL_UNSIGNED_INT, 0);
+		this.defaultLogic = new DefaultRenderLogic();
+		
+		// TEST:
+		program = new ShaderProgram()
+				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
+				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"))
+				.addUniform("color", UniformType.VECTOR4F, new Color(0.1f, 0.3f, 0.1f, 1f))
+				.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
+				
+		program.upload();	
 	}
 	
 	/**
@@ -53,37 +46,64 @@ public class Renderer {
 	}
 	
 	@OpenGLCall
-	public void render(Mesh mesh) {
+	public void renderScene(NucleusMundi scene) {
+		// Clears the buffer before writing to it.
 		clearBuffers();
-		
-		camera.getRotation().add(0.01f, 0.01f, 0.01f, 0);
-
+	
 		camera.updateViewMatrix();
 		
-		mesh.bind();
+		setMatrix(MatrixType.VIEW, camera.getViewMatrix());
+		setMatrix(MatrixType.PROJECTION, camera.getProjectionMatrix());
 		
-		mesh.texture.bindToUnit(0);
+		scene.visit(anima -> {
+			if(anima instanceof PhysicaMundi) {
+				render((PhysicaMundi) anima);
+			}
+		}, VisitType.POST_ORDER);
+	}
+	
+	@OpenGLCall
+	private void render(PhysicaMundi physica) {
 		
-		GL20.glEnableVertexAttribArray(0);
-		GL20.glEnableVertexAttribArray(1);
-		GL20.glEnableVertexAttribArray(2);
+		setMatrix(MatrixType.MODEL, physica.getWorldTransform().transform());
 		
-		drawElements(mesh);
+		computeMatrix(MatrixType.VIEW_PROJECTION_MODEL);
 		
-		GL20.glDisableVertexAttribArray(0);
-		GL20.glDisableVertexAttribArray(1);
-		GL20.glDisableVertexAttribArray(2);
+		setupUniforms();
 		
-		mesh.texture.unbind();
+		defaultLogic.begin(physica);
+	
+		defaultLogic.render(physica);
 		
-		mesh.unbind();
+		defaultLogic.end(physica);
 	}
 
+	/**
+	 * Resize the camera and the viewport dimensions to the provided ones.
+	 * 
+	 * @param width	 The new width of the window.
+	 * @param height The new height of the window.
+	 */
 	@OpenGLCall
 	public void resize(int width, int height) {
 		if(camera != null) {
 			camera.resize(width, height);
 			GL11.glViewport(0, 0, camera.getWidth(), camera.getHeight());
+			GL11.glEnable(GL11.GL_SCISSOR_TEST);
+			GL11.glScissor(0, 0, width, height);
 		}
+	}
+
+	@OpenGLCall
+	public void setDepthRange(double depthRangeNear, double depthRangeFar) {
+		GL11.glDepthRange(depthRangeNear, depthRangeFar);
+	}
+	
+	/**
+	 * Cleanup the renderer and its components.
+	 */
+	@OpenGLCall
+	public void cleanup() {
+		program.cleanup();
 	}
 }

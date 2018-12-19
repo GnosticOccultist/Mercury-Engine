@@ -5,6 +5,7 @@ import java.nio.FloatBuffer;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
@@ -53,6 +54,11 @@ public class Uniform {
 	 * The associated value with the uniform.
 	 */
 	private Object value = null;
+	/**
+	 * A float buffer for matrices or array, most efficient format
+	 * to be sent to GL faster.
+	 */
+	private FloatBuffer buffer = null;
 	/**
 	 * The uniform type.
 	 */
@@ -121,9 +127,10 @@ public class Uniform {
 				GL20.glUniform4f(location, vec4.x, vec4.y, vec4.z, vec4.w);
 				break;
 			case MATRIX4F:
+				
 				try (MemoryStack stack = MemoryStack.stackPush()) {
 					FloatBuffer fb = stack.mallocFloat(16);
-					((Matrix4f) value).fillFloatBuffer(fb, true);
+					fb.put((FloatBuffer) buffer);
 					fb.clear();
 					GL20.glUniformMatrix4fv(location, false, fb);
 				}
@@ -186,10 +193,22 @@ public class Uniform {
 				}
 				break;
 			case MATRIX4F:
-				if(this.value instanceof Matrix4f) {
-					((Matrix4f) this.value).set((Matrix4f) value);
+				if(value.equals(this.value)) {
+					return;
+				}
+				
+				Matrix4f matrix = (Matrix4f) value;
+				if(buffer == null) {
+					buffer = MemoryUtil.memAllocFloat(16);
 				} else {
-					this.value = new Matrix4f((Matrix4f) value);
+					buffer.clear();
+				}
+				matrix.fillFloatBuffer(buffer, true);
+				buffer.clear();
+				if(this.value == null) {
+					this.value = new Matrix4f(matrix);
+				} else {
+					((Matrix4f) this.value).set(matrix);
 				}
 				break;
 			case TEXTURE2D:
