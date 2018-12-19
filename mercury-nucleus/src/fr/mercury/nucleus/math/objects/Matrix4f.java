@@ -169,10 +169,10 @@ public final class Matrix4f {
 	}
 
 	/**
-	 * Fill the provided <code>FloatBuffer</code> with the <code>Matrix4f</code> values.
+	 * Fill the provided {@link FloatBuffer} with the <code>Matrix4f</code> values.
 	 * It can be ordered in column major order or row major ordered.
 	 * 
-	 * @param fb		  The float buffer to fill with the matrix (16 float space left).
+	 * @param fb		  The float buffer to fill with the matrix (space left &ge;16).
 	 * @param columnMajor Whether to fill in column major order or in row major order.
 	 * @return			  The filled float buffer.
 	 */
@@ -188,7 +188,7 @@ public final class Matrix4f {
 	 * Fill the float array with the <code>Matrix4f</code> values.
 	 * It can be ordered in column major order or row major ordered.
 	 * 
-	 * @param array		  The float array to fill with the matrix (16 float space left).
+	 * @param array		  The float array to fill with the matrix (length left &ge;16).
 	 * @param columnMajor Whether to fill in column major order or in row major order.
 	 */
 	public void fillFloatArray(float[] array, boolean columnMajor) {
@@ -227,6 +227,66 @@ public final class Matrix4f {
             array[14] = m32;
             array[15] = m33;
         }
+	}
+	
+	/**
+	 * Reads value from the provided {@link FloatBuffer} and store them
+	 * into the <code>Matrix4f</code> as row major order.
+	 * 
+	 * @param fb The float buffer to read data from (size &ge;16).
+	 * @return	 The filled matrix with the data of the float buffer.
+	 */
+	public Matrix4f readFloatBuffer(FloatBuffer fb) {
+		return readFloatBuffer(fb, false);
+	}
+	
+	/**
+	 * Reads value from the provided {@link FloatBuffer} and store them
+	 * into the <code>Matrix4f</code>.
+	 * 
+	 * @param fb		  The float buffer to read data from (size &ge;16).
+	 * @param columnMajor Whether to fill the matrix with column major data or row major data.
+	 * @return			  The filled matrix with the data of the float buffer.
+	 */
+	public Matrix4f readFloatBuffer(FloatBuffer fb, boolean columnMajor) {
+		Validator.nonNull(fb);
+		
+		if(columnMajor) {
+            m00 = fb.get();
+            m10 = fb.get();
+            m20 = fb.get();
+            m30 = fb.get();
+            m01 = fb.get();
+            m11 = fb.get();
+            m21 = fb.get();
+            m31 = fb.get();
+            m02 = fb.get();
+            m12 = fb.get();
+            m22 = fb.get();
+            m32 = fb.get();
+            m03 = fb.get();
+            m13 = fb.get();
+            m23 = fb.get();
+            m33 = fb.get();
+		} else {
+            m00 = fb.get();
+            m01 = fb.get();
+            m02 = fb.get();
+            m03 = fb.get();
+            m10 = fb.get();
+            m11 = fb.get();
+            m12 = fb.get();
+            m13 = fb.get();
+            m20 = fb.get();
+            m21 = fb.get();
+            m22 = fb.get();
+            m23 = fb.get();
+            m30 = fb.get();
+            m31 = fb.get();
+            m32 = fb.get();
+            m33 = fb.get();
+		}
+		return this;
 	}
 	
 	/**

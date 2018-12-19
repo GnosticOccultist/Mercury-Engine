@@ -1,5 +1,6 @@
 package fr.mercury.nucleus.math.objects;
 
+import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.MercuryMath;
 
 /**
@@ -75,6 +76,24 @@ public final class Transform {
 		this.rotation = new Quaternion(rotation);
 		this.scale = new Vector3f(scale);
 		this.transformMatrix = new Matrix4f();
+	}
+	
+	/**
+	 * Set the components values of the provided transform to this 
+	 * <code>Transform</code> components.
+	 * <p>
+	 * The provided transform cannot be null.
+	 * 
+	 * @param other The other transform to copy from.
+	 * @return		The transform with copied components.
+	 */
+	public Transform set(Transform other) {
+		Validator.nonNull(other);
+		
+		this.translation.set(other.translation);
+		this.rotation.set(other.rotation);
+		this.scale.set(other.scale);
+		return this;
 	}
 	
 	/**
@@ -180,13 +199,15 @@ public final class Transform {
 	/**
 	 * Rotate the rotation quaternion of the <code>Transform</code> by
 	 * the provided quaternion.
+	 * <p>
+	 * The provided quaternion cannot be null.
 	 * 
 	 * @param rotation The rotation quaternion to addition.
 	 *
 	 * @return 		   The updated transform. 
 	 */
 	public Transform rotate(Quaternion rotation) {
-		this.rotation.add(rotation);
+		this.rotation.mul(rotation);
 		return this;
 	}
 	
@@ -201,7 +222,8 @@ public final class Transform {
 	 * @return  The updated transform. 
 	 */
 	public Transform rotate(float x, float y, float z) {
-		this.rotation.add(x, y, z, 0);
+		Quaternion quat = new Quaternion().fromAngles(x, y, z);
+		rotate(quat);
 		return this;
 	}
 	
@@ -291,16 +313,28 @@ public final class Transform {
 	}
 	
 	/**
-	 * Apply the <code>Transform</code> scale to the provided <code>Matrix4f</code>,
-	 * to be used as a scaling matrix.
+	 * Computes the world <code>Transform</code> with this local <code>Transform</code>,
+	 * using the provided parent's <code>Transform</code>.
+	 * <p>
+	 * The provided transform cannot be null.
 	 * 
-	 * @param store The matrix to scale.
-	 * @return		The scaling matrix.
+	 * @param parent The parent transform to use to compute the world one.
+	 * @return		 The computed world transform of this local transform.
 	 */
-	public Matrix4f scaleMatrix(Matrix4f store) {
-		store.scale(scale);
-		return store;
-	}
+    public Transform worldTransform(Transform parent) {
+    	Validator.nonNull(parent, "The parent's transform cannot be null!");
+    	
+        // Multiply the local scale with the parent one.
+        scale.mul(parent.scale);
+        // Multiply the parent rotation with the local one.
+        parent.rotation.mul(rotation, rotation);
+        // Multiply the local translation with the parent one.
+        translation.mul(parent.scale);
+        // Multiply parent rotation with local translation, and finally add it the parent translation.
+        parent.rotation.mul(translation).add(parent.translation);
+
+        return this;
+    }
 	
 	/**
 	 * Set the <code>Transform</code> to its identity values.

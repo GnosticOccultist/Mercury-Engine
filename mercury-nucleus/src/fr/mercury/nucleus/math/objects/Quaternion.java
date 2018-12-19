@@ -177,11 +177,14 @@ public final class Quaternion {
 	 * 
 	 * @return 	The quaternion with its new components values. 
 	 */
-    public Quaternion mul(float x, float y, float z, float w) {
-    	this.x =  this.x * w + this.y * z - this.z * y + this.w * x;
-    	this.y = -this.x * z + this.y * w + this.z * x + this.w * y;
-    	this.z =  this.x * y - this.y * x + this.z * w + this.w * z;
-    	this.w = -this.x * x - this.y * y - this.z * z + this.w * w;
+    public Quaternion mul(float qx, float qy, float qz, float qw) {
+        float x1 = x * qw + y * qz - z * qy + w * qx;
+        float y1 = -x * qz + y * qw + z * qx + w * qy;
+        float z1 = x * qy - y * qx + z * qw + w * qz;
+        w = -x * qx - y * qy - z * qz + w * qw;
+        x = x1;
+        y = y1;
+        z = z1;
     	
     	return this;
     }
@@ -199,6 +202,44 @@ public final class Quaternion {
     	Validator.nonNull(other, "The quaternion cannot be null!");
     	
     	return mul(other.x, other.y, other.z, other.w);
+    }
+    
+    public Quaternion mul(Quaternion q, Quaternion res) {
+        if (res == null) {
+            res = new Quaternion();
+        }
+        float qw = q.w, qx = q.x, qy = q.y, qz = q.z;
+        res.x = x * qw + y * qz - z * qy + w * qx;
+        res.y = -x * qz + y * qw + z * qx + w * qy;
+        res.z = x * qy - y * qx + z * qw + w * qz;
+        res.w = -x * qx - y * qy - z * qz + w * qw;
+        return res;
+    }
+    
+    /**
+     * Multiplies the <code>Quaternion</code> with the provided {@link Vector3f}. The result
+     * is stored in the given vector.
+     * <p>
+	 * The provided vector cannot be null.
+     * 
+     * @param vector The vector to multiply the quaternion by.
+     * @return		 The storing vector with the result.
+     */
+    public Vector3f mul(Vector3f v) {
+    	Validator.nonNull(v, "The vector cannot be null!");
+    	
+    	float tempX, tempY;
+        tempX = w * w * v.x + 2 * y * w * v.z - 2 * z * w * v.y + x * x * v.x
+                + 2 * y * x * v.y + 2 * z * x * v.z - z * z * v.x - y * y * v.x;
+        tempY = 2 * x * y * v.x + y * y * v.y + 2 * z * y * v.z + 2 * w * z
+                * v.x - z * z * v.y + w * w * v.y - 2 * x * w * v.z - x * x
+                * v.y;
+        v.z = 2 * x * z * v.x + 2 * y * z * v.y + z * z * v.z - 2 * w * y * v.x
+                - y * y * v.z + 2 * w * x * v.y - x * x * v.z + w * w * v.z;
+    	v.x = tempX;
+    	v.y = tempY;
+    	
+    	return v;
     }
     
     /**
@@ -349,6 +390,36 @@ public final class Quaternion {
 		x = y = z = w = 0;
 		return this;
 	}
+	
+
+    public Quaternion fromAngles(float xAngle, float yAngle, float zAngle) {
+        float angle;
+        float sinY, sinZ, sinX, cosY, cosZ, cosX;
+        
+        angle = zAngle * 0.5f;
+        sinZ = (float) Math.sin(angle);
+        cosZ = (float) Math.cos(angle);
+        angle = yAngle * 0.5f;
+        sinY = (float) Math.sin(angle);
+        cosY = (float) Math.cos(angle);
+        angle = xAngle * 0.5f;
+        sinX = (float) Math.sin(angle);
+        cosX = (float) Math.cos(angle);
+
+        // variables used to reduce multiplication calls.
+        float cosYXcosZ = cosY * cosZ;
+        float sinYXsinZ = sinY * sinZ;
+        float cosYXsinZ = cosY * sinZ;
+        float sinYXcosZ = sinY * cosZ;
+
+        w = (cosYXcosZ * cosX - sinYXsinZ * sinX);
+        x = (cosYXcosZ * sinX + sinYXsinZ * cosX);
+        y = (sinYXcosZ * cosX + cosYXsinZ * sinX);
+        z = (cosYXsinZ * cosX - sinYXcosZ * sinX);
+
+        normalize();
+        return this;
+    }
 	
 	@Override
 	public boolean equals(Object o) {
