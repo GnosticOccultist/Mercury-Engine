@@ -183,7 +183,7 @@ public class MercuryContext implements Runnable {
 			throw new IllegalStateException();
 		}
 		
-		application.update();
+		application.internalUpdate();
 		
 		glfwSwapBuffers(window);
 		
@@ -231,7 +231,7 @@ public class MercuryContext implements Runnable {
 			return false;
 		}
 		
-		application.initialize();
+		application.internalInitialize();
 		return true;
 	}
 	

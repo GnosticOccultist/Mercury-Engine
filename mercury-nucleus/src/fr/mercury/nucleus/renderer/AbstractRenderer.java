@@ -79,7 +79,7 @@ public class AbstractRenderer {
 	 * <code>MatrixType</code> is the enumeration of all matrices used for
 	 * rendering inside a {@link ShaderProgram}. 
 	 * 
-	 * @author Stickxy
+	 * @author GnosticOccultist
 	 */
 	public enum MatrixType {
 		/**

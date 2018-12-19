@@ -2,18 +2,10 @@ package fr.mercury.nucleus.application;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
-import fr.alchemy.utilities.logging.LoggerLevel;
 import fr.mercury.nucleus.asset.AssetManager;
-import fr.mercury.nucleus.math.objects.Color;
-import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
-import fr.mercury.nucleus.scenegraph.PhysicaMundi;
-import fr.mercury.nucleus.texture.Texture2D;
-import fr.mercury.nucleus.texture.TextureState.MagFilter;
-import fr.mercury.nucleus.texture.TextureState.MinFilter;
-import fr.mercury.nucleus.texture.TextureState.WrapMode;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 
@@ -26,7 +18,7 @@ import fr.mercury.nucleus.utils.SpeedableNanoTimer;
  * 
  * @author GnosticOccultist
  */
-public class MercuryApplication implements Application {
+public abstract class MercuryApplication implements Application {
 
 	/**
 	 * The logger for the Mercury Application.
@@ -60,18 +52,7 @@ public class MercuryApplication implements Application {
 	/**
 	 * The root node for the scene.
 	 */
-	protected NucleusMundi scene;
-	
-	
-	private PhysicaMundi cube;
-	
-	private NucleusMundi nucleus;
-	
-	// TODO: Remove this, only used when concrete application are created.
-	public static void main(String[] args) {
-		MercuryApplication app = new MercuryApplication();
-		app.start();
-	}
+	protected NucleusMundi scene = new NucleusMundi("root-nucleus");
 	
 	/**
 	 * Starts the <code>MercuryApplication</code> and creates the <code>MercuryContext</code>.
@@ -96,53 +77,30 @@ public class MercuryApplication implements Application {
 	 */
 	@Override
 	@OpenGLCall
-	public void initialize() {
+	public void internalInitialize() {
 		
 		// Initialize the camera.
 		camera = new Camera(settings.getWidth(), settings.getHeight());
 		camera.getLocation().set(0f, 0f, 8f);
 		camera.setProjectionMatrix(45f, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
 		
+		// Initialize renderer.
 		renderer = new Renderer(camera, assetManager);
 		
 		// Reset the timer before invoking anything else,
 		// to ensure the first time per frame isn't too large...
 		timer.reset();
 		
-		scene = new NucleusMundi("root-nucleus");
-		
-		Texture2D texture = assetManager.loadTexture2D("/model/octostone.png")
-				.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
-				.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
-		texture.upload();
-		
-		cube = assetManager.loadPhysicaMundi("/model/cube.obj");
-		cube.setName("cube-1");
-		cube.getLocalTransform().setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
-		
-		PhysicaMundi cube1 = assetManager.loadPhysicaMundi("/model/cube.obj");
-		cube1.setName("cube-2");
-		cube1.getLocalTransform().setTranslation(2.5f, 0, 0).setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
-		
-		camera.lookAt(cube.getLocalTransform().getTranslation(), Vector3f.UNIT_Y);
-		
-		cube.getMesh().texture = texture;
-		
-		Texture2D texture2 = new Texture2D().color(new Color(0, 0, 1), 2048, 2048)
-				.setFilter(MinFilter.BILINEAR, MagFilter.BILINEAR)
-				.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
-		texture2.upload();
-		
-		cube1.getMesh().texture = texture2;
-		
-		FactoryLogger.getLogger("mercury.scenegraph").setActive(LoggerLevel.DEBUG, true);
-		
-		nucleus = new NucleusMundi("sub-nucleus");
-		
-		nucleus.attach(cube);
-		nucleus.attach(cube1);
-		scene.attach(nucleus);
+		// Initialize the implementation.
+		initialize();
 	}
+	
+	/**
+	 * Initialize the implementation of <code>MercuryApplication</code>.
+	 * This is automatically called internally in {@link #internalInitialize()}.
+	 */
+	@OpenGLCall
+	protected abstract void initialize();
 	
 	@Override
 	@OpenGLCall
@@ -159,25 +117,38 @@ public class MercuryApplication implements Application {
 	 */
 	@Override
 	@OpenGLCall
-	public void update() {
-		
+	public void internalUpdate() {
+		// Timer is paused, no need to continue...
 		if(timer.isPaused()) {
 			return;
 		}
 		
 		timer.update();
 		
-		scene.rotate(.007f, 0.007f, 0);
-		cube.rotate(0.0f, 0.03f, 0);
-		
-		scene.updateGeometricState();
-
 		if(settings.getBoolean("ShowFPS")) {
 			context.setTitle(settings.getTitle() + " - " + (int) (timer.getFrameRate()) + " FPS");
-		}	
+		}
 		
+		float tpf = timer.getTimePerFrame() * timer.getSpeed();
+		
+		// Update the implementation.
+		update(tpf);
+		
+		// Update the geometric information of the scene and its hierarchy.
+		scene.updateGeometricState();
+		
+		// Perform rendering of the scene.
 		renderer.renderScene(scene);
 	}
+	
+	/**
+	 * Update the implementation of <code>MercuryApplication</code>.
+	 * This is automatically called internally in {@link #internalUpdate()}.
+	 * 
+	 * @param tpf The time per frame.
+	 */
+	@OpenGLCall
+	protected void update(float tpf) {}
 
 	/**
 	 * <b>Don't call manually</b>
@@ -190,7 +161,6 @@ public class MercuryApplication implements Application {
 	public void cleanup() {
 		timer.reset();
 		renderer.cleanup();
-		cube.getMesh().cleanup();
 		
 		logger.info("Closing the application: " + getClass().getSimpleName());
 	}

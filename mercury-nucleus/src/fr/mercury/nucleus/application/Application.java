@@ -16,7 +16,7 @@ public interface Application {
 	 * It is mostly used to initialize any OpenGL objects or scene-graph requirements.
 	 */
 	@OpenGLCall
-	void initialize();
+	void internalInitialize();
 	
 	/**
 	 * Update the <code>Application</code> state and render the scene to the back buffer.
@@ -24,7 +24,7 @@ public interface Application {
 	 * All the updating and rendering logic happen here.
 	 */
 	@OpenGLCall
-	void update();
+	void internalUpdate();
 	
 	/**
 	 * Cleanup the application when the context has been ask for destruction.
