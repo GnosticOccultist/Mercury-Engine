@@ -36,6 +36,7 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL11C;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
@@ -184,6 +185,8 @@ public class MercuryContext implements Runnable {
 		}
 		
 		application.internalUpdate();
+		
+		GL11C.glFlush();
 		
 		glfwSwapBuffers(window);
 		

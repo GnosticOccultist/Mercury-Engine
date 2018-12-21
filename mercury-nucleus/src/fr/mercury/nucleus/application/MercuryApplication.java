@@ -6,6 +6,7 @@ import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
+import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 
@@ -172,6 +173,19 @@ public abstract class MercuryApplication implements Application {
 	public void restart() {
 		context.setSettings(settings);
 		context.restart();
+	}
+	
+	/**
+	 * Return the {@link NucleusMundi} representing the root-node
+	 * of the scene. 
+	 * <br>
+	 * Call {@link NucleusMundi#attach(AnimaMundi) attach} to add an 
+	 * {@link PhysicaMundi object} to the scene.
+	 * 
+	 * @return The root-node of the scene.
+	 */
+	public NucleusMundi getScene() {
+		return scene;
 	}
 	
 	/**

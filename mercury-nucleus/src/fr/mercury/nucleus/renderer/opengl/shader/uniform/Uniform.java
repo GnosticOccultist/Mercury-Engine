@@ -99,7 +99,7 @@ public class Uniform {
 		create(program);
 		
 		if(getLocation() == UNDEFINED_LOCATION || getUniformType() == null) {
-			logger.error("The uniform: " + name + " is inactive or has no type!");
+			logger.error("The uniform '" + name + "' is inactive or has no type!");
 			return;
 		}
 		
