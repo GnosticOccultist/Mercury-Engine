@@ -5,6 +5,7 @@ import fr.alchemy.utilities.logging.LoggerLevel;
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Vector3f;
+import fr.mercury.nucleus.math.readable.ReadableVector3f;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.Texture2D;
@@ -32,13 +33,14 @@ public class TestApp extends MercuryApplication {
 		
 		cube = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube.setName("cube-1");
-		cube.getLocalTransform().setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
+		cube.setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
 		
 		PhysicaMundi cube1 = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube1.setName("cube-2");
-		cube1.getLocalTransform().setTranslation(2.5f, 0, 0).setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
+		cube1.setTranslation(2.5f, 0, 0).setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
 		
-		camera.lookAt(cube.getLocalTransform().getTranslation(), Vector3f.UNIT_Y);
+		ReadableVector3f translation = cube.getLocalTransform().getTranslation();
+		camera.lookAt(translation.x(), translation.y(), translation.z(), Vector3f.UNIT_Y);
 		
 		cube.getMesh().texture = texture;
 		

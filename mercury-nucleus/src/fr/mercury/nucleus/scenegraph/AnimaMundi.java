@@ -1,8 +1,6 @@
 package fr.mercury.nucleus.scenegraph;
 
 import java.util.EnumSet;
-import java.util.LinkedList;
-import java.util.Queue;
 
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
@@ -10,6 +8,9 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Quaternion;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.math.objects.Vector3f;
+import fr.mercury.nucleus.math.readable.ReadableTransform;
+import fr.mercury.nucleus.renderer.queue.BucketType;
+import fr.mercury.nucleus.renderer.queue.RenderBucket;
 import fr.mercury.nucleus.scenegraph.visitor.AbstractVisitor;
 import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
@@ -67,10 +68,18 @@ public abstract class AnimaMundi {
 	 */
 	protected NucleusMundi parent = null;
 	/**
+	 * The bucket used for rendering of the anima-mundi.
+	 */
+	protected BucketType bucket = BucketType.LEGACY;
+	/**
 	 * The accumulated dirty marks by the anima-mundi. At instantiation
 	 * it will contain {@link DirtyType#TRANSFORM}.
 	 */
 	protected EnumSet<DirtyType> dirtyMarks = EnumSet.of(DirtyType.TRANSFORM);
+	/**
+	 * The queue distance computed by the {@link RenderBucket}.
+	 */
+	public transient double queueDistance = Double.NEGATIVE_INFINITY;
 	
 	/**
 	 * Instantiates a new <code>AnimaMundi</code> with the {@link Transform}
@@ -174,7 +183,7 @@ public abstract class AnimaMundi {
 	 * 
 	 * @see #getWorldTransform
 	 */
-	public Transform getLocalTransform() {
+	public ReadableTransform getLocalTransform() {
 		dirty(DirtyType.TRANSFORM);
 		return localTransform;
 	}
@@ -189,7 +198,7 @@ public abstract class AnimaMundi {
 	 * 
 	 * @see #getLocalTransform() 
 	 */
-	public Transform getWorldTransform() {
+	public ReadableTransform getWorldTransform() {
 		if(isDirty(DirtyType.TRANSFORM)) {
 			throw new IllegalStateException("The world transform hasn't been computed yet!");
 		}
@@ -209,6 +218,23 @@ public abstract class AnimaMundi {
 	 */
 	public AnimaMundi setTranslation(Vector3f translation) {
 		localTransform.setTranslation(translation);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
+	 * Sets the translation of this <code>AnimaMundi</code> to the provided components in
+	 * the local coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * 
+	 * @param x The X-axis component of the translation.
+	 * @param y The Y-axis component of the translation.
+	 * @param z The Z-axis component of the translation.
+	 * @return	The changed anima-mundi.
+	 */
+	public AnimaMundi setTranslation(float x, float y, float z) {
+		localTransform.setTranslation(x, y, z);
 		dirty(DirtyType.TRANSFORM);
 		
 		return this;
@@ -266,6 +292,23 @@ public abstract class AnimaMundi {
 	}
 	
 	/**
+	 * Sets the rotation of this <code>AnimaMundi</code> to the provided components in
+	 * the local coordinate space, the W-component is leaved untouched. Note that the 
+	 * {@link #getWorldTransform() world transform} won't be updated until {@link #updateGeometricState()} has been called.
+	 * 
+	 * @param x The X-axis rotation value aka pitch.
+	 * @param y The Y-axis rotation value aka yaw.
+	 * @param z The Z-axis rotation value aka roll.
+	 * @return	The changed anima-mundi.
+	 */
+	public AnimaMundi setRotation(float x, float y, float z) {
+		localTransform.setRotation(x, y, z);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
 	 * Rotates the <code>AnimaMundi</code> by the provided {@link Quaternion} in the local 
 	 * coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
 	 * be updated until {@link #updateGeometricState()} has been called.
@@ -312,6 +355,23 @@ public abstract class AnimaMundi {
 	 */
     public AnimaMundi setScale(Vector3f scale) {
 		localTransform.setScale(scale);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+    
+    /**
+	 * Sets the scale of this <code>AnimaMundi</code> to the provided components in
+	 * the local coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * 
+	 * @param x The X-axis component of the scale.
+	 * @param y The Y-axis component of the scale.
+	 * @param z The Z-axis component of the scale.
+	 * @return	The changed anima-mundi.
+	 */
+    public AnimaMundi setScale(float x, float y, float z) {
+		localTransform.setScale(x, y, z);
 		dirty(DirtyType.TRANSFORM);
 		
 		return this;
@@ -417,6 +477,42 @@ public abstract class AnimaMundi {
 	}
 	
 	/**
+	 * Return the used {@link BucketType} for the rendering of this <code>AnimaMundi</code>.
+	 * If the <code>checkLegacy</code> is set to true, it will search the parent's bucket type until
+	 * it founds something different than {@link BucketType#LEGACY} or until the ancestor is orphan.
+	 * 
+	 * @param checkLegacy Whether to return the legacy bucket's type or the {@link BucketType#LEGACY}.
+	 * 
+	 * @return The bucket type used to render the anima-mundi.
+	 */
+	public BucketType getBucket(boolean checkLegacy) {
+		if(checkLegacy && parent != null && bucket.equals(BucketType.LEGACY)) {
+			return parent.getBucket(true);
+		}
+		
+		return bucket;
+	}
+	
+	/**
+	 * Return the used {@link BucketType} for the rendering of this <code>AnimaMundi</code>.
+	 * It will try to find the ancestor's bucket type if its type is {@link BucketType#LEGACY}.
+	 * 
+	 * @return The bucket type used to render the anima-mundi.
+	 */
+	public BucketType getBucket() {
+		return getBucket(true);
+	}
+	
+	/**
+	 * Sets the used {@link BucketType} for the rendering of this <code>AnimaMundi</code>.
+	 * 
+	 * @param bucket The bucket type used to render the anima-mundi.
+	 */
+	public void setBucket(BucketType bucket) {
+		this.bucket = bucket;
+	}
+	
+	/**
 	 * Visit the <code>AnimaMundi</code> with the given {@link Visitor} and {@link VisitType}.
 	 * The visit type defines in which order the concerned mundi should be visited.
 	 * 
@@ -424,17 +520,6 @@ public abstract class AnimaMundi {
 	 * @param type	  The type of visit to execute.
 	 */
 	public void visit(Visitor visitor, VisitType type) {
-		if(type.equals(VisitType.DEPTH_LAYER)) {
-			Queue<AnimaMundi> queue = new LinkedList<AnimaMundi>();
-	        queue.add(this);
-
-	        while (!queue.isEmpty()) {
-	        	AnimaMundi anima = queue.poll();
-	            visitor.visit(anima);
-	            if(anima instanceof NucleusMundi) 
-	            	queue.addAll(((NucleusMundi) anima).children());
-	        }
-		}
 		visitor.visit(this);
 	}
 }

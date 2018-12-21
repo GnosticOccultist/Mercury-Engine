@@ -2,35 +2,59 @@ package fr.mercury.nucleus.renderer;
 
 import org.lwjgl.opengl.GL11;
 
-import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.asset.AssetManager;
-import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.renderer.logic.DefaultRenderLogic;
 import fr.mercury.nucleus.renderer.logic.RenderLogic;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
+import fr.mercury.nucleus.renderer.queue.BucketType;
+import fr.mercury.nucleus.renderer.queue.RenderBucket;
+import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
+import fr.mercury.nucleus.scenegraph.visitor.Visitor;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 public class Renderer extends AbstractRenderer {
 	
-	private final Camera camera;
+	/**
+	 * The visitor designed to render {@link PhysicaMundi} which doesn't use any {@link RenderBucket}.
+	 */
+	private final Visitor RENDER_NONE_BUCKET = new Visitor() {
+		
+		@Override
+		public void visit(AnimaMundi anima) {
+			if(anima instanceof PhysicaMundi && anima.getBucket().equals(BucketType.NONE)) {
+				render((PhysicaMundi) anima);
+			}
+		}
+	};
+	
+	/**
+	 * The visitor designed to fill the buckets with appropriate {@link PhysicaMundi}.
+	 */
+	private final Visitor BUCKETS_FILLER = new Visitor() {
+		
+		@Override
+		public void visit(AnimaMundi anima) {
+			if(anima instanceof PhysicaMundi) {
+				submitToBucket(anima);
+			}
+		}
+	};
 	
 	private final RenderLogic defaultLogic;
 	
 	public Renderer(Camera camera, AssetManager assetManager) {
-		Validator.nonNull(camera);
+		super(camera);
 		
-		this.camera = camera;
 		this.defaultLogic = new DefaultRenderLogic();
 		
 		// TEST:
 		program = new ShaderProgram()
 				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
 				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"))
-				.addUniform("color", UniformType.VECTOR4F, new Color(0.1f, 0.3f, 0.1f, 1f))
 				.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
 				
 		program.upload();	
@@ -55,17 +79,24 @@ public class Renderer extends AbstractRenderer {
 		setMatrix(MatrixType.VIEW, camera.getViewMatrix());
 		setMatrix(MatrixType.PROJECTION, camera.getProjectionMatrix());
 		
-		scene.visit(anima -> {
-			if(anima instanceof PhysicaMundi) {
-				render((PhysicaMundi) anima);
-			}
-		}, VisitType.POST_ORDER);
+		// Visit the scene and render objects which doesn't use the bucket logic.
+		scene.visit(RENDER_NONE_BUCKET, VisitType.POST_ORDER);
+		
+		// Visit the scene and fill the buckets with renderables.
+		scene.visit(BUCKETS_FILLER, VisitType.POST_ORDER);
+		
+		// Render buckets...
+		renderBucket(BucketType.OPAQUE);
+		
+		// Flushes all the buckets, even if some rendering wasn't performed.
+		flushBuckets();
 	}
 	
+	@Override
 	@OpenGLCall
-	private void render(PhysicaMundi physica) {
+	protected void render(PhysicaMundi physica) {
 		
-		setMatrix(MatrixType.MODEL, physica.getWorldTransform().transform());
+		setMatrix(MatrixType.MODEL, physica.getWorldTransform());
 		
 		computeMatrix(MatrixType.VIEW_PROJECTION_MODEL);
 		

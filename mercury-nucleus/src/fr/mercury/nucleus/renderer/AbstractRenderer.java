@@ -1,15 +1,27 @@
 package fr.mercury.nucleus.renderer;
 
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 
+import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Matrix4f;
+import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
+import fr.mercury.nucleus.renderer.queue.BucketType;
+import fr.mercury.nucleus.renderer.queue.RenderBucket;
+import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
+import fr.mercury.nucleus.utils.MercuryException;
 
-public class AbstractRenderer {
+public abstract class AbstractRenderer {
 	
+	/**
+	 * The table containing the various render buckets organized by their types.
+	 */
+	protected final Map<BucketType, RenderBucket> buckets = new HashMap<BucketType, RenderBucket>();
 	/**
 	 * The table containing the various matrices used for rendering in the shader 
 	 * as a float buffer.
@@ -20,14 +32,73 @@ public class AbstractRenderer {
 	 * render pass.
 	 */
 	protected ShaderProgram program;
+	/**
+	 * The camera used by the renderer.
+	 */
+	protected final Camera camera;
 	
-	protected AbstractRenderer() {
+	protected AbstractRenderer(Camera camera) {
+		Validator.nonNull(camera);
+		
+		this.camera = camera;
+		registerBucket(BucketType.OPAQUE);
 		
 		// Instantiates the matrices used for rendering.
 		matrixMap.put(MatrixType.MODEL, new Matrix4f());
 		matrixMap.put(MatrixType.VIEW, new Matrix4f());
 		matrixMap.put(MatrixType.PROJECTION, new Matrix4f());
 		matrixMap.put(MatrixType.VIEW_PROJECTION_MODEL, new Matrix4f());
+	}
+	
+	/**
+	 * Register a new {@link RenderBucket} with the specified {@link BucketType} for
+	 * the <code>Renderer</code>.
+	 * 
+	 * @param type The bucket type to register.
+	 */
+	public void registerBucket(BucketType type) {
+		Validator.nonNull(type);
+		buckets.put(type, new RenderBucket(camera));
+	}
+	
+	protected boolean submitToBucket(AnimaMundi anima) {
+		if(anima.getBucket().equals(BucketType.NONE)) {
+			return false;
+		}
+		
+		BucketType type = anima.getBucket();
+		
+		if(type.equals(BucketType.LEGACY)) {
+			type = BucketType.OPAQUE;
+		}
+		
+		buckets.get(type).add(anima);
+		return true;
+	}
+	
+	protected void renderBucket(BucketType type) {
+		if(type.equals(BucketType.LEGACY) || type.equals(BucketType.NONE)) {
+			throw new MercuryException("The bucket '" + type + "' cannot be rendered!");
+		}
+		
+		RenderBucket bucket = buckets.get(type);
+		if(bucket == null) {
+			throw new IllegalStateException("No bucket for type: " + type + " is defined in the renderer!");
+		}
+		bucket.sort();
+		for(int i = 0; i < bucket.size(); i++) {
+			AnimaMundi anima = bucket.array()[i];
+			if(anima instanceof PhysicaMundi) {
+				render((PhysicaMundi) anima);
+			}
+			anima.queueDistance = Double.NEGATIVE_INFINITY;
+		}
+	}
+	
+	protected abstract void render(PhysicaMundi anima);
+
+	protected void flushBuckets() {
+		buckets.values().forEach(RenderBucket::flush);
 	}
 	
 	protected void setupUniforms() {
@@ -50,6 +121,17 @@ public class AbstractRenderer {
 	public void setMatrix(MatrixType type, Matrix4f matrix) {
 		var buffer = matrixMap.get(type);
 		buffer.set(matrix);
+	}
+	
+	/**
+	 * Stores the provided {@link Matrix4f} for the given usage {@link MatrixType}
+	 * 
+	 * @param type   The type of the rendering matrix.
+	 * @param matrix The rendering matrix to store.
+	 */
+	public void setMatrix(MatrixType type, ReadableTransform transform) {
+		var buffer = matrixMap.get(type);
+		transform.asModelMatrix(buffer);
 	}
 	
 	/**
