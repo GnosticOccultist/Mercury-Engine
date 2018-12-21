@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.math.readable.ReadableVector3f;
 
 /**
  * <code>Vector3f</code> is a mathematical utility class representing a vector with
@@ -17,7 +18,7 @@ import fr.alchemy.utilities.Validator;
  * 
  * @author GnosticOccultist
  */
-public final class Vector3f {
+public final class Vector3f implements ReadableVector3f {
 	
 	/**
 	 * The zero components <code>Vector3f</code> &rarr; [0,0,0].
@@ -102,12 +103,12 @@ public final class Vector3f {
 	 * 
 	 * @param other The other vector to copy from.
 	 */
-	public Vector3f set(Vector3f other) {
+	public Vector3f set(ReadableVector3f other) {
 		Validator.nonNull(other, "The vector cannot be null!");
 		
-		this.x = other.x;
-		this.y = other.y;
-		this.z = other.z;
+		this.x = other.x();
+		this.y = other.y();
+		this.z = other.z();
 		return this;
 	}
 	
@@ -325,11 +326,55 @@ public final class Vector3f {
      * @param other The vector to determine the distance squared from.
      * @return 		The distance squared between the two vectors.
      */
-    public float distanceSquared(Vector3f other) {
-        double dx = x - other.x;
-        double dy = y - other.y;
-        double dz = z - other.z;
+    public float distanceSquared(ReadableVector3f other) {
+        double dx = x - other.x();
+        double dy = y - other.y();
+        double dz = z - other.z();
         return (float) (dx * dx + dy * dy + dz * dz);
+    }
+    
+    /**
+     * Calculates the distance between the <code>Vector3f</code> and 
+     * the provided one.
+     *
+     * @param other The vector to determine the distance from.
+     * @return 		The distance between the two vectors.
+     */
+    public double distance(ReadableVector3f other) {
+        return Math.sqrt(distanceSquared(other));
+    }
+    
+	/**
+	 * Return the X-component of the <code>ReadableVector3f</code>,
+	 * as a single-precision float.
+	 * 
+	 * @return The X-coordinate value of the vector.
+	 */
+    @Override
+    public float x() {
+    	return x;
+    }
+    
+    /**
+	 * Return the Y-component of the <code>ReadableVector3f</code>,
+	 * as a single-precision float.
+	 * 
+	 * @return The Y-coordinate value of the vector.
+	 */
+    @Override
+    public float y() {
+    	return y;
+    }
+
+    /**
+	 * Return the Z-component of the <code>ReadableVector3f</code>,
+	 * as a single-precision float.
+	 * 
+	 * @return The Z-coordinate value of the vector.
+	 */
+    @Override
+    public float z() {
+    	return z;
     }
 	
 	/**

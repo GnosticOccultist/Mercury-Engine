@@ -4,6 +4,7 @@ import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Quaternion;
 import fr.mercury.nucleus.math.objects.Vector3f;
+import fr.mercury.nucleus.math.readable.ReadableVector3f;
 
 /**
  * <code>Camera</code> represents a mathematical object designed to render
@@ -100,12 +101,12 @@ public final class Camera {
 	    		frustumRight, frustumTop, frustumBottom);
 	}
 	
-	public void lookAt(Vector3f pos, Vector3f worldUpVector) {
+	public void lookAt(float x, float y, float z, ReadableVector3f worldUpVector) {
 		Vector3f newDirection = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
 		Vector3f newUp = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
 		Vector3f newLeft = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
 		
-		newDirection.set(pos).sub(location).normalize();
+		newDirection.set(x, y, z).sub(location).normalize();
 		newUp.set(worldUpVector).normalize();
 		if(newUp.equals(Vector3f.ZERO)) {
 			newUp.set(Vector3f.UNIT_Y);

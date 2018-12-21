@@ -2,6 +2,10 @@ package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.MercuryMath;
+import fr.mercury.nucleus.math.readable.ReadableQuaternion;
+import fr.mercury.nucleus.math.readable.ReadableTransform;
+import fr.mercury.nucleus.math.readable.ReadableVector3f;
+import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 
 /**
  * <code>Transform</code> is a mathematical object representing a translation, a rotation 
@@ -11,7 +15,7 @@ import fr.mercury.nucleus.math.MercuryMath;
  * 
  * @author GnosticOccultist
  */
-public final class Transform {
+public final class Transform implements ReadableTransform {
 	
 	/**
 	 * The <code>Transform</code> identity &rarr; Translation: [0,0,0] | Rotation: [0,0,0,1] | Scale: [1,1,1].
@@ -101,7 +105,8 @@ public final class Transform {
 	 * 
 	 * @return The translation vector.
 	 */
-	public Vector3f getTranslation() {
+	@Override
+	public ReadableVector3f getTranslation() {
 		return translation;
 	}
 	
@@ -165,7 +170,8 @@ public final class Transform {
 	 * 
 	 * @return The rotation quaternion.
 	 */
-	public Quaternion getRotation() {
+	@Override
+	public ReadableQuaternion getRotation() {
 		return rotation;
 	}
 	
@@ -232,7 +238,8 @@ public final class Transform {
 	 * 
 	 * @return The scaling vector.
 	 */
-	public Vector3f getScale() {
+	@Override
+	public ReadableVector3f getScale() {
 		return scale;
 	}
 	
@@ -293,23 +300,29 @@ public final class Transform {
 	
 	/**
 	 * Return the transformation matrix of the <code>Transform</code>, which
-	 * is used inside a <code>ShaderProgram</code> to compute the correct position,
+	 * is used inside a {@link ShaderProgram} to compute the correct position,
 	 * rotation and scale.
+	 * 
+	 * @param The storing matrix, or null to use the internal store of the transform.
 	 * 
 	 * @return The transformation matrix.
 	 */
-	public Matrix4f transform() {
-		transformMatrix.identity();
+	public Matrix4f asModelMatrix(Matrix4f store) {
+		if(store == null) {
+			store = transformMatrix;
+		}
 		
-		transformMatrix.setRotation(rotation);
-		transformMatrix.setTranslation(translation);
+		store.setRotation(rotation);
+		store.setTranslation(translation);
 		
 		Matrix4f scaleMatrix = MercuryMath.LOCAL_VARS.acquireNext(Matrix4f.class);
 		scaleMatrix.identity();
 		scaleMatrix.scale(scale);
-		transformMatrix.mult(scaleMatrix, transformMatrix);
+		store.mult(scaleMatrix, store);
 		
-		return transformMatrix;
+		transformMatrix.set(store);
+		
+		return store;
 	}
 	
 	/**

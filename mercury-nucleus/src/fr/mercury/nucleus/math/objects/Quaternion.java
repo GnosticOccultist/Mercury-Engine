@@ -2,6 +2,7 @@ package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.MercuryMath;
+import fr.mercury.nucleus.math.readable.ReadableQuaternion;
 
 /**
  * <code>Quaternion</code> defines a rotation in 4 dimensions instead of 3, using hypercomplex numbers.
@@ -16,7 +17,7 @@ import fr.mercury.nucleus.math.MercuryMath;
  * 
  * @author GnosticOccultist
  */
-public final class Quaternion {
+public final class Quaternion implements ReadableQuaternion {
 	
 	/**
 	 * The X-component of the vector.
@@ -391,6 +392,49 @@ public final class Quaternion {
 		return this;
 	}
 	
+	/**
+	 * Return the X-component of the <code>Quaternion</code>,
+	 * as a single-precision float.
+	 * 
+	 * @return The X-coordinate value of the quaternion.
+	 */
+	@Override
+	public float x() {
+		return x;
+	}
+	
+	/**
+	 * Return the Y-component of the <code>Quaternion</code>,
+	 * as a single-precision float.
+	 * 
+	 * @return The Y-coordinate value of the quaternion.
+	 */
+	@Override
+	public float y() {
+		return y;
+	}
+	
+	/**
+	 * Return the Z-component of the <code>Quaternion</code>,
+	 * as a single-precision float.
+	 * 
+	 * @return The Z-coordinate value of the quaternion.
+	 */
+	@Override
+	public float z() {
+		return z;
+	}
+	
+	/**
+	 * Return the W-component of the <code>Quaternion</code>,
+	 * as a single-precision float.
+	 * 
+	 * @return The W-coordinate value of the quaternion.
+	 */
+	@Override
+	public float w() {
+		return w;
+	}
 
     public Quaternion fromAngles(float xAngle, float yAngle, float zAngle) {
         float angle;
