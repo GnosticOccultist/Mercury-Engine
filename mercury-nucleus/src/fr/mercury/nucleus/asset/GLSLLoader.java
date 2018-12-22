@@ -38,7 +38,7 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
 	public ShaderSource load(String path) {
 		
 		StringBuilder sb = new StringBuilder();
-		try (final BufferedReader bufferedReader = FileUtils.read(path)) {
+		try (final BufferedReader bufferedReader = FileUtils.readBuffered(path)) {
 			
 			String line = null;
 			
@@ -87,7 +87,7 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
 	 * @return	   The filled string builder with the imported file content.
 	 */
 	private StringBuilder readImport(String path, StringBuilder sb) {
-		try (final BufferedReader bufferedReader = FileUtils.read(path)) {
+		try (final BufferedReader bufferedReader = FileUtils.readBuffered(path)) {
 			
 			String line = null;
 			

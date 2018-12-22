@@ -116,7 +116,7 @@ public abstract class AbstractRenderer {
 			throw new MercuryException("The bucket '" + type + "' cannot be rendered!");
 		}
 		
-		RenderBucket bucket = buckets.get(type);
+		var bucket = buckets.get(type);
 		if(bucket == null) {
 			throw new IllegalStateException("No bucket for type: " + type + " is defined in the renderer!");
 		}

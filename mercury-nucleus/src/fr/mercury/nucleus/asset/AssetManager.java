@@ -8,10 +8,12 @@ import java.util.Map.Entry;
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
+import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.utils.MercuryException;
@@ -26,6 +28,10 @@ import fr.mercury.nucleus.utils.MercuryException;
 public class AssetManager {
 	
 	/**
+	 * The logger of the asset manager.
+	 */
+	private static final Logger logger = FactoryLogger.getLogger("mercury.assets");
+	/**
 	 * The table containing the asset loaders ordered by their extensions.
 	 */
 	private final Map<String[], AssetLoader<?>> loaders = new HashMap<>();
@@ -37,12 +43,22 @@ public class AssetManager {
 	 */
 	public AssetManager() {
 		registerLoader(GLSLLoader.class, FileExtensions.SHADER_FILE_EXTENSIONS);
-		registerLoader(SimpleOBJLoader.class, new String[] {FileExtensions.OBJ_MODEL_FORMAT});
+		registerLoader(SimpleOBJLoader.class, new String[] { FileExtensions.OBJ_MODEL_FORMAT });
 		registerLoader(ImageReader.class, FileExtensions.TEXTURE_FILE_EXTENSION);
+		registerLoader(MaterialLoader.class, new String[] { FileExtensions.JSON_FORMAT });
 	}
 	
 	public PhysicaMundi loadPhysicaMundi(String path) {
 		AssetLoader<PhysicaMundi> loader = acquireLoader(path);
+		if(loader != null) {
+			return loader.load(path);
+		}
+		
+		throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
+	}
+	
+	public Material[] loadMaterial(String path) {
+		AssetLoader<Material[]> loader = acquireLoader(path);
 		if(loader != null) {
 			return loader.load(path);
 		}
@@ -107,8 +123,7 @@ public class AssetManager {
 			}
 		}
 		
-		FactoryLogger.getLogger("mercury.app")
-				.warning("No asset loaders are registered for the extension: '" + extension + "'.");
+		logger.warning("No asset loaders are registered for the extension: '" + extension + "'.");
 		return null;
 	}
 	
@@ -124,12 +139,13 @@ public class AssetManager {
 			instance = type.getConstructor().newInstance();
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			FactoryLogger.getLogger("mercury.app").error("Failed to instantiate the loader: " + type + 
+			logger.error("Failed to instantiate the loader: " + type + 
 					". Please check that the constructor arguments are empty.");
 			e.printStackTrace();
 		}
 		
 		if(instance != null) {
+			instance.registerAssetManager(this);
 			loaders.put(extensions, instance);
 		}
 	}

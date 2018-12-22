@@ -1,0 +1,15 @@
+{
+	"Unlit": {
+		"description": "Simple default material used for rendering animae without any lighting.",
+		"shaders": [ 
+			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": [] },
+			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": [] }
+		]
+	},
+	
+	"Unlit_no_fog": {
+		"shaders": [ 
+			
+		]
+	}
+}

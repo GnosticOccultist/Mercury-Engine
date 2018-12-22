@@ -19,4 +19,14 @@ public interface AssetLoader<T> {
 	 * @return	   The loaded object.
 	 */
 	T load(String path);
+	
+	/**
+	 * Sets the {@link AssetManager} for this <code>AssetLoader</code>, which
+	 * can be reused to load sub-assets, dependent from the first one loaded.
+	 * <p>
+	 * This function is not necessarily used or implemented.
+	 * 
+	 * @param assetManager The asset manager.
+	 */
+	default void registerAssetManager(AssetManager assetManager) {}
 }
