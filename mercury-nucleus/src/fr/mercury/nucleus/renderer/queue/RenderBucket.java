@@ -4,8 +4,10 @@ import java.util.Comparator;
 
 import fr.alchemy.utilities.SortUtil;
 import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.renderer.AbstractRenderer;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
+import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 
 /**
  * <code>RenderBucket</code> represents a temporary storage for {@link AnimaMundi} that are
@@ -28,7 +30,7 @@ public class RenderBucket {
 	 * The distance comparator from the {@link Camera} to the {@link AnimaMundi}.
 	 */
 	protected final Comparator<AnimaMundi> DISTANCE_COMPARATOR = new Comparator<AnimaMundi>() {
-
+		
 		@Override
 		public int compare(AnimaMundi anima1, AnimaMundi anima2) {
 			
@@ -87,6 +89,7 @@ public class RenderBucket {
 	 * @param anima The anima-mundi to add to the bucket.
 	 */
 	public void add(AnimaMundi anima) {
+		// Make sure to reset the distance, so it can be recomputed.
 		anima.queueDistance = Double.NEGATIVE_INFINITY;
 		
 		// We've reached the end of the array, increase the size.
@@ -100,6 +103,11 @@ public class RenderBucket {
 		array[size++] = anima;
 	}
 	
+	/**
+	 * Sort the <code>RenderBucket</code> using the {@link Comparator} and a 
+	 * <code>shellsort</code> sorter.
+	 * Note that the comparator cannot be null.
+	 */
 	public void sort() {
 		// Perform the sort only is there is more than one anima in the bucket.
 		if(size > 1) {
@@ -108,6 +116,35 @@ public class RenderBucket {
 		}
 	}
 	
+	/**
+	 * Render the <code>RenderBucket</code> by calling {@link AbstractRenderer#render(PhysicaMundi)}
+	 * for each {@link PhysicaMundi}, and resetting the queue distance field.
+	 * 
+	 * @param renderer The renderer used to render each animae independently.
+	 */
+	public void render(AbstractRenderer renderer) {
+		for(int i = 0; i < size; i++) {
+			var anima = array[i];
+			
+			// Delegates the rendering of the physica-mundi to the renderer. 
+			if(anima instanceof PhysicaMundi) {
+				renderer.render((PhysicaMundi) anima);
+			}
+			
+			// Make sure to reset the distance, so it can be recomputed.
+			// This is only if the bucket isn't flushed every frame.
+			anima.queueDistance = Double.NEGATIVE_INFINITY;
+		}
+	}
+	
+	/**
+	 * Compute the distance between the provided {@link AnimaMundi} and
+	 * the registered {@link Camera}.
+	 * Note that the camera cannot be null.
+	 * 
+	 * @param anima The anima to compute distance to.
+	 * @return		The distance between the camera and the anima translation.
+	 */
 	public double computeDistance(AnimaMundi anima) {
 		Validator.nonNull(camera);
 		
@@ -133,15 +170,18 @@ public class RenderBucket {
 	 * @return		The bucket with the merged content.
 	 */
 	public RenderBucket merge(RenderBucket other) {
+		// No need to merge an empty bucket.
 		if(other.size() < 1) {
 			return this;
 		}
 		
 		AnimaMundi[] tmp = new AnimaMundi[array.length + other.array.length];
+		// Adding content of this render bucket.
 		for(int i = 0; i < array.length; i++) {
         	tmp[i] = array[i];
         }
 		
+		// Adding content of the other render bucket.
         for(int i = 0; i < array.length; i++) {
         	tmp[i] = other.array[i];
         }

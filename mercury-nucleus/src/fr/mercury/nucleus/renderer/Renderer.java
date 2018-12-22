@@ -21,6 +21,20 @@ public class Renderer extends AbstractRenderer {
 	/**
 	 * The visitor designed to render {@link PhysicaMundi} which doesn't use any {@link RenderBucket}.
 	 */
+	private final Visitor GL_CLEANUP = new Visitor() {
+		
+		@Override
+		public void visit(AnimaMundi anima) {
+			if(anima instanceof PhysicaMundi) {
+				var physica = (PhysicaMundi) anima;
+				physica.getMesh().cleanup();
+			}
+		}
+	};
+	
+	/**
+	 * The visitor designed to render {@link PhysicaMundi} which doesn't use any {@link RenderBucket}.
+	 */
 	private final Visitor RENDER_NONE_BUCKET = new Visitor() {
 		
 		@Override
@@ -94,7 +108,7 @@ public class Renderer extends AbstractRenderer {
 	
 	@Override
 	@OpenGLCall
-	protected void render(PhysicaMundi physica) {
+	public void render(PhysicaMundi physica) {
 		
 		setMatrix(MatrixType.MODEL, physica.getWorldTransform());
 		
@@ -134,7 +148,8 @@ public class Renderer extends AbstractRenderer {
 	 * Cleanup the renderer and its components.
 	 */
 	@OpenGLCall
-	public void cleanup() {
+	public void cleanup(AnimaMundi anima) {
 		program.cleanup();
+		anima.visit(GL_CLEANUP, VisitType.POST_ORDER);
 	}
 }

@@ -161,7 +161,7 @@ public abstract class MercuryApplication implements Application {
 	@OpenGLCall
 	public void cleanup() {
 		timer.reset();
-		renderer.cleanup();
+		renderer.cleanup(scene);
 		
 		logger.info("Closing the application: " + getClass().getSimpleName());
 	}

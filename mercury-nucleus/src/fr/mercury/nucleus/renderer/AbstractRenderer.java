@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
@@ -18,6 +20,10 @@ import fr.mercury.nucleus.utils.MercuryException;
 
 public abstract class AbstractRenderer {
 	
+	/**
+	 * The logger for the Mercury Renderer.
+	 */
+	protected static final Logger logger = FactoryLogger.getLogger("mercury.renderer");
 	/**
 	 * The table containing the various render buckets organized by their types.
 	 */
@@ -58,24 +64,53 @@ public abstract class AbstractRenderer {
 	 */
 	public void registerBucket(BucketType type) {
 		Validator.nonNull(type);
+		if(type.equals(BucketType.LEGACY) || type.equals(BucketType.NONE)) {
+			throw new MercuryException("The bucket '" + type + "' cannot be registered!");
+		}
+		
 		buckets.put(type, new RenderBucket(camera));
 	}
 	
+	/**
+	 * Submit the specified {@link AnimaMundi} to a {@link RenderBucket} matching 
+	 * the {@link BucketType}. 
+	 * <p>
+	 * If the type of bucket isn't registered for this <code>Renderer</code>,
+	 * it will not add the anima to be rendered, call {@link #registerBucket(BucketType)}
+	 * to register the needed bucket's type.
+	 * 
+	 * @param anima The anima-mundi to add to a bucket.
+	 * @return		Whether the anima-mundi has been added to a bucket.
+	 */
 	protected boolean submitToBucket(AnimaMundi anima) {
 		if(anima.getBucket().equals(BucketType.NONE)) {
 			return false;
 		}
 		
-		BucketType type = anima.getBucket();
-		
+		var type = anima.getBucket();
 		if(type.equals(BucketType.LEGACY)) {
 			type = BucketType.OPAQUE;
 		}
 		
-		buckets.get(type).add(anima);
-		return true;
+		var bucket = buckets.get(type);
+		if(bucket != null) {
+			bucket.add(anima);
+			return true;
+		}
+		
+		logger.warning("The anima '" + anima + "' couldn't be submitted to a bucket of type " + type + "!");
+		return false;
 	}
 	
+	/**
+	 * Render the {@link RenderBucket} corresponding to the specified {@link BucketType}.
+	 * It will first call {@link RenderBucket#sort()} and then {@link RenderBucket#render(AbstractRenderer)}.
+	 * 
+	 * @param type The type of bucket to render.
+	 * 
+	 * @throws MercuryException 	 Thrown if the type is either {@link BucketType#LEGACY} or {@link BucketType#NONE}.
+	 * @throws IllegalStateException Thrown if there is no registered bucket of the specified type in the renderer.
+	 */
 	protected void renderBucket(BucketType type) {
 		if(type.equals(BucketType.LEGACY) || type.equals(BucketType.NONE)) {
 			throw new MercuryException("The bucket '" + type + "' cannot be rendered!");
@@ -85,21 +120,28 @@ public abstract class AbstractRenderer {
 		if(bucket == null) {
 			throw new IllegalStateException("No bucket for type: " + type + " is defined in the renderer!");
 		}
+		
 		bucket.sort();
-		for(int i = 0; i < bucket.size(); i++) {
-			AnimaMundi anima = bucket.array()[i];
-			if(anima instanceof PhysicaMundi) {
-				render((PhysicaMundi) anima);
-			}
-			anima.queueDistance = Double.NEGATIVE_INFINITY;
-		}
+		bucket.render(this);
 	}
 	
-	protected abstract void render(PhysicaMundi anima);
-
+	/**
+	 * Flushes all registered {@link RenderBucket} in the <code>Renderer</code>, by
+	 * emptying the bucket of its {@link AnimaMundi} and reseting its size to 0.
+	 * 
+	 * @see RenderBucket#flush()
+	 */
 	protected void flushBuckets() {
 		buckets.values().forEach(RenderBucket::flush);
 	}
+	
+	/**
+	 * Render the provided {@link AnimaMundi}.
+	 * Override this method in your implementation of <code>AbstractRenderer</code>.
+	 * 
+	 * @param anima The anima to render.
+	 */
+	public abstract void render(PhysicaMundi anima);
 	
 	protected void setupUniforms() {
 		// Only pass the view projection model for now..
