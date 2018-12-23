@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.file.json.AlchemyJSON;
@@ -69,7 +70,7 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 			// Load the specified shaders in the file into the material.
 			loadShaders(mat, matObj);
 			
-			
+			logger.info("Successfully loaded material '" + name + "' !");
 			materials[i] = mat;
 		}
 		
@@ -77,15 +78,22 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 	}
 
 	private void loadShaders(Material mat, JSONObject matObj) {
+		
 		var shaders = matObj.get("shaders").asArray();
+		
 		for(int i = 0; i < shaders.size(); i++) {
 			var shader = shaders.get(i).asObject();
 			
-			// Check the type of shader.
+			// Retrieve the type of shader.
 			var shaderType = shader.get("type").asString();
+			// Retrieve also the path to the source of the shader.
 			var shaderPath = shader.get("source").asString();
-			if(ShaderType.fromExtension(FileUtils.getExtension(shaderPath)) != ShaderType.valueOf(shaderType.toUpperCase())) {
-				throw new IllegalStateException();
+			
+			// Check that the retrieved type and the extension of the source path correspond.
+			var extension = FileUtils.getExtension(shaderPath);
+			if(ShaderType.fromExtension(extension) != ShaderType.valueOf(shaderType.toUpperCase())) {
+				throw new IllegalStateException("The specified shader type '" + shaderType + "' doesn't "
+						+ "correspond to the source path extension '" + extension + "' !");
 			}
 			
 			var source = assetManager.loadShaderSource(shaderPath);
@@ -93,9 +101,13 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 		}
 	}
 
-	
+	/**
+	 * Register the asset manager which instantiated this <code>MaterialLoader</code>,
+	 * to use it for loading {@link ShaderSource} from specified file paths.
+	 */
 	@Override
 	public void registerAssetManager(AssetManager assetManager) {
+		Validator.nonNull(assetManager);
 		this.assetManager = assetManager;
 	}
 }

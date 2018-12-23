@@ -115,7 +115,7 @@ public final class ShaderProgram extends GLObject {
 	}
 	
 	/**
-	 * Attach a <code>ShaderSource</code> to the <code>ShaderProgram</code>.
+	 * Attach a {@link ShaderSource} to the <code>ShaderProgram</code>.
 	 * <p>
 	 * The source cannot be null.
 	 * 
@@ -126,6 +126,21 @@ public final class ShaderProgram extends GLObject {
 		Validator.nonNull(source, "The shader source cannot be null.");
 		
 		sources.add(source);
+		return this;
+	}
+	
+	/**
+	 * Attach an array of {@link ShaderSource} to the <code>ShaderProgram</code>.
+	 * <p>
+	 * Each of the provided sources must not be null.
+	 * 
+	 * @param source The sources to attach.
+	 * @return		 The program with the attached sources.
+	 */
+	public ShaderProgram attachSources(ShaderSource... sources) {
+		for(int i = 0; i < sources.length; i++) {
+			attachSource(sources[i]);
+		}
 		return this;
 	}
 	

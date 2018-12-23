@@ -66,12 +66,7 @@ public class Renderer extends AbstractRenderer {
 		this.defaultLogic = new DefaultRenderLogic();
 		
 		// TEST:
-		program = new ShaderProgram()
-				.attachSource(assetManager.loadShaderSource("/shaders/default.vert"))
-				.attachSource(assetManager.loadShaderSource("/shaders/default.frag"))
-				.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
-				
-		program.upload();	
+		
 	}
 	
 	/**
@@ -113,6 +108,15 @@ public class Renderer extends AbstractRenderer {
 		setMatrix(MatrixType.MODEL, physica.getWorldTransform());
 		
 		computeMatrix(MatrixType.VIEW_PROJECTION_MODEL);
+		
+		// this is temporary hopefully...
+		var material = physica.getMaterial();
+		if(material != null && program == null) {
+			program = new ShaderProgram();
+			material.getSources().forEach(program::attachSource);
+			program.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
+			program.upload();
+		}
 		
 		setupUniforms();
 		
