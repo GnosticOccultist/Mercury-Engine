@@ -18,7 +18,7 @@ import fr.mercury.nucleus.math.readable.ReadableVector3f;
  * 
  * @author GnosticOccultist
  */
-public final class Vector3f implements ReadableVector3f {
+public final class Vector3f implements ReadableVector3f, Comparable<Vector3f> {
 	
 	/**
 	 * The zero components <code>Vector3f</code> &rarr; [0,0,0].
@@ -385,6 +385,27 @@ public final class Vector3f implements ReadableVector3f {
 	public Vector3f zero() {
 		x = y = z = 0;
 		return this;
+	}
+	
+	/**
+	 * Compare this vector with the provided <code>Vector3f</code>. It will first
+	 * compare the X-component, then the Y-component and finally the Z-component.
+	 * 
+	 * @param  The other vector to compare with (not null).
+	 * @return 0 &rarr; the 2 vectors are equal, negative &rarr; this vector comes before 
+	 * 		   the other, negative &rarr; this vector comes after the other.
+	 */
+	@Override
+	public int compareTo(Vector3f other) {
+		int result = Float.compare(x, other.x);
+		if(result == 0) {
+			result = Float.compare(y, other.y);
+		}
+        if(result == 0) {
+        	result = Float.compare(z, other.z);
+        }
+        
+        return result;
 	}
 	
 	@Override

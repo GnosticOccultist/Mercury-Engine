@@ -64,9 +64,6 @@ public class Renderer extends AbstractRenderer {
 		super(camera);
 		
 		this.defaultLogic = new DefaultRenderLogic();
-		
-		// TEST:
-		
 	}
 	
 	/**

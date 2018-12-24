@@ -17,7 +17,7 @@ import fr.mercury.nucleus.math.readable.ReadableQuaternion;
  * 
  * @author GnosticOccultist
  */
-public final class Quaternion implements ReadableQuaternion {
+public final class Quaternion implements ReadableQuaternion, Comparable<Quaternion> {
 	
 	/**
 	 * The X-component of the vector.
@@ -464,6 +464,30 @@ public final class Quaternion implements ReadableQuaternion {
         normalize();
         return this;
     }
+    
+    /**
+	 * Compare this quaternion with the provided <code>Quaternion</code>. It will first
+	 * compare the X-component, then the Y-component, the Z-component and so on.
+	 * 
+	 * @param  The other quaternion to compare with (not null).
+	 * @return 0 &rarr; the 2 quaternions are equal, negative &rarr; this quaternion comes before 
+	 * 		   the other, negative &rarr; this quaternion comes after the other.
+	 */
+	@Override
+	public int compareTo(Quaternion other) {
+		int result = Float.compare(x, other.x);
+		if(result == 0) {
+			result = Float.compare(y, other.y);
+		}
+        if(result == 0) {
+        	result = Float.compare(z, other.z);
+        }
+        if(result == 0) {
+        	result = Float.compare(w, other.w);
+        }
+        
+        return result;
+	}
 	
 	@Override
 	public boolean equals(Object o) {

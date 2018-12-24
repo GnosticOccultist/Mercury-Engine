@@ -13,7 +13,7 @@ import fr.alchemy.utilities.Validator;
  * 
  * @author GnosticOccultist
  */
-public final class Color {
+public final class Color implements Comparable<Color> {
 	
 	/**
 	 * The red component.
@@ -147,6 +147,30 @@ public final class Color {
 		return new Vector4f(r, g, b, a);
 	}
 
+	/**
+	 * Compare this color with the provided <code>Color</code>. It will first
+	 * compare the R-component, then the G-component and so on.
+	 * 
+	 * @param  The other color to compare with (not null).
+	 * @return 0 &rarr; the 2 colors are equal, negative &rarr; this color comes before 
+	 * 		   the other, negative &rarr; this color comes after the other.
+	 */
+	@Override
+	public int compareTo(Color other) {
+		int result = Float.compare(r, other.r);
+		if(result == 0) {
+			result = Float.compare(g, other.g);
+		}
+        if(result == 0) {
+        	result = Float.compare(b, other.b);
+        }
+        if(result == 0) {
+        	result = Float.compare(a, other.a);
+        }
+        
+        return result;
+	}
+	
 	@Override
 	public boolean equals(Object o) {
 		if (o == null || !(o instanceof Color)) {

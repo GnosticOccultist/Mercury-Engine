@@ -15,7 +15,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
  * 
  * @author GnosticOccultist
  */
-public final class Transform implements ReadableTransform {
+public final class Transform implements ReadableTransform, Comparable<Transform> {
 	
 	/**
 	 * The <code>Transform</code> identity &rarr; Translation: [0,0,0] | Rotation: [0,0,0,1] | Scale: [1,1,1].
@@ -308,6 +308,11 @@ public final class Transform implements ReadableTransform {
 	 * @return The transformation matrix.
 	 */
 	public Matrix4f asModelMatrix(Matrix4f store) {
+		if(isIdentity()) {
+			transformMatrix.set(Matrix4f.IDENTITY_MATRIX);
+			return transformMatrix;
+		}
+		
 		if(store == null) {
 			store = transformMatrix;
 		}
@@ -362,6 +367,27 @@ public final class Transform implements ReadableTransform {
 		translation.set(0, 0, 0);
 		rotation.set(0, 0, 0, 1);
 		scale.set(1, 1, 1);
+	}
+	
+	/**
+	 * Compare this transform with the provided <code>Transform</code>. It will first
+	 * compare the translation, then the rotation and finally the scale.
+	 * 
+	 * @param  The other transform to compare with (not null).
+	 * @return 0 &rarr; the 2 transforms are equal, negative &rarr; this transform comes before 
+	 * 		   the other, negative &rarr; this transform comes after the other.
+	 */
+	@Override
+	public int compareTo(Transform other) {
+		int result = translation.compareTo(other.translation);
+		if(result == 0) {
+			result = rotation.compareTo(other.rotation);
+		}
+        if(result == 0) {
+        	result = scale.compareTo(other.scale);
+        }
+        
+        return result;
 	}
 	
 	@Override

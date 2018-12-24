@@ -14,7 +14,7 @@ import fr.alchemy.utilities.Validator;
  * 
  * @author GnosticOccultist
  */
-public final class Vector4f {
+public final class Vector4f implements Comparable<Vector4f> {
 	
 	/**
 	 * The X-component of the vector.
@@ -308,6 +308,30 @@ public final class Vector4f {
 	public Vector4f zero() {
 		x = y = z = w = 0;
 		return this;
+	}
+	
+	/**
+	 * Compare this vector with the provided <code>Vector4f</code>. It will first
+	 * compare the X-component, then the Y-component and so on.
+	 * 
+	 * @param  The other vector to compare with (not null).
+	 * @return 0 &rarr; the 2 vectors are equal, negative &rarr; this vector comes before 
+	 * 		   the other, negative &rarr; this vector comes after the other.
+	 */
+	@Override
+	public int compareTo(Vector4f other) {
+		int result = Float.compare(x, other.x);
+		if(result == 0) {
+			result = Float.compare(y, other.y);
+		}
+        if(result == 0) {
+        	result = Float.compare(z, other.z);
+        }
+        if(result == 0) {
+        	result = Float.compare(w, other.w);
+        }
+        
+        return result;
 	}
 	
 	@Override

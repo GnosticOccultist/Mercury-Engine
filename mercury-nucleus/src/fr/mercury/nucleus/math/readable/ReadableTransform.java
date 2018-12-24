@@ -42,4 +42,24 @@ public interface ReadableTransform {
 	 * @return The transformation matrix.
 	 */
 	Matrix4f asModelMatrix(Matrix4f store);
+	
+	/**
+	 * Return whether all 3 components (translation, rotation and scale) of the <code>ReadableTransform</code> 
+	 * are equal to an identity matrix, meaning this transform is an identity-transform.
+	 * 
+	 * @return Whether the transform is an identity-transform.
+	 */
+	default boolean isIdentity() {
+		return getTranslation().isZero() && getRotation().isIdentity() && getScale().isIdentity();
+	}
+	
+	/**
+	 * Return whether all the scale component of the <code>ReadableTransform</code> is a uniform vector, 
+	 * meaning all 3 of its components are equal.
+	 * 
+	 * @return Whether the transform's scaling vector is uniform.
+	 */
+	default boolean isUniformScale() {
+		return getScale().isUniform();
+	}
 }
