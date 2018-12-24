@@ -145,6 +145,21 @@ public final class ShaderProgram extends GLObject {
 	}
 	
 	/**
+	 * Attach a list of {@link ShaderSource} to the <code>ShaderProgram</code>.
+	 * <p>
+	 * Each of the provided sources must not be null.
+	 * 
+	 * @param source The sources to attach.
+	 * @return		 The program with the attached sources.
+	 */
+	public ShaderProgram attachSources(List<ShaderSource> sources) {
+		for(int i = 0; i < sources.size(); i++) {
+			attachSource(sources.get(i));
+		}
+		return this;
+	}
+	
+	/**
 	 * Add a {@link Uniform} to the <code>ShaderProgram</code> with the specified
 	 * name, type and value.
 	 * 

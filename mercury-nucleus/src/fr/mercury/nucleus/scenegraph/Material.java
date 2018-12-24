@@ -1,9 +1,12 @@
 package fr.mercury.nucleus.scenegraph;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 
 public class Material {
@@ -19,7 +22,11 @@ public class Material {
 	/**
 	 * The set of the shader sources for the material.
 	 */
-	private final Set<ShaderSource> sources = new HashSet<>();
+	private final Map<String, List<ShaderSource>> sources = new HashMap<String, List<ShaderSource>>();
+	/**
+	 * The store for already loaded shaders.
+	 */
+	private final Map<String, ShaderProgram> shaders = new HashMap<String, ShaderProgram>();
 	
 	/**
 	 * Instantiates a new empty <code>Material</code>.
@@ -43,12 +50,43 @@ public class Material {
 		this.description = description;
 	}
 	
-	public Set<ShaderSource> getSources() {
-		return sources;
+	public ShaderProgram getShader(String name) {
+		var shader = shaders.get(name);
+		if(shader == null) {
+			// Compute the new shader.
+			shader = new ShaderProgram().attachSources(sources.get(name));
+			shader.upload();
+			shaders.put(name, shader);
+		}
+		
+		return shader;
 	}
 	
-	public void addShaderSource(ShaderSource source) {
-		sources.add(source);
+	public boolean addWorldParam(String name) {
+		try {
+			
+		} catch ()
+	}
+	
+	public List<ShaderSource> getSources(String name) {
+		return sources.get(name);
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public void addShaderSource(String name, ShaderSource source) {
+		var list = sources.get(name);
+		if(list == null) {
+			list = new ArrayList<>();
+			sources.put(name, list);
+		}
+		list.add(source);
+	}
+	
+	public void cleanup() {
+		shaders.values().forEach(ShaderProgram::cleanup);
 	}
 	
 	@Override

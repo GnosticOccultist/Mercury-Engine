@@ -97,7 +97,7 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 			}
 			
 			var source = assetManager.loadShaderSource(shaderPath);
-			mat.addShaderSource(source);
+			mat.addShaderSource(mat.getName(), source);
 		}
 	}
 

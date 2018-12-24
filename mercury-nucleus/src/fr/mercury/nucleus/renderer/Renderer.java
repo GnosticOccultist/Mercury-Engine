@@ -5,7 +5,6 @@ import org.lwjgl.opengl.GL11;
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.renderer.logic.DefaultRenderLogic;
 import fr.mercury.nucleus.renderer.logic.RenderLogic;
-import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
@@ -28,6 +27,7 @@ public class Renderer extends AbstractRenderer {
 			if(anima instanceof PhysicaMundi) {
 				var physica = (PhysicaMundi) anima;
 				physica.getMesh().cleanup();
+				physica.getMaterial().cleanup();
 			}
 		}
 	};
@@ -107,15 +107,16 @@ public class Renderer extends AbstractRenderer {
 		computeMatrix(MatrixType.VIEW_PROJECTION_MODEL);
 		
 		// this is temporary hopefully...
-		var material = physica.getMaterial();
-		if(material != null && program == null) {
-			program = new ShaderProgram();
-			material.getSources().forEach(program::attachSource);
-			program.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
-			program.upload();
+		var shader = physica.getMaterial().getShader("Unlit");
+		if(shader != null) {
+			if(shader.getUniform("texture_sampler") == null) {
+				shader.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
+			} else {
+				shader.getUniform("texture_sampler").upload(shader);
+			}
 		}
 		
-		setupUniforms();
+		setupUniforms(shader);
 		
 		defaultLogic.begin(physica);
 	
@@ -150,7 +151,6 @@ public class Renderer extends AbstractRenderer {
 	 */
 	@OpenGLCall
 	public void cleanup(AnimaMundi anima) {
-		program.cleanup();
 		anima.visit(GL_CLEANUP, VisitType.POST_ORDER);
 	}
 }

@@ -34,11 +34,6 @@ public abstract class AbstractRenderer {
 	 */
 	protected final EnumMap<MatrixType, Matrix4f> matrixMap = new EnumMap<>(MatrixType.class);
 	/**
-	 * The shader program used for rendering. This need to be changed to allow multiple
-	 * render pass.
-	 */
-	protected ShaderProgram program;
-	/**
 	 * The camera used by the renderer.
 	 */
 	protected final Camera camera;
@@ -143,14 +138,14 @@ public abstract class AbstractRenderer {
 	 */
 	public abstract void render(PhysicaMundi anima);
 	
-	protected void setupUniforms() {
+	protected void setupUniforms(ShaderProgram shader) {
 		// Only pass the view projection model for now..
 		var name = MatrixType.VIEW_PROJECTION_MODEL.getUniformName();
-		if(program.getUniform(name) == null) {
-			program.addUniform(name, UniformType.MATRIX4F, matrixMap.get(MatrixType.VIEW_PROJECTION_MODEL));
+		if(shader.getUniform(name) == null) {
+			shader.addUniform(name, UniformType.MATRIX4F, matrixMap.get(MatrixType.VIEW_PROJECTION_MODEL));
 		} else {
-			program.getUniform(name).setValue(UniformType.MATRIX4F, matrixMap.get(MatrixType.VIEW_PROJECTION_MODEL));
-			program.getUniform(name).upload(program);
+			shader.getUniform(name).setValue(UniformType.MATRIX4F, matrixMap.get(MatrixType.VIEW_PROJECTION_MODEL));
+			shader.getUniform(name).upload(shader);
 		}
 	}
 	
