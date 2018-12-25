@@ -15,6 +15,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
+import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.utils.MercuryException;
 
@@ -138,14 +139,24 @@ public abstract class AbstractRenderer {
 	 */
 	public abstract void render(PhysicaMundi anima);
 	
-	protected void setupUniforms(ShaderProgram shader) {
-		// Only pass the view projection model for now..
-		var name = MatrixType.VIEW_PROJECTION_MODEL.getUniformName();
-		if(shader.getUniform(name) == null) {
-			shader.addUniform(name, UniformType.MATRIX4F, matrixMap.get(MatrixType.VIEW_PROJECTION_MODEL));
-		} else {
-			shader.getUniform(name).setValue(UniformType.MATRIX4F, matrixMap.get(MatrixType.VIEW_PROJECTION_MODEL));
-			shader.getUniform(name).upload(shader);
+	/**
+	 * Setup the {@link Uniform} corresponding to the needed {@link MatrixType} specified by the provided
+	 * {@link Material} and applied for the given {@link ShaderProgram}.
+	 * 
+	 * @param shader   The shader program to which the matrix uniforms need to be passed.
+	 * @param material The material specifying which matrix type should be passed.
+	 */
+	protected void setupMatrixUniforms(ShaderProgram shader, Material material) {
+		for(MatrixType type : MatrixType.values()) {
+			var name = type.name();
+			if(material.prefabUniforms.contains(name)) {
+				if(shader.getUniform(type.getUniformName()) == null) {
+					shader.addUniform(type.getUniformName(), UniformType.MATRIX4F, matrixMap.get(type));
+				} else {
+					shader.getUniform(type.getUniformName()).setValue(UniformType.MATRIX4F, matrixMap.get(type));
+					shader.getUniform(type.getUniformName()).upload(shader);
+				}
+			}
 		}
 	}
 	
@@ -205,7 +216,7 @@ public abstract class AbstractRenderer {
 		 * The model matrix used to display a {@link PhysicaMundi} correctly 
 		 * in world-space. It should take into account the world transform not the local one.
 		 */
-		MODEL("worldMatrix"),
+		MODEL("modelMatrix"),
 		/**
 		 * The view matrix used to display the scene-graph based on camera position.
 		 */

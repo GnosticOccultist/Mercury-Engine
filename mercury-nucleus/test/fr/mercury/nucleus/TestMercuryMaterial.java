@@ -1,8 +1,11 @@
 package fr.mercury.nucleus;
 
 import fr.mercury.nucleus.application.MercuryApplication;
+import fr.mercury.nucleus.math.objects.Color;
+import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
+import fr.mercury.nucleus.scenegraph.environment.Fog;
 import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
@@ -24,7 +27,10 @@ public class TestMercuryMaterial extends MercuryApplication {
 		
 		PhysicaMundi cube = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube.setName("cube");
-		cube.setTranslation(2.5f, 0, 0).setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
+		cube.setTranslation(5, 0, 0).setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
+		
+		var translation = cube.getLocalTransform().getTranslation();
+		camera.lookAt(translation.x(), translation.y(), translation.z(), Vector3f.UNIT_Y);
 		
 		Material[] materials = assetManager.loadMaterial("/shaders/unlit.json");
 		for(int i = 0; i < materials.length; i++) {
@@ -33,13 +39,14 @@ public class TestMercuryMaterial extends MercuryApplication {
 		
 		cube.setMaterial(materials[0]);
 		cube.getMesh().texture = texture;
+		
+		Fog fog = new Fog(new Color(1, 0, 0, 1), 0.1f);
+		scene.addLocalEnvironmentProperty(fog);
 		scene.attach(cube);
 	}
 	
 	@Override
 	protected void update(float tpf) {
 		super.update(tpf);
-		
-		scene.rotate(0, 0.1f, 0);
 	}
 }

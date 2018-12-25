@@ -1,6 +1,8 @@
 package fr.mercury.nucleus.scenegraph;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
@@ -9,8 +11,10 @@ import fr.mercury.nucleus.math.objects.Quaternion;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformStructure;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
+import fr.mercury.nucleus.scenegraph.environment.EnvironmentMode;
 import fr.mercury.nucleus.scenegraph.visitor.AbstractVisitor;
 import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
@@ -71,6 +75,15 @@ public abstract class AnimaMundi {
 	 * The bucket used for rendering of the anima-mundi.
 	 */
 	protected BucketType bucket = BucketType.LEGACY;
+	/**
+	 * The environment mode describing how environmental data should be
+	 * passed through the scene-tree.
+	 */
+	protected EnvironmentMode envMode = EnvironmentMode.LOCAL_PRIORITY;
+	/**
+	 * The list of uniform structures which can be used for rendering.
+	 */
+	protected List<UniformStructure> environments = new ArrayList<>(3);
 	/**
 	 * The accumulated dirty marks by the anima-mundi. At instantiation
 	 * it will contain {@link DirtyType#TRANSFORM}.
@@ -478,6 +491,16 @@ public abstract class AnimaMundi {
 	
 	/**
 	 * Return the used {@link BucketType} for the rendering of this <code>AnimaMundi</code>.
+	 * It will try to find the ancestor's bucket type if its type is {@link BucketType#LEGACY}.
+	 * 
+	 * @return The bucket type used to render the anima-mundi.
+	 */
+	public BucketType getBucket() {
+		return getBucket(true);
+	}
+	
+	/**
+	 * Return the used {@link BucketType} for the rendering of this <code>AnimaMundi</code>.
 	 * If the <code>checkLegacy</code> is set to true, it will search the parent's bucket type until
 	 * it founds something different than {@link BucketType#LEGACY} or until the ancestor is orphan.
 	 * 
@@ -493,14 +516,46 @@ public abstract class AnimaMundi {
 		return bucket;
 	}
 	
-	/**
-	 * Return the used {@link BucketType} for the rendering of this <code>AnimaMundi</code>.
-	 * It will try to find the ancestor's bucket type if its type is {@link BucketType#LEGACY}.
-	 * 
-	 * @return The bucket type used to render the anima-mundi.
-	 */
-	public BucketType getBucket() {
-		return getBucket(true);
+	public UniformStructure getEnvironmentProperty(String name) {
+		// Search on the local environment only.
+		if(envMode.equals(EnvironmentMode.LOCAL_ONLY)) {
+			return getLocalEnvironmentProperty(name);
+		}
+		
+		var parent = getParent();
+		if(envMode.equals(EnvironmentMode.LOCAL_PRIORITY)) {
+			var property = getLocalEnvironmentProperty(name);
+			if(property == null && parent != null) {
+				property = parent.getEnvironmentProperty(name);
+			}
+			return property;
+		}
+		
+		if(envMode.equals(EnvironmentMode.ANCESTOR_PRIORITY)) {
+			var property = parent != null ? parent.getEnvironmentProperty(name) : null;
+			if(property == null) {
+				property = getLocalEnvironmentProperty(name);
+			}
+			
+			return property;
+		}
+		
+		return null;
+	}
+	
+	public void addLocalEnvironmentProperty(UniformStructure structure) {
+		environments.add(structure);
+	}
+	
+	public UniformStructure getLocalEnvironmentProperty(String name) {
+		for(int i = 0; i < environments.size(); i++) {
+			
+			var env = environments.get(i);
+			if(env.name().equalsIgnoreCase(name)) {
+				return env;
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -521,5 +576,10 @@ public abstract class AnimaMundi {
 	 */
 	public void visit(Visitor visitor, VisitType type) {
 		visitor.visit(this);
+	}
+	
+	@Override
+	public String toString() {
+		return "[" + getClass().getSimpleName() + "]: " + name;
 	}
 }

@@ -16,6 +16,11 @@ import fr.alchemy.utilities.Validator;
 public final class Color implements Comparable<Color> {
 	
 	/**
+	 * The white color (1,1,1,1).
+	 */
+	public static final Color WHITE = new Color();
+	
+	/**
 	 * The red component.
 	 */
 	public float r;

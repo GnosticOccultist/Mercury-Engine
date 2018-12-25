@@ -19,6 +19,8 @@ public class Material {
 	 * The description of the material, used for debugging.
 	 */
 	private String description;
+	
+	public final List<String> prefabUniforms = new ArrayList<>();
 	/**
 	 * The set of the shader sources for the material.
 	 */
@@ -50,7 +52,7 @@ public class Material {
 		this.description = description;
 	}
 	
-	public ShaderProgram getShader(String name) {
+	public ShaderProgram getShader(String name, AnimaMundi anima) {
 		var shader = shaders.get(name);
 		if(shader == null) {
 			// Compute the new shader.
@@ -58,14 +60,18 @@ public class Material {
 			shader.upload();
 			shaders.put(name, shader);
 		}
-		
+		addPrefabs(shader, anima);
 		return shader;
 	}
 	
-	public boolean addWorldParam(String name) {
-		try {
-			
-		} catch ()
+	public void addPrefabs(ShaderProgram shader, AnimaMundi anima) {
+		for(int i = 0; i < prefabUniforms.size(); i++) {
+			var prefabName = prefabUniforms.get(i);
+			var property = anima.getEnvironmentProperty(prefabName);
+			if(property != null) {
+				property.uniforms(shader);
+			}
+		}
 	}
 	
 	public List<ShaderSource> getSources(String name) {
@@ -92,6 +98,6 @@ public class Material {
 	@Override
 	public String toString() {
 		String descr = description != null ? ": " + description : "";
-		return "[" + name + "]" + descr; 
+		return "[" + name + "]" + descr + " " + prefabUniforms; 
 	}
 }

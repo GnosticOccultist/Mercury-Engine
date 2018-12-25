@@ -4,12 +4,18 @@
 		"shaders": [ 
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": [] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": [] }
-		]
+		],
+		"uniforms": {
+			"prefabs": ["FOG", "MODEL", "VIEW", "VIEW_PROJECTION_MODEL"]
+		}
 	},
 	
 	"Unlit_no_fog": {
 		"shaders": [ 
 			
-		]
+		],
+		"uniforms": {
+			"prefabs": []
+		}
 	}
 }

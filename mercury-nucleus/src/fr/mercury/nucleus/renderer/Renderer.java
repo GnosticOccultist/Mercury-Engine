@@ -107,7 +107,7 @@ public class Renderer extends AbstractRenderer {
 		computeMatrix(MatrixType.VIEW_PROJECTION_MODEL);
 		
 		// this is temporary hopefully...
-		var shader = physica.getMaterial().getShader("Unlit");
+		var shader = physica.getMaterial().getShader("Unlit", physica);
 		if(shader != null) {
 			if(shader.getUniform("texture_sampler") == null) {
 				shader.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
@@ -116,7 +116,9 @@ public class Renderer extends AbstractRenderer {
 			}
 		}
 		
-		setupUniforms(shader);
+		var material = physica.getMaterial();
+		
+		setupMatrixUniforms(shader, material);
 		
 		defaultLogic.begin(physica);
 	

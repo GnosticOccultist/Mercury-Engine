@@ -70,6 +70,8 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 			// Load the specified shaders in the file into the material.
 			loadShaders(mat, matObj);
 			
+			loadPrefabUniforms(mat, matObj);
+			
 			logger.info("Successfully loaded material '" + name + "' !");
 			materials[i] = mat;
 		}
@@ -98,6 +100,14 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 			
 			var source = assetManager.loadShaderSource(shaderPath);
 			mat.addShaderSource(mat.getName(), source);
+		}
+	}
+	
+	private void loadPrefabUniforms(Material mat, JSONObject matObj) {
+		
+		var prefabUniforms = matObj.get("uniforms").asObject().get("prefabs").asArray();
+		for(int i = 0; i < prefabUniforms.size(); i++) {
+			mat.prefabUniforms.add(prefabUniforms.get(i).asString());
 		}
 	}
 
