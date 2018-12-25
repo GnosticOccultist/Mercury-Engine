@@ -14,6 +14,7 @@ import fr.mercury.nucleus.math.objects.Vector2f;
 import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.math.objects.Vector4f;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
+import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
@@ -89,8 +90,11 @@ public class Uniform {
 	/**
 	 * Uploads the <code>Uniform</code> with its stored value to be used inside 
 	 * the {@link ShaderProgram} currently bounded.
+	 * <p>
+	 * Note that the uniform is capable of knowing when its value needs to be resent
+	 * through the program, so calling this method won't always result in OpenGL calls.
 	 * 
-	 * @param program
+	 * @param program The program on which the uniform is used.
 	 */
 	@OpenGLCall
 	public void upload(ShaderProgram program) {
@@ -106,11 +110,14 @@ public class Uniform {
 			return;
 		}
 		
-		if(!needsUpdate) {
+		if(!needsUpdate()) {
 			return;
 		}
 		
-		System.out.println("Updating " + getUniformType() + " " + name);
+		if(program != ShaderProgram.CURRENT) {
+			throw new GLException("The program on which the uniform needs to be sent, "
+					+ "isn't the one currently bound to the GL context!");
+		}
 		
 		switch (getUniformType()) {
 			case FLOAT:
@@ -156,10 +163,6 @@ public class Uniform {
 		}
 		
 		this.needsUpdate = false;
-	}
-	
-	public void cleanup() {
-		setLocation(-2);
 	}
 	
 	/**
@@ -271,6 +274,25 @@ public class Uniform {
 		
 		this.type = type;
 		this.needsUpdate = true;
+	}
+	
+	/**
+	 * Cleanup the <code>Uniform</code> by resetting its ID and setting its 
+	 * {@link #needsUpdate() update tag} to true.
+	 */
+	public void cleanup() {
+		this.needsUpdate = true;
+		setLocation(-2);
+	}
+	
+	/**
+	 * Return whether the <code>Uniform</code> needs its value uploaded to the 
+	 * {@link ShaderProgram}.
+	 * 
+	 * @return Whether the uniform value needs to be reuploaded through the shader program.
+	 */
+	protected boolean needsUpdate() {
+		return needsUpdate;
 	}
 	
 	/**
