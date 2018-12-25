@@ -149,13 +149,27 @@ public abstract class AbstractRenderer {
 	protected void setupMatrixUniforms(ShaderProgram shader, Material material) {
 		for(MatrixType type : MatrixType.values()) {
 			var name = type.name();
-			if(material.prefabUniforms.contains(name)) {
+			if(material.getPrefabUniforms().contains(name)) {
 				if(shader.getUniform(type.getUniformName()) == null) {
 					shader.addUniform(type.getUniformName(), UniformType.MATRIX4F, matrixMap.get(type));
 				} else {
 					shader.getUniform(type.getUniformName()).setValue(UniformType.MATRIX4F, matrixMap.get(type));
 					shader.getUniform(type.getUniformName()).upload(shader);
 				}
+			}
+		}
+	}
+	
+	protected void setupPrefabUniforms(ShaderProgram shader, PhysicaMundi physica) {
+		var prefabUniforms = physica.getMaterial().getPrefabUniforms();
+		
+		for(int i = 0; i < prefabUniforms.size(); i++) {
+			
+			var prefabName = prefabUniforms.get(i);
+			var property = physica.getEnvironmentProperty(prefabName);
+			
+			if(property != null) {
+				property.uniforms(shader);
 			}
 		}
 	}

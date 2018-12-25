@@ -120,6 +120,8 @@ public class Renderer extends AbstractRenderer {
 		
 		setupMatrixUniforms(shader, material);
 		
+		setupPrefabUniforms(shader, physica);
+		
 		defaultLogic.begin(physica);
 	
 		defaultLogic.render(physica);

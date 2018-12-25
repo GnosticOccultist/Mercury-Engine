@@ -19,8 +19,10 @@ public class Material {
 	 * The description of the material, used for debugging.
 	 */
 	private String description;
-	
-	public final List<String> prefabUniforms = new ArrayList<>();
+	/**
+	 * The prefab uniforms needed by the material, set during material-file reading.
+	 */
+	private final List<String> prefabUniforms = new ArrayList<>();
 	/**
 	 * The set of the shader sources for the material.
 	 */
@@ -76,6 +78,10 @@ public class Material {
 	
 	public List<ShaderSource> getSources(String name) {
 		return sources.get(name);
+	}
+	
+	public List<String> getPrefabUniforms() {
+		return prefabUniforms;
 	}
 	
 	public String getName() {

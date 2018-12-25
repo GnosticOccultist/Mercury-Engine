@@ -107,7 +107,7 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 		
 		var prefabUniforms = matObj.get("uniforms").asObject().get("prefabs").asArray();
 		for(int i = 0; i < prefabUniforms.size(); i++) {
-			mat.prefabUniforms.add(prefabUniforms.get(i).asString());
+			mat.getPrefabUniforms().add(prefabUniforms.get(i).asString());
 		}
 	}
 
