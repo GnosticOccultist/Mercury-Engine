@@ -129,12 +129,22 @@ public class Uniform {
 				GL20.glUniform2f(location, vec2.x, vec2.y);
 				break;
 			case VECTOR3F:
-				Vector3f vec3 = (Vector3f) value;
-				GL20.glUniform3f(location, vec3.x, vec3.y, vec3.z);
+				if(value instanceof Vector3f) {
+					Vector3f vec3 = (Vector3f) value;
+					GL20.glUniform3f(location, vec3.x, vec3.y, vec3.z);
+				} else if(value instanceof Color) {
+					Color color = (Color) value;
+					GL20.glUniform3f(location, color.r, color.g, color.b);
+				}
 				break;
 			case VECTOR4F:
-				Vector4f vec4 = (Vector4f) value;
-				GL20.glUniform4f(location, vec4.x, vec4.y, vec4.z, vec4.w);
+				if(value instanceof Vector4f) {
+					Vector4f vec4 = (Vector4f) value;
+					GL20.glUniform4f(location, vec4.x, vec4.y, vec4.z, vec4.w);
+				} else if(value instanceof Color) {
+					Color color = (Color) value;
+					GL20.glUniform4f(location, color.r, color.g, color.b, color.a);
+				}
 				break;
 			case MATRIX4F:
 				buffer.clear();
@@ -186,7 +196,11 @@ public class Uniform {
 					return;
 				}
 				
-				this.value = new Vector2f((Vector2f) value);
+				if(this.value == null) {
+					this.value = new Vector2f((Vector2f) value);
+				} else {
+					((Vector2f) this.value).set((Vector2f) value);
+				}
 				
 				break;
 			case VECTOR3F:
@@ -194,22 +208,42 @@ public class Uniform {
 					return;
 				}
 				
-				if(value instanceof Vector3f) {
+				if(value instanceof Vector3f && !(this.value instanceof Vector3f)) {
 					this.value = new Vector3f((Vector3f) value);
-				} else if (value instanceof Color) { 
-					this.value = ((Color) value).asVector3f();
+					break;
+				} else if (value instanceof Color && !(this.value instanceof Color)) { 
+					this.value = new Color((Color) value);
+					break;
 				}
+				
+				if(value instanceof Vector3f) {
+					((Vector3f) this.value).set((Vector3f) value);
+				}
+				if(value instanceof Color) {
+					((Color) this.value).set((Color) value);
+				}
+				
 				break;
 			case VECTOR4F:
 				if(value.equals(this.value)) {
 					return;
 				}
 				
-				if(value instanceof Vector4f) {
+				if(value instanceof Vector4f && !(this.value instanceof Vector4f)) {
 					this.value = new Vector4f((Vector4f) value);
-				} else if (value instanceof Color) { 
-					this.value = ((Color) value).asVector4f();
+					break;
+				} else if (value instanceof Color && !(this.value instanceof Color)) { 
+					this.value = new Color((Color) value);
+					break;
 				}
+				
+				if(value instanceof Vector4f) {
+					((Vector4f) this.value).set((Vector4f) value);
+				}
+				if(value instanceof Color) {
+					((Color) this.value).set((Color) value);
+				}
+				
 				break;
 			case MATRIX4F:
 				if(value.equals(this.value)) {
