@@ -410,12 +410,12 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f> {
 	
 	@Override
 	public boolean equals(Object o) {
-		if(o == null || !(o instanceof Vector3f)) {
-			return false;
-		}
-		
 		if(this == o) {
 			return true;
+		}
+		
+		if(!(o instanceof Vector3f)) {
+			return false;
 		}
 		
 		Vector3f other = (Vector3f) o;
@@ -425,6 +425,7 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f> {
 		if (Float.compare(y, other.y) != 0) {
 			return false;
 		}
+		
 		return Float.compare(z, other.z) == 0;
 	}
 }

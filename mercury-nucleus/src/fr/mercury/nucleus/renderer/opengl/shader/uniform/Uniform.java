@@ -4,7 +4,6 @@ import java.nio.FloatBuffer;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
@@ -63,6 +62,10 @@ public class Uniform {
 	 * The uniform type.
 	 */
 	private UniformType type = null;
+	/**
+	 * Whether the uniform needs to be updated.
+	 */
+	private boolean needsUpdate = true;
 	
 	/**
 	 * Creates the <code>Uniform</code> by acquiring its location from the provided
@@ -103,10 +106,17 @@ public class Uniform {
 			return;
 		}
 		
+		if(!needsUpdate) {
+			return;
+		}
+		
+		System.out.println("Updating " + getUniformType() + " " + name);
+		
 		switch (getUniformType()) {
 			case FLOAT:
 				GL20.glUniform1f(location, (float) value);
 				break;
+			case TEXTURE2D:
 			case INTEGER:
 				GL20.glUniform1i(location, (int) value);
 				break;
@@ -127,21 +137,15 @@ public class Uniform {
 				GL20.glUniform4f(location, vec4.x, vec4.y, vec4.z, vec4.w);
 				break;
 			case MATRIX4F:
-				
-				try (MemoryStack stack = MemoryStack.stackPush()) {
-					FloatBuffer fb = stack.mallocFloat(16);
-					fb.put((FloatBuffer) buffer);
-					fb.clear();
-					GL20.glUniformMatrix4fv(location, false, fb);
-				}
-				break;
-			case TEXTURE2D:
-				GL20.glUniform1i(location, (int) value);
+				buffer.clear();
+				GL20.glUniformMatrix4fv(location, false, buffer);
 				break;
 			default:
 				throw new UnsupportedOperationException(
 						"Unsupported uniform type: " + getUniformType());
 		}
+		
+		this.needsUpdate = false;
 	}
 	
 	public void cleanup() {
@@ -167,18 +171,29 @@ public class Uniform {
 		}
 	
 		switch (type) {
+			case TEXTURE2D:
 			case FLOAT:
 			case INTEGER:
 			case BOOLEAN:
-				if (value.equals(this.value)) {
+				if(value.equals(this.value)) {
 					return;
 				}
+				
 				this.value = value;
 				break;
 			case VECTOR2F:
+				if(value.equals(this.value)) {
+					return;
+				}
+				
 				this.value = new Vector2f((Vector2f) value);
+				
 				break;
 			case VECTOR3F:
+				if(value.equals(this.value)) {
+					return;
+				}
+				
 				if(value instanceof Vector3f) {
 					this.value = new Vector3f((Vector3f) value);
 				} else if (value instanceof Color) { 
@@ -186,6 +201,10 @@ public class Uniform {
 				}
 				break;
 			case VECTOR4F:
+				if(value.equals(this.value)) {
+					return;
+				}
+				
 				if(value instanceof Vector4f) {
 					this.value = new Vector4f((Vector4f) value);
 				} else if (value instanceof Color) { 
@@ -211,15 +230,13 @@ public class Uniform {
 					((Matrix4f) this.value).set(matrix);
 				}
 				break;
-			case TEXTURE2D:
-				this.value = value;	
-				break;
 			default:
 				throw new UnsupportedOperationException(
 						"Unsupported uniform type: " + getUniformType());
 		}
 		
 		this.type = type;
+		this.needsUpdate = true;
 	}
 	
 	/**

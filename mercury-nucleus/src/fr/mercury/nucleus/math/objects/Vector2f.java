@@ -289,18 +289,19 @@ public final class Vector2f implements Comparable<Vector2f> {
 	
 	@Override
 	public boolean equals(Object o) {
-		if(o == null || !(o instanceof Vector2f)) {
-			return false;
-		}
-		
 		if(this == o) {
 			return true;
+		}
+		
+		if(!(o instanceof Vector2f)) {
+			return false;
 		}
 		
 		Vector2f other = (Vector2f) o;
 		if (Float.compare(x, other.x) != 0) {
 			return false;
 		}
+		
 		return Float.compare(y, other.y) == 0;
 	}
 }

@@ -336,12 +336,12 @@ public final class Vector4f implements Comparable<Vector4f> {
 	
 	@Override
 	public boolean equals(Object o) {
-		if(o == null || !(o instanceof Vector4f)) {
-			return false;
-		}
-		
 		if(this == o) {
 			return true;
+		}
+		
+		if(!(o instanceof Vector4f)) {
+			return false;
 		}
 		
 		Vector4f other = (Vector4f) o;
@@ -354,6 +354,7 @@ public final class Vector4f implements Comparable<Vector4f> {
 		if (Float.compare(z, other.z) != 0) {
 			return false;
 		}
+		
 		return Float.compare(w, other.w) == 0;
 	}
 }

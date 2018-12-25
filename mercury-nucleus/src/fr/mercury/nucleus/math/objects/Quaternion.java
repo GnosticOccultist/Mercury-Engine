@@ -491,12 +491,12 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
 	
 	@Override
 	public boolean equals(Object o) {
-		if (o == null || !(o instanceof Quaternion)) {
-			return false;
-		}
-
 		if (this == o) {
 			return true;
+		}
+		
+		if (!(o instanceof Quaternion)) {
+			return false;
 		}
 
 		Quaternion other = (Quaternion) o;
@@ -509,6 +509,7 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
 		if (Float.compare(z, other.z) != 0) {
 			return false;
 		}
+		
 		return Float.compare(w, other.w) == 0;
 	}
 

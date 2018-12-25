@@ -178,12 +178,12 @@ public final class Color implements Comparable<Color> {
 	
 	@Override
 	public boolean equals(Object o) {
-		if (o == null || !(o instanceof Color)) {
-			return false;
-		}
-
 		if (this == o) {
 			return true;
+		}
+		
+		if (!(o instanceof Color)) {
+			return false;
 		}
 
 		Color other = (Color) o;
