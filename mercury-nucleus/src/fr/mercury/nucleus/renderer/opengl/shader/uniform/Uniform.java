@@ -64,7 +64,8 @@ public class Uniform {
 	 */
 	private UniformType type = null;
 	/**
-	 * Whether the uniform needs to be updated.
+	 * Whether the uniform has been changed and needs 
+	 * to be re-uploaded to program.
 	 */
 	private boolean needsUpdate = true;
 	

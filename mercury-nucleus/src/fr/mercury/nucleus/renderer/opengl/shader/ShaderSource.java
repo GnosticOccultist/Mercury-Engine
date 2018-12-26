@@ -8,12 +8,14 @@ import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL40;
 import org.lwjgl.opengl.GL43;
 
+import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.asset.GLSLLoader;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
 import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
- * <code>ShaderSource</code> is a specific <code>ShaderProgram</code> part which is
+ * <code>ShaderSource</code> is a specific {@link ShaderProgram} part which is
  * defined by its {@link ShaderType}.
  * <p>
  * Attaching multiple <code>ShaderSource</code> to a <code>ShaderProgram</code> will construct
@@ -31,14 +33,30 @@ public final class ShaderSource extends GLObject {
 	 * The source code of the shader.
 	 */
 	private String source;
+	/**
+	 * The defines for the shader source.
+	 */
+	private String defines;
+	/**
+	 * The string buffer used to upload shader source.
+	 */
+	private final StringBuffer buffer = new StringBuffer(250);
+	/**
+	 * Whether the source has been changed and needs 
+	 * to be re-uploaded to program.
+	 */
+	private boolean needsUpdate = true;
 	
 	/**
 	 * Instantiates a new <code>ShaderSource</code> with the provided {@link ShaderType type}
-	 * and the source code.
+	 * and the source code. The provided source must not be empty or null.
 	 * <p>
-	 * It should only be used by the <code>GLSLLoader</code> when reading a 'glsl' file.
+	 * It should only be used by the {@link GLSLLoader} when reading a 'glsl' file.
 	 */
 	public ShaderSource(ShaderType type, String source) {
+		Validator.nonNull(type);
+		Validator.nonEmpty(source);
+		
 		this.type = type;
 		this.source = source;
 	}
@@ -46,20 +64,88 @@ public final class ShaderSource extends GLObject {
 	@Override
 	@OpenGLCall
 	protected void upload() {
+		// Can't compile null or empty source for shader.
 		if(source.isEmpty() || source == null) {
 			logger.warning("The source code is null or empty for " + type);
 			return;
 		}
 		
 		create();
+		
+		// The source doesn't need to be re-uploaded.
+		if(!needsUpdate()) {
+			return;
+		}
 	
-		GL20.glShaderSource(id, source);
+		GL20.glShaderSource(id, generateSource());
 		GL20.glCompileShader(id);
 
 		if (GL20.glGetShaderi(id, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
 			throw new MercuryException("Error while compiling shader code: " 
 						+ GL20.glGetShaderInfoLog(id, 1024));
 		}
+	}
+	
+	/**
+	 * Generates the entire shader code of the <code>ShaderSource</code>,
+	 * based on the provided source and defines.
+	 * 
+	 * @return The buffer containing the generated shader code.
+	 */
+	private StringBuffer generateSource() {
+		buffer.setLength(0);
+		
+		// Access the version since it needs to be at top.
+		String version = source.substring(0, source.indexOf("\n"));
+		buffer.append(version + "\n");
+		
+		// Append defines if any.
+		if(defines != null && !defines.isEmpty()) {
+			buffer.append(defines);
+		}
+		
+		// Append the source code without the version.
+		buffer.append(source.substring(version.length(), source.length()));
+		
+		return buffer;
+	}
+	
+	/**
+	 * Sets the source code used by the <code>ShaderSource</code>.
+	 * <p>
+	 * The source code can't be empty or null.
+	 * 
+	 * @param source The source code to be used by the shader.
+	 */
+	public void setSource(String source) {
+		Validator.nonEmpty(source, "Can't use null or empty source for shader!");
+		
+		this.source = source;
+		this.needsUpdate = true;
+	}
+	
+	/**
+	 * Sets the defines list used by the <code>ShaderSource</code>.
+	 * <p>
+	 * The defines list can't be empty or null.
+	 * 
+	 * @param source The defines list to be used by the shader.
+	 */
+	public void setDefines(String defines) {
+		Validator.nonEmpty(source, "Can't use null or empty source for shader!");
+		
+		this.defines = defines;
+		this.needsUpdate = true;
+	}
+	
+	/**
+	 * Return whether the <code>ShaderSource</code> needs to be recompiled,
+	 * to take into account the latest changes.
+	 * 
+	 * @return Whether the shader source needs to be recompiled.
+	 */
+	protected boolean needsUpdate() {
+		return needsUpdate;
 	}
 	
 	@Override

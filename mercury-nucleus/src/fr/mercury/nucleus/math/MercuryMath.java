@@ -1,5 +1,7 @@
 package fr.mercury.nucleus.math;
 
+import java.util.Random;
+
 import fr.alchemy.utilities.LocalVars;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Matrix4f;
@@ -16,6 +18,10 @@ import fr.mercury.nucleus.math.objects.Vector3f;
  */
 public final class MercuryMath {
 	
+	/**
+	 * The instance of random object used to generate random numbers.
+	 */
+	public static final Random rand = new Random(System.currentTimeMillis());
 	/**
 	 * The local vars from the main thread.
 	 */

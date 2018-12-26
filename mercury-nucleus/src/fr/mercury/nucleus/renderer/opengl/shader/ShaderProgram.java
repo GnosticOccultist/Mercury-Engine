@@ -36,6 +36,9 @@ public final class ShaderProgram extends GLObject {
 	 */
 	private static final Logger logger = FactoryLogger.getLogger("mercury.opengl");
 	
+	/**
+	 * The currenlty used program by the rendering state of <code>OpenGL</code>.
+	 */
 	public static ShaderProgram CURRENT = null;
 	
 	/**
@@ -71,6 +74,7 @@ public final class ShaderProgram extends GLObject {
 	@Override
 	@OpenGLCall
 	public void upload() {
+		// Check if we need to create the program first.
 		create();
 		
 		for(var source : sources) {
@@ -94,11 +98,19 @@ public final class ShaderProgram extends GLObject {
 		// Use the program to correctly upload uniform.
 		use();
 		
+		// Upload all the uniforms to the program if needed.
 		for(var uniform : uniforms.values()) {
 			uniform.upload(this);
 		}
 	}
 	
+	/**
+	 * Install this <code>ShaderProgram</code> as part of the current rendering state
+	 * of <code>OpenGL</code>. 
+	 * It keeps track of the bounded program, to prevent useless call of this function.
+	 * 
+	 * @throws GLException Thrown if the program isn't yet created.
+	 */
 	@OpenGLCall
 	public void use() {
 		if(CURRENT == this) {
@@ -160,6 +172,29 @@ public final class ShaderProgram extends GLObject {
 	}
 	
 	/**
+	 * Detach the provided {@link ShaderSource} from the <code>ShaderProgram</code>, if
+	 * it was previously attached to it.
+	 * Note that if the source or the program isn't yet created, it will not continue 
+	 * and leave a warning message.
+	 * 
+	 * @param source The source to be detached from the program.
+	 */
+	@OpenGLCall
+	public void detachShader(ShaderSource source) {
+		if(!sources.contains(source)) {
+			logger.warning("The source to detach has never been attached to the program!");
+		}
+		
+		if(getID() == INVALID_ID || source.getID() == INVALID_ID) {
+			logger.warning("Can't detach shader source from program, if it isn't yet created!");
+			return;
+		}
+		
+		GL20.glDetachShader(getID(), source.getID());
+		sources.remove(source);
+	}
+	
+	/**
 	 * Add a {@link Uniform} to the <code>ShaderProgram</code> with the specified
 	 * name, type and value.
 	 * 
@@ -195,6 +230,11 @@ public final class ShaderProgram extends GLObject {
 	@Override
 	public void cleanup() {
 		uniforms.values().forEach(Uniform::cleanup);
+		for(int i = 0; i < sources.size(); i++) {
+			var source = sources.get(i);
+			detachShader(source);
+			source.cleanup();
+		}
 		super.cleanup();
 	}
 	
