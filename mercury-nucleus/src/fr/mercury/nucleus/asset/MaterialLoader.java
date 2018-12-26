@@ -3,11 +3,13 @@ package fr.mercury.nucleus.asset;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Optional;
 
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.file.json.AlchemyJSON;
+import fr.alchemy.utilities.file.json.JSONArray;
 import fr.alchemy.utilities.file.json.JSONObject;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
@@ -78,7 +80,8 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 			// Load the specified shaders in the file into the material.
 			loadShaders(mat, matObj);
 			
-			loadPrefabUniforms(mat, matObj);
+			// Load the possibly declared uniforms.
+			loadUniforms(mat, matObj);
 			
 			logger.info("Successfully loaded material '" + name + "' !");
 			materials[i] = mat;
@@ -87,9 +90,9 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 		return materials;
 	}
 
-	private void loadShaders(Material mat, JSONObject matObj) {
+	private void loadShaders(Material mat, JSONObject matObj) throws IOException {
 		
-		var shaders = matObj.get("shaders").asArray();
+		var shaders = matObj.getOptional("shaders").orElseThrow(IOException::new).asArray();
 		
 		for(int i = 0; i < shaders.size(); i++) {
 			var shader = shaders.get(i).asObject();
@@ -107,27 +110,57 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 			}
 			
 			var source = assetManager.loadShaderSource(shaderPath);
+			// Loads the defines for the source code.
 			loadDefines(source, shader);
 			
+			// Add the shader source to the material.
 			mat.addShaderSource(mat.getName(), source);
 		}
 	}
 	
+	/**
+	 * Loads the declared defines, if any, from the provided shader {@link JSONObject} and
+	 * set them to the given {@link ShaderSource}.
+	 * 
+	 * @param source	The source to fill with defines.
+	 * @param shaderObj The shader JSON object that can possibly contain the defines.
+	 */
 	private void loadDefines(ShaderSource source, JSONObject shaderObj) {
-		var defines = shaderObj.get("defines").asArray();
-		if(defines != null && !defines.isEmpty()) {
+		// Try accessing the defines is specified in the JSON file.
+		var definesOpt = shaderObj.getOptional("defines").map(JSONArray.class::cast);
+		
+		if(definesOpt.isPresent() && !definesOpt.get().isEmpty()) {
+			// Hurrah, we found some defines values. 
+			var defines = definesOpt.get();
+			// Append them to the buffer...
 			for(int i = 0; i < defines.size(); i++) {
 				buffer.append("#define " + defines.get(i).asString() + "\n");
 			}
+			// ... and set the content of the buffer as the defines of the shader source.
 			source.setDefines(buffer.toString());
 		}
 	}
 	
-	private void loadPrefabUniforms(Material mat, JSONObject matObj) {
+	/**
+	 * Loads the declared uniforms, if any, from the provided material {@link JSONObject} and
+	 * add them to the given {@link Material}.
+	 * 
+	 * @param mat	 The material to add the uniforms to.
+	 * @param matObj The material JSON object that can possibly contain the defines.
+	 */
+	private void loadUniforms(Material mat, JSONObject matObj) {
+		// Try accessing the uniforms object and the prefab uniforms array.
+		var uniformsOpt = matObj.getOptional("uniforms").map(JSONObject.class::cast);
+		var prefabsOpt = uniformsOpt.isPresent() ? uniformsOpt.get().getOptional("prefabs")
+				.map(JSONArray.class::cast) : Optional.empty().map(JSONArray.class::cast);
 		
-		var prefabUniforms = matObj.get("uniforms").asObject().get("prefabs").asArray();
-		for(int i = 0; i < prefabUniforms.size(); i++) {
-			mat.getPrefabUniforms().add(prefabUniforms.get(i).asString());
+		if(prefabsOpt.isPresent() && !prefabsOpt.get().isEmpty()) {
+			// Hurrah, some prefab uniform are present.
+			var prefabs = prefabsOpt.get();
+			// Add them to the material, to be later asked to the renderer.
+			for(int i = 0; i < prefabs.size(); i++) {
+				mat.getPrefabUniforms().add(prefabs.get(i).asString());
+			}
 		}
 	}
 
