@@ -1,9 +1,9 @@
 {
 	"Unlit": {
-		"description": "Simple default material used for rendering animae without any lighting.",
+		"description": "Simple default material used for rendering animae without any lighting but a fog effect.",
 		"shaders": [ 
-			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": [] },
-			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": [] }
+			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_FOG"] },
+			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_FOG"] }
 		],
 		"uniforms": {
 			"prefabs": ["FOG", "MODEL", "VIEW", "VIEW_PROJECTION_MODEL"]
@@ -11,11 +11,13 @@
 	},
 	
 	"Unlit_no_fog": {
+		"description": "Simple default material used for rendering animae without any lighting or fog.",
 		"shaders": [ 
-			
+			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": [] },
+			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": [] }
 		],
 		"uniforms": {
-			"prefabs": []
+			"prefabs": ["VIEW_PROJECTION_MODEL"]
 		}
 	}
 }

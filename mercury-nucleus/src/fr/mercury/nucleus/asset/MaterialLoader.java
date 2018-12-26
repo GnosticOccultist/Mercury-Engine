@@ -23,9 +23,17 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 	 */
 	private static final Logger logger = FactoryLogger.getLogger("mercury.app");
 	/**
+	 * The maximum authorized defines per shader.
+	 */
+	private static final int MAX_DEFINES = 20;
+	/**
 	 * The asset manager managing this asset loader.
 	 */
 	private AssetManager assetManager;
+	/**
+	 * The buffer used to append defines.
+	 */
+	private final StringBuffer buffer = new StringBuffer(MAX_DEFINES);
 	
 	@Override
 	public Material[] load(String path) {
@@ -99,7 +107,19 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 			}
 			
 			var source = assetManager.loadShaderSource(shaderPath);
+			loadDefines(source, shader);
+			
 			mat.addShaderSource(mat.getName(), source);
+		}
+	}
+	
+	private void loadDefines(ShaderSource source, JSONObject shaderObj) {
+		var defines = shaderObj.get("defines").asArray();
+		if(defines != null && !defines.isEmpty()) {
+			for(int i = 0; i < defines.size(); i++) {
+				buffer.append("#define " + defines.get(i).asString() + "\n");
+			}
+			source.setDefines(buffer.toString());
 		}
 	}
 	
