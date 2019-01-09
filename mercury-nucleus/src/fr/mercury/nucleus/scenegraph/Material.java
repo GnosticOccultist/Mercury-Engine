@@ -62,7 +62,6 @@ public class Material {
 			shader.upload();
 			shaders.put(name, shader);
 		}
-		addPrefabs(shader, anima);
 		return shader;
 	}
 	

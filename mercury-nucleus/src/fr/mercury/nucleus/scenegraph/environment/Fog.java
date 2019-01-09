@@ -77,23 +77,10 @@ public final class Fog implements UniformStructure {
 	
 	@Override
 	public void uniforms(ShaderProgram program) {
-		var color = program.getUniform(STRUCTURE_NAME + ".color");
-		if(color == null) {
-			program.addUniform(STRUCTURE_NAME + ".color", UniformType.VECTOR4F, this.color);
-			program.getUniform(STRUCTURE_NAME + ".color").upload(program);
-		} else {
-			color.setValue(UniformType.VECTOR4F, this.color);
-			color.upload(program);
-		}
-		
-		var density = program.getUniform(STRUCTURE_NAME + ".density");
-		if(density == null) {
-			program.addUniform(STRUCTURE_NAME + ".density", UniformType.FLOAT, this.density);
-			program.getUniform(STRUCTURE_NAME + ".density").upload(program);
-		} else {
-			density.setValue(UniformType.FLOAT, this.density);
-			density.upload(program);
-		}
+		program.addUniform(STRUCTURE_NAME + ".color", UniformType.VECTOR4F, this.color);
+		program.addUniform(STRUCTURE_NAME + ".density", UniformType.FLOAT, this.density);
+		// Apply changes if any.
+		program.upload();
 	}
 	
 	@Override

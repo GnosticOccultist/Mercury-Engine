@@ -59,6 +59,10 @@ public final class ShaderProgram extends GLObject {
 	 * The table with the uniforms classed by their name.
 	 */
 	private final Map<String, Uniform> uniforms;
+	/**
+	 * Whether the shader program has been modified and needs to be re-linked.
+	 */
+	private boolean needsUpdate = true;
 	
 	/**
 	 * Instantiates a new <code>ShaderProgram</code> with empty sources.
@@ -77,22 +81,25 @@ public final class ShaderProgram extends GLObject {
 		// Check if we need to create the program first.
 		create();
 		
-		for(var source : sources) {
-			source.upload();
+		if(needsUpdate()) {
+			for(var source : sources) {
+				source.upload();
+				
+				// Attach the shader source.
+				GL20.glAttachShader(id, source.getID());
+			}
 			
-			// Attach the shader source.
-			GL20.glAttachShader(id, source.getID());
-		}
-		
-		// Link the program.
-		GL20.glLinkProgram(id);
-		
-		// If failed, show info log.
-		if (GL20.glGetProgrami(id, GL20.GL_LINK_STATUS) == GL11.GL_FALSE) {
-			throw new GLException("Error while linking shader program: "
-					+ GL20.glGetProgramInfoLog(id, 1024));
-		} else {
-			logger.info("Successfully linked shader program!");
+			// Link the program.
+			GL20.glLinkProgram(id);
+			
+			// If failed, show info log.
+			if (GL20.glGetProgrami(id, GL20.GL_LINK_STATUS) == GL11.GL_FALSE) {
+				throw new GLException("Error while linking shader program: "
+						+ GL20.glGetProgramInfoLog(id, 1024));
+			} else {
+				logger.info("Successfully linked shader program!");
+				needsUpdate = false;
+			}
 		}
 		
 		// Use the program to correctly upload uniform.
@@ -138,6 +145,7 @@ public final class ShaderProgram extends GLObject {
 		Validator.nonNull(source, "The shader source cannot be null.");
 		
 		sources.add(source);
+		needsUpdate = true;
 		return this;
 	}
 	
@@ -196,7 +204,9 @@ public final class ShaderProgram extends GLObject {
 	
 	/**
 	 * Add a {@link Uniform} to the <code>ShaderProgram</code> with the specified
-	 * name, type and value.
+	 * name, type and value. 
+	 * If a uniform with the name already exists, it will simply set its type and 
+	 * value without instantiating a new one.
 	 * 
 	 * @param name  The name of the uniform.
 	 * @param type  The value's type of the uniform.
@@ -208,11 +218,15 @@ public final class ShaderProgram extends GLObject {
 		Validator.nonNull(value, "The uniform's value cannot be null!");
 		Validator.nonNull(name, "The uniform's name cannot be null!");
 		
-		Uniform uniform = new Uniform();
-		uniform.setName(name);
-		uniform.setValue(type, value);
+		// Check if the uniform doesn't already exists.
+		var uniform = getUniform(name);
+		if(uniform == null) {
+			uniform = new Uniform();
+			uniform.setName(name);
+			uniforms.put(name, uniform);
+		}
 		
-		uniforms.put(name, uniform);
+		uniform.setValue(type, value);
 		return this;
 	}
 	
@@ -221,20 +235,32 @@ public final class ShaderProgram extends GLObject {
 	 * null if it doesn't exist.
 	 * 
 	 * @param name The name of the uniform to get.
-	 * @return	   The uniform matching the name.
+	 * @return	   The uniform matching the name, or null if none.
 	 */
 	public Uniform getUniform(String name) {
 		return uniforms.get(name);
 	}
 	
+	/**
+	 * Return whether the <code>ShaderProgram</code> needs to be relinked,
+	 * to take into account the latest changes.
+	 * 
+	 * @return Whether the shader program needs to be relinked.
+	 */
+	protected boolean needsUpdate() {
+		return needsUpdate;
+	}
+	
 	@Override
 	public void cleanup() {
 		uniforms.values().forEach(Uniform::cleanup);
+		uniforms.clear();
 		for(int i = 0; i < sources.size(); i++) {
 			var source = sources.get(i);
 			detachShader(source);
 			source.cleanup();
 		}
+		sources.clear();
 		super.cleanup();
 	}
 	

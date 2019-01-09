@@ -108,13 +108,7 @@ public class Renderer extends AbstractRenderer {
 		
 		// this is temporary hopefully...
 		var shader = physica.getMaterial().getShader("Unlit", physica);
-		if(shader != null) {
-			if(shader.getUniform("texture_sampler") == null) {
-				shader.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
-			} else {
-				shader.getUniform("texture_sampler").upload(shader);
-			}
-		}
+		shader.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
 		
 		var material = physica.getMaterial();
 		

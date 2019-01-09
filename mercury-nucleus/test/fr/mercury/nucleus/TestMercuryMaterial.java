@@ -18,6 +18,8 @@ public class TestMercuryMaterial extends MercuryApplication {
 		app.start();
 	}
 
+	private PhysicaMundi cube;
+
 	@Override
 	protected void initialize() {
 		Texture2D texture = assetManager.loadTexture2D("/model/octostone.png")
@@ -25,7 +27,7 @@ public class TestMercuryMaterial extends MercuryApplication {
 				.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
 		texture.upload();
 		
-		PhysicaMundi cube = assetManager.loadPhysicaMundi("/model/cube.obj");
+		cube = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube.setName("cube");
 		cube.setTranslation(5, 0, 0).setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
 		
@@ -49,5 +51,7 @@ public class TestMercuryMaterial extends MercuryApplication {
 	@Override
 	protected void update(float tpf) {
 		super.update(tpf);
+		
+		cube.rotate(0.0f, 0.03f, 0);
 	}
 }
