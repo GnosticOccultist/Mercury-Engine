@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.readable.ReadableQuaternion;
 
@@ -17,7 +18,7 @@ import fr.mercury.nucleus.math.readable.ReadableQuaternion;
  * 
  * @author GnosticOccultist
  */
-public final class Quaternion implements ReadableQuaternion, Comparable<Quaternion> {
+public final class Quaternion implements ReadableQuaternion, Comparable<Quaternion>, Reusable {
 	
 	/**
 	 * The X-component of the vector.
@@ -281,7 +282,7 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
        
     	// Saving the original scale before applying the rotation, to be restored
     	// at the end.
-    	Vector3f originalScale = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
+    	Vector3f originalScale = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class, Vector3f::new);
     	originalScale.set(0, 0, 0);
         result.getScale(originalScale);
         result.setScale(1, 1, 1);
@@ -464,6 +465,24 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
         normalize();
         return this;
     }
+    
+    /**
+	 * Sets all the components of the <code>Quaternion</code> to the {@link #identity()},
+	 * before retrieving it from a pool.
+	 */
+	@Override
+	public void reuse() {
+		identity();
+	}
+	
+	/**
+	 * Sets all the components of the <code>Quaternion</code> to the {@link #identity()},
+	 * before storing it into a pool.
+	 */
+	@Override
+	public void free() {
+		identity();
+	}
     
     /**
 	 * Compare this quaternion with the provided <code>Quaternion</code>. It will first

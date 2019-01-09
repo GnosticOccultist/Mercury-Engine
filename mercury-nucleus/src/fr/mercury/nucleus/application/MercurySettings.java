@@ -27,6 +27,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 		DEFAULT.put("VSync", true);
 		DEFAULT.put("FrameRate", -1);
 		DEFAULT.put("ShowFPS", true);
+		DEFAULT.put("Samples", 0);
 	}
 	
 	/**
@@ -174,6 +175,16 @@ public final class MercurySettings extends HashMap<String, Object> {
 	 */
 	public void setFrameRate(int frameRate) {
 		addInteger("FrameRate", frameRate);
+	}
+	
+	/**
+	 * Set the number of samples per pixel. If the value is &gt;1, the rendered 
+	 * pixels will be multi-sampled.
+	 * 
+	 * @param frameRate The number of samples (Default: 1 &rarr; single-sampled).
+	 */
+	public void setSamples(int samples) {
+		addInteger("Samples", samples);
 	}
 	
 	/**

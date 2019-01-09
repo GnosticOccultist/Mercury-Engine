@@ -3,6 +3,7 @@ package fr.mercury.nucleus.math.objects;
 import java.nio.FloatBuffer;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
 
 /**
@@ -17,7 +18,7 @@ import fr.mercury.nucleus.math.MercuryMath;
  * 
  * @author GnosticOccultist
  */
-public final class Matrix4f {
+public final class Matrix4f implements Reusable {
 	
 	/**
 	 * The <code>Matrix4f</code> identity &rarr; {@link #identity()}
@@ -506,6 +507,24 @@ public final class Matrix4f {
         store.set(scaleX, scaleY, scaleZ);
         return store;
     }
+    
+    /**
+   	 * Sets all the components of the <code>Matrix4f</code> to the {@link #identity()},
+   	 * before retrieving it from a pool.
+   	 */
+   	@Override
+   	public void reuse() {
+   		identity();
+   	}
+   	
+   	/**
+   	 * Sets all the components of the <code>Matrix4f</code> to the {@link #identity()},
+   	 * before storing it into a pool.
+   	 */
+   	@Override
+   	public void free() {
+   		identity();
+   	}
     
     @Override
     public boolean equals(Object o) {

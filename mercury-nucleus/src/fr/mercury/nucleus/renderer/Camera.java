@@ -102,9 +102,9 @@ public final class Camera {
 	}
 	
 	public void lookAt(float x, float y, float z, ReadableVector3f worldUpVector) {
-		Vector3f newDirection = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
-		Vector3f newUp = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
-		Vector3f newLeft = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class);
+		Vector3f newDirection = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class, Vector3f::new);
+		Vector3f newUp = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class, Vector3f::new);
+		Vector3f newLeft = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class, Vector3f::new);
 		
 		newDirection.set(x, y, z).sub(location).normalize();
 		newUp.set(worldUpVector).normalize();

@@ -5,7 +5,10 @@ import java.util.Random;
 import fr.alchemy.utilities.LocalVars;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Matrix4f;
+import fr.mercury.nucleus.math.objects.Quaternion;
+import fr.mercury.nucleus.math.objects.Vector2f;
 import fr.mercury.nucleus.math.objects.Vector3f;
+import fr.mercury.nucleus.math.objects.Vector4f;
 
 /**
  * <code>MercuryMath</code> contains mathematical functions, providing fast
@@ -28,9 +31,12 @@ public final class MercuryMath {
 	public static final LocalVars LOCAL_VARS = LocalVars.get();
 	
 	static {
-		LOCAL_VARS.register(Vector3f.class, Vector3f::new);
-		LOCAL_VARS.register(Matrix4f.class, Matrix4f::new);
-		LOCAL_VARS.register(Color.class, Color::new);
+		LOCAL_VARS.register(Vector2f.class);
+		LOCAL_VARS.register(Vector3f.class);
+		LOCAL_VARS.register(Vector4f.class);
+		LOCAL_VARS.register(Quaternion.class);
+		LOCAL_VARS.register(Matrix4f.class);
+		LOCAL_VARS.register(Color.class);
 	}
 	
 	/**

@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.pool.Reusable;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
 
 /**
@@ -18,7 +19,7 @@ import fr.mercury.nucleus.math.readable.ReadableVector3f;
  * 
  * @author GnosticOccultist
  */
-public final class Vector3f implements ReadableVector3f, Comparable<Vector3f> {
+public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, Reusable {
 	
 	/**
 	 * The zero components <code>Vector3f</code> &rarr; [0,0,0].
@@ -385,6 +386,24 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f> {
 	public Vector3f zero() {
 		x = y = z = 0;
 		return this;
+	}
+	
+	/**
+	 * Sets all the components of the <code>Vector3f</code> to 0,
+	 * before retrieving it from a pool.
+	 */
+	@Override
+	public void reuse() {
+		zero();
+	}
+	
+	/**
+	 * Sets all the components of the <code>Vector3f</code> to 0,
+	 * before storing it into a pool.
+	 */
+	@Override
+	public void free() {
+		zero();
 	}
 	
 	/**

@@ -143,7 +143,7 @@ public class Image {
 	public ByteBuffer toByteBuffer(ByteBuffer store) {
 		Validator.nonNull(store, "The buffer store cannot be null!");
 		
-		Color color = MercuryMath.LOCAL_VARS.acquireNext(Color.class);
+		Color color = MercuryMath.LOCAL_VARS.acquireNext(Color.class, Color::new);
 		int index = 0;
 
 		for (int x = 0; x < width; x++) {

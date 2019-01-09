@@ -37,6 +37,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
+import org.lwjgl.opengl.GL13;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
@@ -317,6 +318,10 @@ public class MercuryContext implements Runnable {
         glfwMakeContextCurrent(window);
         
         GL.createCapabilities();
+        
+        if(settings.getInteger("Samples") != 0) {
+        	GL11.glEnable(GL13.GL_MULTISAMPLE);
+        }
         
         // Enabling V-Sync.
         glfwSwapInterval(settings.isVSync() ? 1 : 0);

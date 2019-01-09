@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.pool.Reusable;
 
 /**
  * <code>Vector2f</code> is a mathematical utility class representing a vector with
@@ -15,7 +16,7 @@ import fr.alchemy.utilities.Validator;
  * 
  * @author GnosticOccultist
  */
-public final class Vector2f implements Comparable<Vector2f> {
+public final class Vector2f implements Comparable<Vector2f>, Reusable {
 	
 	/**
 	 * The X-component of the vector.
@@ -267,6 +268,24 @@ public final class Vector2f implements Comparable<Vector2f> {
 	public Vector2f zero() {
 		x = y = 0;
 		return this;
+	}
+	
+	/**
+	 * Sets all the components of the <code>Vector2f</code> to 0,
+	 * before retrieving it from a pool.
+	 */
+	@Override
+	public void reuse() {
+		zero();
+	}
+	
+	/**
+	 * Sets all the components of the <code>Vector2f</code> to 0,
+	 * before storing it into a pool.
+	 */
+	@Override
+	public void free() {
+		zero();
 	}
 	
 	/**

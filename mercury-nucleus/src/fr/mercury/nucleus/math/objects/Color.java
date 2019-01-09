@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.pool.Reusable;
 
 /**
  * <code>Color</code> is a mathematical object defined of a red, green, blue and alpha component
@@ -13,7 +14,7 @@ import fr.alchemy.utilities.Validator;
  * 
  * @author GnosticOccultist
  */
-public final class Color implements Comparable<Color> {
+public final class Color implements Comparable<Color>, Reusable {
 	
 	/**
 	 * The white color (1,1,1,1).
@@ -151,6 +152,24 @@ public final class Color implements Comparable<Color> {
 	public Vector4f asVector4f() {
 		return new Vector4f(r, g, b, a);
 	}
+	
+	/**
+   	 * Sets all the components of the <code>Color</code> to {@link #WHITE},
+   	 * before retrieving it from a pool.
+   	 */
+   	@Override
+   	public void reuse() {
+   		set(0, 0, 0, 1);
+   	}
+   	
+   	/**
+   	 * Sets all the components of the <code>Color</code> to {@link #WHITE},
+   	 * before storing it into a pool.
+   	 */
+   	@Override
+   	public void free() {
+   		set(0, 0, 0, 1);
+   	}
 
 	/**
 	 * Compare this color with the provided <code>Color</code>. It will first

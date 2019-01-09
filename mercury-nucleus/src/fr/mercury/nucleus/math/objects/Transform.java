@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.readable.ReadableQuaternion;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
@@ -15,7 +16,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
  * 
  * @author GnosticOccultist
  */
-public final class Transform implements ReadableTransform, Comparable<Transform> {
+public final class Transform implements ReadableTransform, Comparable<Transform>, Reusable {
 	
 	/**
 	 * The <code>Transform</code> identity &rarr; Translation: [0,0,0] | Rotation: [0,0,0,1] | Scale: [1,1,1].
@@ -228,7 +229,8 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 * @return  The updated transform. 
 	 */
 	public Transform rotate(float x, float y, float z) {
-		Quaternion quat = new Quaternion().fromAngles(x, y, z);
+		Quaternion quat = MercuryMath.LOCAL_VARS.acquireNext(Quaternion.class, Quaternion::new);
+		quat.fromAngles(x, y, z);
 		rotate(quat);
 		return this;
 	}
@@ -320,7 +322,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 		store.setRotation(rotation);
 		store.setTranslation(translation);
 		
-		Matrix4f scaleMatrix = MercuryMath.LOCAL_VARS.acquireNext(Matrix4f.class);
+		Matrix4f scaleMatrix = MercuryMath.LOCAL_VARS.acquireNext(Matrix4f.class, Matrix4f::new);
 		scaleMatrix.identity();
 		scaleMatrix.scale(scale);
 		store.mult(scaleMatrix, store);
@@ -368,6 +370,24 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 		rotation.set(0, 0, 0, 1);
 		scale.set(1, 1, 1);
 	}
+	
+	/**
+   	 * Sets the <code>Transform</code> to the {@link #identity()},
+   	 * before retrieving it from a pool.
+   	 */
+   	@Override
+   	public void reuse() {
+   		identity();
+   	}
+   	
+   	/**
+   	 * Sets the <code>Transform</code> to the {@link #identity()},
+   	 * before storing it into a pool.
+   	 */
+   	@Override
+   	public void free() {
+   		identity();
+   	}
 	
 	/**
 	 * Compare this transform with the provided <code>Transform</code>. It will first
