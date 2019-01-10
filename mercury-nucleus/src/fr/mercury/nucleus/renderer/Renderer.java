@@ -104,8 +104,6 @@ public class Renderer extends AbstractRenderer {
 		
 		setMatrix(MatrixType.MODEL, physica.getWorldTransform());
 		
-		computeMatrix(MatrixType.VIEW_PROJECTION_MODEL);
-		
 		// this is temporary hopefully...
 		var shader = physica.getMaterial().getShader("Unlit", physica);
 		shader.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
@@ -115,6 +113,9 @@ public class Renderer extends AbstractRenderer {
 		setupMatrixUniforms(shader, material);
 		
 		setupPrefabUniforms(shader, physica);
+		
+		// Upload latest changes to the OpenGL state.
+		shader.upload();
 		
 		defaultLogic.begin(physica);
 	

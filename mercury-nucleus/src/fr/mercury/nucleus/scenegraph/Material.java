@@ -65,16 +65,6 @@ public class Material {
 		return shader;
 	}
 	
-	public void addPrefabs(ShaderProgram shader, AnimaMundi anima) {
-		for(int i = 0; i < prefabUniforms.size(); i++) {
-			var prefabName = prefabUniforms.get(i);
-			var property = anima.getEnvironmentProperty(prefabName);
-			if(property != null) {
-				property.uniforms(shader);
-			}
-		}
-	}
-	
 	public List<ShaderSource> getSources(String name) {
 		return sources.get(name);
 	}

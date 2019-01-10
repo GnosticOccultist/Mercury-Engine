@@ -11,6 +11,7 @@ import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformStructure;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
@@ -149,17 +150,25 @@ public abstract class AbstractRenderer {
 	protected void setupMatrixUniforms(ShaderProgram shader, Material material) {
 		for(MatrixType type : MatrixType.values()) {
 			var name = type.name();
+			
 			if(material.getPrefabUniforms().contains(name)) {
-				if(shader.getUniform(type.getUniformName()) == null) {
-					shader.addUniform(type.getUniformName(), UniformType.MATRIX4F, matrixMap.get(type));
-				} else {
-					shader.getUniform(type.getUniformName()).setValue(UniformType.MATRIX4F, matrixMap.get(type));
-					shader.getUniform(type.getUniformName()).upload(shader);
+				// First force-compute the matrix before adding it to the uniform.
+				if(type.isComputed()) {
+					computeMatrix(type);
 				}
+				
+				shader.addUniform(type.getUniformName(), UniformType.MATRIX4F, matrixMap.get(type));	
 			}
 		}
 	}
 	
+	/**
+	 * Setup the {@link UniformStructure} specified by the provided {@link Material} and apply it 
+	 * for the given {@link ShaderProgram}.
+	 * 
+	 * @param shader  The shader program to setup the structure of uniforms for.
+	 * @param physica The physica-mundi requesting the prefab uniforms.
+	 */
 	protected void setupPrefabUniforms(ShaderProgram shader, PhysicaMundi physica) {
 		var prefabUniforms = physica.getMaterial().getPrefabUniforms();
 		
@@ -197,26 +206,32 @@ public abstract class AbstractRenderer {
 	}
 	
 	/**
-	 * Compute the {@link MatrixType#VIEW_PROJECTION_MODEL} with the other
-	 * matrices if they are provided.
+	 * Compute the specified {@link MatrixType}, if possible, with the other matrices if they are provided.
+	 * The type of matrix that can be computed are marked as {@link MatrixType#isComputed()}.
 	 * 
-	 * @param type The type of matrix to compute, for now only view-projection-model.
+	 * @param type The type of matrix to compute.
 	 */
 	public void computeMatrix(MatrixType type) {
-		if(!type.equals(MatrixType.VIEW_PROJECTION_MODEL)) {
+		if(!type.isComputed()) {
 			throw new IllegalArgumentException("The provided type of matrix: " + 
 					type + " can't be computed!");
 		}
 		
 		var buffer = matrixMap.get(type);
 		
-		var projection = matrixMap.get(MatrixType.PROJECTION);
-		var view = matrixMap.get(MatrixType.VIEW);
-		
-		buffer.set(projection.mult(view, buffer));
-		
-		var model = matrixMap.get(MatrixType.MODEL);
-		buffer.mult(model, buffer);
+		switch (type) {
+			case VIEW_PROJECTION_MODEL:
+				var projection = matrixMap.get(MatrixType.PROJECTION);
+				var view = matrixMap.get(MatrixType.VIEW);
+				
+				buffer.set(projection.mult(view, buffer));
+				
+				var model = matrixMap.get(MatrixType.MODEL);
+				buffer.mult(model, buffer);
+				break;
+			default:
+				throw new UnsupportedOperationException("The provided type of matrix: " + type + " can't be computed!");
+		}
 	}
 	
 	/**
@@ -230,29 +245,34 @@ public abstract class AbstractRenderer {
 		 * The model matrix used to display a {@link PhysicaMundi} correctly 
 		 * in world-space. It should take into account the world transform not the local one.
 		 */
-		MODEL("modelMatrix"),
+		MODEL("modelMatrix", false),
 		/**
 		 * The view matrix used to display the scene-graph based on camera position.
 		 */
-		VIEW("viewMatrix"),
+		VIEW("viewMatrix", false),
 		/**
 		 * The projection matrix used to display the scene-graph based on 
 		 * window size.
 		 */
-		PROJECTION("projectionMatrix"),
+		PROJECTION("projectionMatrix", false),
 		/**
 		 * The view-projection-model matrix used to display an entire scene-graph
 		 * correctly in 3D-space taking into account the camera, window and object's transform.
 		 */
-		VIEW_PROJECTION_MODEL("viewProjectionWorldMatrix");
+		VIEW_PROJECTION_MODEL("viewProjectionModelMatrix", true);
 		
 		/**
 		 * The uniform name used inside the shader.
 		 */
 		private final String uniformName;
+		/**
+		 * Whether the matrix type should be computed.
+		 */
+		private final boolean computed;
 		
-		private MatrixType(String uniformName) {
+		private MatrixType(String uniformName, boolean computed) {
 			this.uniformName = uniformName;
+			this.computed = computed;
 		}
 		
 		/**
@@ -262,6 +282,16 @@ public abstract class AbstractRenderer {
 		 */
 		public String getUniformName() {
 			return uniformName;
+		}
+		
+		/**
+		 * Return whether the <code>MatrixType</code> should be first computed,
+		 * before being added to a {@link Uniform}.
+		 * 
+		 * @return Whether the matrix should be computed.
+		 */
+		public boolean isComputed() {
+			return computed;
 		}
 	}
 }
