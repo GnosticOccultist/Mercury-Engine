@@ -41,6 +41,7 @@ import org.lwjgl.opengl.GL13;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.NanoTimer;
 
 /**
@@ -57,6 +58,10 @@ public class MercuryContext implements Runnable {
 	 * The application logger.
 	 */
 	private static final Logger logger = FactoryLogger.getLogger("mercury.app");
+	/**
+	 * A reference of the rendering thread.
+	 */
+	static Thread GL_RENDER_THREAD = null;
 	
 	/**
 	 * The application which manages the context.
@@ -221,6 +226,8 @@ public class MercuryContext implements Runnable {
 	private boolean initializeInMercury() {
 		try {
 			
+			GL_RENDER_THREAD = Thread.currentThread();
+			
 			timer = new NanoTimer();
 			
 			createContext(settings);
@@ -366,7 +373,18 @@ public class MercuryContext implements Runnable {
 	private void showWindow() {
 		glfwShowWindow(window);
 	}
-
+	
+	/**
+	 * Check that the currently used thread is the one use by the OpenGL context for rendering.
+	 * 
+	 * @throws GLException Thrown if the current thread isn't the rendering one.
+	 */
+	public static void checkGLThread() {
+		if(GL_RENDER_THREAD != Thread.currentThread()) {
+			throw new GLException("The method should only be called from the GL render thread!");
+		}
+	}
+	
 	/**
 	 * Set the settings used by the context to the provided ones. It copies the settings
 	 * without altering the provided instance of <code>MercurySettings</code>.
