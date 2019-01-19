@@ -35,6 +35,10 @@ public abstract class GLBuffer extends GLObject {
 	 * The data contained in the buffer.
 	 */
 	protected Buffer data = null;
+	/**
+	 * Whether the buffer needs to be updated through OpenGL.
+	 */
+	protected boolean needsUpdate = true;
 
 	/**
 	 * Determines if the provided ID correspond to an OpenGL <code>GLBuffer</code>.
@@ -76,6 +80,18 @@ public abstract class GLBuffer extends GLObject {
 		} else if(data instanceof IntBuffer) {
 			GL15.glBufferData(getOpenGLType(), (IntBuffer) data, getOpenGLUsage());
 		}
+		
+		this.needsUpdate = false;
+	}
+	
+	/**
+	 * Return whether the <code>GLBuffer</code> needs its data buffer uploaded to the 
+	 * OpenGL context.
+	 * 
+	 * @return Whether the data buffer needs to be reuploaded through the OpenGL context.
+	 */
+	protected boolean needsUpdate() {
+		return needsUpdate;
 	}
 	
 	/**

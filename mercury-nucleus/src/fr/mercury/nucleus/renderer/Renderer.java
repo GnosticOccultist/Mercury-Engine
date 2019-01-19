@@ -18,7 +18,7 @@ import fr.mercury.nucleus.utils.OpenGLCall;
 public class Renderer extends AbstractRenderer {
 	
 	/**
-	 * The visitor designed to render {@link PhysicaMundi} which doesn't use any {@link RenderBucket}.
+	 * The visitor designed to cleanup a hierarchy of {@link AnimaMundi}.
 	 */
 	private final Visitor GL_CLEANUP = new Visitor() {
 		

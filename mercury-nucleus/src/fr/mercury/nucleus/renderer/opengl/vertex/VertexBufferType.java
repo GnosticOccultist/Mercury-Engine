@@ -6,9 +6,10 @@ import org.lwjgl.opengl.GL15;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.BufferType;
 
 /**
+ * <code>VertexBufferType</code> is an enumeration defining the various type of vertex data
+ * a {@link VertexBuffer} can hold.
  * 
  * @author GnosticOccultist
- *
  */
 public enum VertexBufferType {
 	
@@ -52,8 +53,18 @@ public enum VertexBufferType {
 	 */
 	INDEX(BufferType.VERTEX_INDEXING, 1, Format.UNSIGNED_INT);
 	
+	/**
+	 * The buffer type to use either {@link BufferType#VERTEX_DATA} or 
+	 * {@link BufferType#VERTEX_INDEXING}.
+	 */
 	private BufferType bufferType;
+	/**
+	 * The preferred format for the type.
+	 */
 	private Format format;
+	/**
+	 * The size per component, for example 3 for a normal.
+	 */
 	private int size;
 	
 	VertexBufferType(BufferType bufferType, int size, Format format) {
@@ -113,12 +124,25 @@ public enum VertexBufferType {
 		return format;
 	}
 	
+	/**
+	 * Return the OpenGL equivalent format to this <code>VertexBufferType</code>'s {@link Format}.
+	 * 
+	 * @return The OpenGL equivalent to the preferred format.
+	 */
 	public int getOpenGLFormat() {
 		return getOpenGLFormat(format);
 	}
 	
+	/**
+	 * Return the OpenGL equivalent format to the specified {@link Format}.
+	 * 
+	 * @param format The format to get the OpenGL equivalent one.
+	 * @return		 The OpenGL equivalent format.
+	 */
 	public static int getOpenGLFormat(Format format) {
 		switch (format) {
+			case UNSIGNED_SHORT:
+				return GL11.GL_UNSIGNED_SHORT;
 			case FLOAT:
 				return GL11.GL_FLOAT;
 			case UNSIGNED_INT:
@@ -128,25 +152,61 @@ public enum VertexBufferType {
 		}
 	}
 	
+	/**
+	 * <code>Format</code> is an enumeration which describes the various format handled
+	 * by <code>Mercury-Engine</code> and the graphics API OpenGL.
+	 * 
+	 * @author Stickxy
+	 */
 	public enum Format {
-		
-		FLOAT(4),
-		
+		/**
+		 * An unsigned 16-bit value (2 bytes).
+		 */
+		UNSIGNED_SHORT(2),
+		/**
+		 * A 32-bit single-precision floating-point value (4 bytes).
+		 */
+		FLOAT(4, true),
+		/**
+		 * An unsigned 32-bit value (4 bytes).
+		 */
 		UNSIGNED_INT(4);
 		
+		/**
+		 * The size in bytes of the format.
+		 */
 		private int byteSize = 0;
-		
+		/**
+		 * Whether the format is a floating-point type.
+		 */
+		private boolean floatingPoint = false;
+	
 		Format(int byteSize) {
 			this.byteSize = byteSize;
 		}
 		
+		Format(int byteSize, boolean floatingPoint) {
+			this.byteSize = byteSize;
+			this.floatingPoint = floatingPoint;
+		}
+		
 		/**
-		 * Returns the size in bytes of the format.
+		 * Returns the size in bytes of the <code>Format</code>.
 		 * 
 		 * @return The size in bytes of the format.
 		 */
 		public int getSizeInByte() {
 			return byteSize;
-		}	
+		}
+		
+		/**
+		 * Returns whether the <code>Format</code> is a floating-point type.
+		 * If this is <code>true</code> the value can't be normalized.
+		 * 
+		 * @return Whether the format is a floating-point type.
+		 */
+		public boolean isFloatingPoint() {
+			return floatingPoint;
+		}
 	}
 }

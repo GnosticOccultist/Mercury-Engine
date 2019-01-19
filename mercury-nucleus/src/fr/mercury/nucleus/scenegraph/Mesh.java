@@ -14,6 +14,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexArray;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType.Format;
 import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
@@ -63,7 +64,7 @@ public class Mesh {
 	protected void bind() {
 		vao.bind();
 		
-		buffers.values().forEach(VertexBuffer::bind);
+		buffers.values().forEach(VertexBuffer::upload);
 	}
 	
 	public void bindBeforeRender() {
@@ -191,10 +192,19 @@ public class Mesh {
 		for(VertexBuffer vertexBuffer : buffers.values()) {
 			
 			vertexBuffer.upload();
+			
+			
 			VertexBufferType type = vertexBuffer.getVertexBufferType();
 			
+			Format format = vertexBuffer.getFormat() == null ? 
+					type.getPreferredFormat() : vertexBuffer.getFormat();
+			boolean normalized = format.isFloatingPoint() ? false : vertexBuffer.isNormalized();
+			
 			if(!type.equals(VertexBufferType.INDEX)) {
-				GL20.glVertexAttribPointer(type.ordinal(), type.getSize(), type.getOpenGLFormat(), false, 0, 0);
+				
+				// TODO: Attribute class to handle attribs creation and enabling.
+				
+				GL20.glVertexAttribPointer(type.ordinal(), type.getSize(), VertexBufferType.getOpenGLFormat(format), normalized, 0, 0);
 				//GL20.glEnableVertexAttribArray(type.ordinal());
 			}
 		}

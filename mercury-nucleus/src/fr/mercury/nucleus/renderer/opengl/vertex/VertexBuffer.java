@@ -10,6 +10,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType.Format;
 import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
@@ -26,10 +27,24 @@ import fr.mercury.nucleus.utils.OpenGLCall;
  * @author GnosticOccultist
  */
 public class VertexBuffer extends GLBuffer {
+	
+	/**
+	 * The upper-limit to which short buffer should be preferred instead of an integer buffer to store indices.
+	 * This means that if indices count &ge; 65536, it needs to use integer buffer.
+	 */
+	public static final int USE_SHORT_LIMIT = 65536;
 	/**
 	 * The vertex buffer type.
 	 */
 	private VertexBufferType vertexBufferType;
+	/**
+	 * The format to use for the vertex data, if null it will use the preferred format of {@link VertexBufferType}.
+	 */
+	private Format format;
+	/**
+	 * Return whether the vertex data should be normalized. Only works for non floating-point type format.
+	 */
+	private boolean normalized = false;
 	
 	/**
 	 * Instantiates a new <code>VertexBuffer</code> with no contained data,
@@ -52,7 +67,9 @@ public class VertexBuffer extends GLBuffer {
 		
 		bind();
 		
-		storeData();
+		if(needsUpdate()) {
+			storeData();
+		}
 	}
 	
 	/**
@@ -102,6 +119,7 @@ public class VertexBuffer extends GLBuffer {
 		}
 		
 		this.data = data;
+		this.needsUpdate = true;
 	}
 	
 	/**
@@ -133,7 +151,29 @@ public class VertexBuffer extends GLBuffer {
 	public VertexBufferType getVertexBufferType() {
 		return vertexBufferType;
 	}
+	
+	/**
+	 * Return the {@link Format} to use for the <code>VertexBuffer</code>, or null
+	 * to default to the preferred format of {@link VertexBufferType}.
+	 * 
+	 * @return The format to use for the vertex data.
+	 */
+	public Format getFormat() {
+		return format;
+	}
 
+	/**
+	 * Return whether the vertex data of the <code>VertexBuffer</code> should be normalized,
+	 * when passing as attributes.
+	 * <p>
+	 * Note that it only works for non floating-point type {@link Format}.
+	 * 
+	 * @return Whether the vertex data should be normalized.
+	 */
+	public boolean isNormalized() {
+		return normalized;
+	}
+	
 	@Override
 	@OpenGLCall
 	protected Integer acquireID() {
