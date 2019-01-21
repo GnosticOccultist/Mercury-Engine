@@ -3,6 +3,7 @@ package fr.mercury.nucleus.renderer.opengl.vertex;
 import java.nio.Buffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.util.function.Consumer;
 
 import org.lwjgl.opengl.GL15;
@@ -11,14 +12,15 @@ import org.lwjgl.system.MemoryUtil;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType.Format;
+import fr.mercury.nucleus.scenegraph.Mesh;
 import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
- * <code>VertexBuffer</code> is an implementation of the <code>GLBuffer</code>, which
- * contains vertex data (<i>position, normal, texture coordinate, etc</i>) used for rendering a <code>Mesh</code>.
+ * <code>VertexBuffer</code> is an implementation of the {@link GLBuffer}, which
+ * contains vertex data (<i>position, normal, texture coordinate, etc</i>) used for rendering a {@link Mesh}.
  * <p>
- * Each <code>VertexBuffer</code> can be organized inside a <code>VertexArray</code> and be called as an attributes list.
+ * Each <code>VertexBuffer</code> can be organized inside a {@link VertexArray} and be called as an attributes list.
  * The attribute can then be attached to a specific index and be used during the rendering process. 
  * <p>
  * This process is auto-managed inside the <code>Mesh</code> class when calling {@link #upload()}, so you don't want to 
@@ -42,6 +44,15 @@ public class VertexBuffer extends GLBuffer {
 	 */
 	private Format format;
 	/**
+	 * The offset at which the vertex data is situated, by default 0.
+	 */
+	private short offset = 0;
+	/**
+	 * The amount of bytes between each vertex data, by default 0 &rarr; the data is tightly packed and <code>OpenGL</code>
+	 * will compute the stride based on the size per component and the data format used.
+	 */
+	private short stride = 0;
+	/**
 	 * Return whether the vertex data should be normalized. Only works for non floating-point type format.
 	 */
 	private boolean normalized = false;
@@ -59,6 +70,7 @@ public class VertexBuffer extends GLBuffer {
 		
 		this.vertexBufferType = type;
 		this.usage = usage;
+		this.format = type.getPreferredFormat();
 	}
 	
 	@Override
@@ -92,9 +104,66 @@ public class VertexBuffer extends GLBuffer {
 	 * @param data The data as an integer array.
 	 */
 	public void storeData(int[] data) {
+		if(format != Format.UNSIGNED_INT) {
+			throw new IllegalArgumentException("The format of the vertex buffer "
+					+ "can only accept integer data values!");
+		}
+		
 		IntBuffer buffer = null;
 		try {
 			buffer = MemoryUtil.memAllocInt(data.length);
+			buffer.put(data).flip();
+			storeData(buffer);
+		} finally {
+			if (buffer != null) {
+                MemoryUtil.memFree(buffer);
+            }
+		}
+	}
+	
+	/**
+	 * Store the provided short data array to the <code>VertexBuffer</code>.
+	 * <p>
+	 * Note that the buffer won't be usable until you call {@link #upload()}, to
+	 * update the stored value.
+	 * 
+	 * @param data The data as a short array.
+	 */
+	public void storeData(short[] data) {
+		if(format != Format.UNSIGNED_SHORT) {
+			throw new IllegalArgumentException("The format of the vertex buffer "
+					+ "can only accept integer data values!");
+		}
+		
+		ShortBuffer buffer = null;
+		try {
+			buffer = MemoryUtil.memAllocShort(data.length);
+			buffer.put(data).flip();
+			storeData(buffer);
+		} finally {
+			if (buffer != null) {
+                MemoryUtil.memFree(buffer);
+            }
+		}
+	}
+	
+	/**
+	 * Store the provided float data array to the <code>VertexBuffer</code>.
+	 * <p>
+	 * Note that the buffer won't be usable until you call {@link #upload()}, to
+	 * update the stored value.
+	 * 
+	 * @param data The data as a float array.
+	 */
+	public void storeData(float[] data) {
+		if(format != Format.FLOAT) {
+			throw new IllegalArgumentException("The format of the vertex buffer "
+					+ "can only accept float data values!");
+		}
+		
+		FloatBuffer buffer = null;
+		try {
+			buffer = MemoryUtil.memAllocFloat(data.length);
 			buffer.put(data).flip();
 			storeData(buffer);
 		} finally {
@@ -113,34 +182,14 @@ public class VertexBuffer extends GLBuffer {
 	 * @param data The buffer storing vertex data.
 	 */
 	public void storeData(Buffer data) {
-		if(data != null && data.isReadOnly()) {
+		Validator.nonNull(data, "The buffer data can't be null!");
+		if(data.isReadOnly()) {
 			throw new MercuryException("Stored data inside a VertexBuffer "
 					+ "cannot be readable-only!");
 		}
 		
 		this.data = data;
 		this.needsUpdate = true;
-	}
-	
-	/**
-	 * Store the provided float data array to the <code>VertexBuffer</code>.
-	 * <p>
-	 * Note that the buffer won't be usable until you call {@link #upload()}, to
-	 * update the stored value.
-	 * 
-	 * @param data The data as an float array.
-	 */
-	public void storeData(float[] data) {
-		FloatBuffer buffer = null;
-		try {
-			buffer = MemoryUtil.memAllocFloat(data.length);
-			buffer.put(data).flip();
-			storeData(buffer);
-		} finally {
-			if (buffer != null) {
-                MemoryUtil.memFree(buffer);
-            }
-		}
 	}
 	
 	/**
@@ -172,6 +221,84 @@ public class VertexBuffer extends GLBuffer {
 	 */
 	public boolean isNormalized() {
 		return normalized;
+	}
+	
+	/**
+	 * Sets whether the vertex data of the <code>VertexBuffer</code> should be normalized,
+	 * when passing as attributes.
+	 * <p>
+	 * Note that it only works for non floating-point type {@link Format}.
+	 * 
+	 * @param normalized Whether the vertex data should be normalized.
+	 */
+	public void setNormalized(boolean normalized) {
+		if(this.normalized == normalized) {
+			return;
+		}
+		
+		this.normalized = normalized;
+		this.needsUpdate = true;
+	}
+	
+	/**
+	 * Return the stride used by the <code>VertexBuffer</code> in bytes.
+	 * 
+	 * @return The stride of the buffer in bytes (&ge;0).
+	 */
+	public short getStride() {
+		return stride;
+	}
+	
+	/**
+	 * Sets the stride to use for the <code>VertexBuffer</code> in bytes,
+	 * to indicate the size in bytes of the data leaved between each components of the vertex data.
+	 * By default, the value is set to 0 meaning the data is tightly packed in the buffer and
+	 * <code>OpenGL</code> will automatically compute the stride from the size per component and {@link Format}
+	 * used for vertex data, i.e. 12 bytes for {@link VertexBufferType#POSITION} 4 bytes per float * 3 float per component.
+	 * <p>
+	 * The specified value must be greater or equal to 0.
+	 * 
+	 * @param stride The stride of the buffer in bytes (&ge;0).
+	 */
+	public void setStride(short stride) {
+		if(this.stride == stride) {
+			return;
+		}
+		
+		Validator.positive(stride);
+		
+		this.stride = stride;
+		this.needsUpdate = true;
+	}
+	
+	/**
+	 * Return the offset used by the <code>VertexBuffer</code> in bytes.
+	 * 
+	 * @return The offset of the buffer in bytes (&ge;0).
+	 */
+	public short getOffset() {
+		return offset;
+	}
+	
+	/**
+	 * Sets the offset to use for the <code>VertexBuffer</code> in bytes,
+	 * to indicate the position of the data to sent to the GPU from the start of the buffer.
+	 * By default, the value is set to 0 meaning it will be reading the vertex data from
+	 * the start of the buffer.
+	 * <p>
+	 * The specified value must be greater or equal to 0.
+	 * 
+	 * @param offset The offset of the buffer in bytes (&ge;0).
+	 */
+	public void setOffset(short offset) {
+		if(this.offset == offset) {
+			return;
+		}
+		
+		Validator.positive(offset);
+		
+		this.offset = offset;
+		this.needsUpdate = true;
 	}
 	
 	@Override

@@ -198,14 +198,15 @@ public class Mesh {
 			
 			Format format = vertexBuffer.getFormat() == null ? 
 					type.getPreferredFormat() : vertexBuffer.getFormat();
+			// Normalized for floating-point data type isn't possible, disable it.
 			boolean normalized = format.isFloatingPoint() ? false : vertexBuffer.isNormalized();
 			
 			if(!type.equals(VertexBufferType.INDEX)) {
 				
 				// TODO: Attribute class to handle attribs creation and enabling.
 				
-				GL20.glVertexAttribPointer(type.ordinal(), type.getSize(), VertexBufferType.getOpenGLFormat(format), normalized, 0, 0);
-				//GL20.glEnableVertexAttribArray(type.ordinal());
+				GL20.glVertexAttribPointer(type.ordinal(), type.getSize(), VertexBufferType.getOpenGLFormat(format), 
+						normalized, vertexBuffer.getStride(), vertexBuffer.getOffset());
 			}
 		}
 	}

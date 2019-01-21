@@ -79,6 +79,12 @@ public abstract class GLBuffer extends GLObject {
 			GL15.glBufferData(getOpenGLType(), (FloatBuffer) data, getOpenGLUsage());
 		} else if(data instanceof IntBuffer) {
 			GL15.glBufferData(getOpenGLType(), (IntBuffer) data, getOpenGLUsage());
+		} else if(data instanceof ShortBuffer) {
+			GL15.glBufferData(getOpenGLType(), (ShortBuffer) data, getOpenGLUsage());
+		} else if(data instanceof ByteBuffer) {
+			GL15.glBufferData(getOpenGLType(), (ByteBuffer) data, getOpenGLUsage());
+		} else {
+			throw new IllegalArgumentException("Can't upload data from buffer type: " + data.getClass().getSimpleName());
 		}
 		
 		this.needsUpdate = false;
@@ -239,12 +245,30 @@ public abstract class GLBuffer extends GLObject {
 	}
 	
 	/**
-	 * Return the <code>Usage</code> of the <code>GLBuffer</code>.
+	 * Return the {@link Usage} of the <code>GLBuffer</code>.
 	 * 
 	 * @return The usage of the buffer.
 	 */
 	protected Usage getUsage() {
 		return usage;
+	}
+	
+	/**
+	 * Sets the {@link Usage} of the <code>GLBuffer</code>.
+	 * <p>
+	 * The provided usage can't be null.
+	 * 
+	 * @param usage The usage of the buffer.
+	 */
+	public void setUsage(Usage usage) {
+		if(this.usage == usage) {
+			return;
+		}
+		
+		Validator.nonNull(usage);
+		
+		this.usage = usage;
+		this.needsUpdate = true;
 	}
 	
 	/**
