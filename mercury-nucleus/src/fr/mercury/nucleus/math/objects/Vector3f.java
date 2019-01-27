@@ -389,6 +389,19 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 	}
 	
 	/**
+	 * Set each component value of the <code>Vector3f</code> to their absolute equivalent.
+	 * The method call {@link Math#abs(float)} on all components of the vector.
+	 * 
+	 * @return The vector with all absolute components.
+	 */
+	public Vector3f abs() {
+		this.x = Math.abs(x);
+		this.y = Math.abs(y);
+		this.z = Math.abs(z);
+		return this;
+	}
+	
+	/**
 	 * Sets all the components of the <code>Vector3f</code> to 0,
 	 * before retrieving it from a pool.
 	 */
@@ -404,6 +417,17 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 	@Override
 	public void free() {
 		zero();
+	}
+	
+	/**
+	 * Clone the <code>Vector3f</code> to a new vector instance with the same
+	 * components as the caller.
+	 * 
+	 * @return A cloned instance of the vector.
+	 */
+	@Override
+	public Vector3f clone() {
+		return new Vector3f(this);
 	}
 	
 	/**
@@ -427,6 +451,24 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
         return result;
 	}
 	
+	/**
+	 * Return a unique code for the <code>Vector3f</code> based on each component value.
+	 * If two vectors are logically equivalent, they will return the same hash code value.
+	 * 
+	 * @return The hash code value of the vector.
+	 */
+	@Override
+	public int hashCode() {
+		return Float.floatToIntBits(x) * Float.floatToIntBits(y) * Float.floatToIntBits(z);
+	}
+	
+	/**
+	 * Return whether the provided object is equal to the <code>Vector3f</code>.
+	 * It checks that all 3 component values are the same.
+	 * 
+	 * @param o The object to check equality with the vector.
+	 * @return  Whether the two object are equal.
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if(this == o) {
@@ -446,5 +488,16 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 		}
 		
 		return Float.compare(z, other.z) == 0;
+	}
+	
+	/**
+	 * Return the string representation of the <code>Vector3f</code> with the format:
+	 * <code>Vector3f[ x, y, z ]</code>.
+	 * 
+	 * @return The string representation of the vector.
+	 */
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "[ " + x + ", " + y + ", " + z + " ]";
 	}
 }

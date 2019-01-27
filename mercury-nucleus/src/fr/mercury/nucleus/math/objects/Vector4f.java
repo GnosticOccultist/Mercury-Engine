@@ -330,6 +330,17 @@ public final class Vector4f implements Comparable<Vector4f>, Reusable {
 	}
 	
 	/**
+	 * Clone the <code>Vector4f</code> to a new vector instance with the same
+	 * components as the caller.
+	 * 
+	 * @return A cloned instance of the vector.
+	 */
+	@Override
+	public Vector4f clone() {
+		return new Vector4f(this);
+	}
+	
+	/**
 	 * Compare this vector with the provided <code>Vector4f</code>. It will first
 	 * compare the X-component, then the Y-component and so on.
 	 * 
@@ -353,6 +364,25 @@ public final class Vector4f implements Comparable<Vector4f>, Reusable {
         return result;
 	}
 	
+	/**
+	 * Return a unique code for the <code>Vector4f</code> based on each component value.
+	 * If two vectors are logically equivalent, they will return the same hash code value.
+	 * 
+	 * @return The hash code value of the vector.
+	 */
+	@Override
+	public int hashCode() {
+		return Float.floatToIntBits(x) * Float.floatToIntBits(y) 
+				* Float.floatToIntBits(z) * Float.floatToIntBits(w);
+	}
+	
+	/**
+	 * Return whether the provided object is equal to the <code>Vector4f</code>.
+	 * It checks that all 4 component values are the same.
+	 * 
+	 * @param o The object to check equality with the vector.
+	 * @return  Whether the two object are equal.
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if(this == o) {
@@ -375,5 +405,16 @@ public final class Vector4f implements Comparable<Vector4f>, Reusable {
 		}
 		
 		return Float.compare(w, other.w) == 0;
+	}
+	
+	/**
+	 * Return the string representation of the <code>Vector4f</code> with the format:
+	 * <code>Vector4f[ x, y, z, w ]</code>.
+	 * 
+	 * @return The string representation of the vector.
+	 */
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "[ " + x + ", " + y + ", " + z + ", " + w + " ]";
 	}
 }

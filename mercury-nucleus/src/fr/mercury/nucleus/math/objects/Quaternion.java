@@ -484,6 +484,17 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
 		identity();
 	}
     
+	/**
+	 * Clone the <code>Quaternion</code> to a new quaternion instance with the same
+	 * components as the caller.
+	 * 
+	 * @return A cloned instance of the quaternion.
+	 */
+	@Override
+	public Quaternion clone() {
+		return new Quaternion(this);
+	}
+	
     /**
 	 * Compare this quaternion with the provided <code>Quaternion</code>. It will first
 	 * compare the X-component, then the Y-component, the Z-component and so on.
@@ -506,6 +517,18 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
         }
         
         return result;
+	}
+	
+	/**
+	 * Return a unique code for the <code>Quaternion</code> based on each component value.
+	 * If two quaternions are logically equivalent, they will return the same hash code value.
+	 * 
+	 * @return The hash code value of the quaternion.
+	 */
+	@Override
+	public int hashCode() {
+		return Float.floatToIntBits(x) * Float.floatToIntBits(y) 
+				* Float.floatToIntBits(z) * Float.floatToIntBits(w);
 	}
 	
 	@Override

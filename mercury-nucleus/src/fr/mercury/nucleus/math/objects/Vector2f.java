@@ -289,6 +289,17 @@ public final class Vector2f implements Comparable<Vector2f>, Reusable {
 	}
 	
 	/**
+	 * Clone the <code>Vector2f</code> to a new vector instance with the same
+	 * components as the caller.
+	 * 
+	 * @return A cloned instance of the vector.
+	 */
+	@Override
+	public Vector2f clone() {
+		return new Vector2f(this);
+	}
+	
+	/**
 	 * Compare this vector with the provided <code>Vector2f</code>. It will first
 	 * compare the X-component, then the Y-component.
 	 * 
@@ -306,6 +317,24 @@ public final class Vector2f implements Comparable<Vector2f>, Reusable {
         return result;
 	}
 	
+	/**
+	 * Return a unique code for the <code>Vector2f</code> based on each component value.
+	 * If two vectors are logically equivalent, they will return the same hash code value.
+	 * 
+	 * @return The hash code value of the vector.
+	 */
+	@Override
+	public int hashCode() {
+		return Float.floatToIntBits(x) * Float.floatToIntBits(y);
+	}
+	
+	/**
+	 * Return whether the provided object is equal to the <code>Vector2f</code>.
+	 * It checks that all 2 component values are the same.
+	 * 
+	 * @param o The object to check equality with the vector.
+	 * @return  Whether the two object are equal.
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if(this == o) {
@@ -322,5 +351,16 @@ public final class Vector2f implements Comparable<Vector2f>, Reusable {
 		}
 		
 		return Float.compare(y, other.y) == 0;
+	}
+	
+	/**
+	 * Return the string representation of the <code>Vector2f</code> with the format:
+	 * <code>Vector2f[ x, y ]</code>.
+	 * 
+	 * @return The string representation of the vector.
+	 */
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "[ " + x + ", " + y + " ]";
 	}
 }
