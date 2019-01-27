@@ -113,7 +113,7 @@ public class VertexBuffer extends GLBuffer {
 		try {
 			buffer = MemoryUtil.memAllocInt(data.length);
 			buffer.put(data).flip();
-			storeData(buffer);
+			storeDataBuffer(buffer);
 		} finally {
 			if (buffer != null) {
                 MemoryUtil.memFree(buffer);
@@ -139,7 +139,7 @@ public class VertexBuffer extends GLBuffer {
 		try {
 			buffer = MemoryUtil.memAllocShort(data.length);
 			buffer.put(data).flip();
-			storeData(buffer);
+			storeDataBuffer(buffer);
 		} finally {
 			if (buffer != null) {
                 MemoryUtil.memFree(buffer);
@@ -165,7 +165,7 @@ public class VertexBuffer extends GLBuffer {
 		try {
 			buffer = MemoryUtil.memAllocFloat(data.length);
 			buffer.put(data).flip();
-			storeData(buffer);
+			storeDataBuffer(buffer);
 		} finally {
 			if (buffer != null) {
                 MemoryUtil.memFree(buffer);
@@ -181,8 +181,7 @@ public class VertexBuffer extends GLBuffer {
 	 * 
 	 * @param data The buffer storing vertex data.
 	 */
-	public void storeData(Buffer data) {
-		Validator.nonNull(data, "The buffer data can't be null!");
+	public void storeDataBuffer(Buffer data) {
 		if(data.isReadOnly()) {
 			throw new MercuryException("Stored data inside a VertexBuffer "
 					+ "cannot be readable-only!");

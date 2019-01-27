@@ -160,6 +160,10 @@ public enum VertexBufferType {
 	 */
 	public enum Format {
 		/**
+		 * An unsigned 8-bit value (1 bytes).
+		 */
+		UNSIGNED_BYTE(1),
+		/**
 		 * An unsigned 16-bit value (2 bytes).
 		 */
 		UNSIGNED_SHORT(2),

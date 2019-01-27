@@ -73,7 +73,11 @@ public abstract class GLBuffer extends GLObject {
 	 */
 	@OpenGLCall
 	protected void storeData() {
-		Validator.nonNull(data, "Can't upload vertex buffer with null data.");
+		
+		if(data == null) {
+			this.needsUpdate = false;
+			return;
+		}
 		
 		if(data instanceof FloatBuffer) {
 			GL15.glBufferData(getOpenGLType(), (FloatBuffer) data, getOpenGLUsage());

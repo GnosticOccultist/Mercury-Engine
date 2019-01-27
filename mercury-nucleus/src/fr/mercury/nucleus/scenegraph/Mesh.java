@@ -115,10 +115,10 @@ public class Mesh {
 		var vbo = buffers.get(type);
 		if(vbo == null) {
 			vbo = new VertexBuffer(type, usage);
-			vbo.storeData(data);
+			vbo.storeDataBuffer(data);
 			buffers.put(type, vbo);
 		} else {
-			vbo.storeData(data);
+			vbo.storeDataBuffer(data);
 		}
 	}
 
