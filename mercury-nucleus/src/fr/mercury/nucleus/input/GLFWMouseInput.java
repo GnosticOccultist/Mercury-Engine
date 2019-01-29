@@ -23,6 +23,7 @@ import org.lwjgl.glfw.GLFWDropCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
 
+import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.event.EventType;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
@@ -54,6 +55,10 @@ public final class GLFWMouseInput {
 	 */
 	private MercuryContext context;
 	/**
+	 * The input processor to dispatch the mouse event to.
+	 */
+	private InputProcessor processor;
+	/**
 	 * The current width of the window.
 	 */
 	private int currentWidth;
@@ -65,19 +70,31 @@ public final class GLFWMouseInput {
      * Whether the cursor is visible.
      */
 	private boolean cursorVisible = true;
+	/**
+	 * The queue of mouse events to be dispatched.
+	 */
+	private final Queue<MouseEvent> mouseEvents = new ArrayDeque<>();
+	/**
+	 * The table containing the click time of each mouse button.
+	 */
+	private final HashMap<Integer, Long> lastClickTime = new HashMap<>();
+	/**
+	 * The last event which was queued up.
+	 */
+	private MouseEvent lastEvent = null;
 	
 	private GLFWCursorPosCallback cursorPosCallback;
 	private GLFWMouseButtonCallback mouseButtonCallback;
 	private GLFWScrollCallback scrollCallback;
 	private GLFWDropCallback dropCallback;
 	
-	private final Queue<MouseEvent> mouseEvents = new ArrayDeque<>();
-	
-	HashMap<Integer, Long> lastClickTime = new HashMap<>();
-	
-	private MouseEvent lastEvent = null;
-	
+	/**
+	 * Instantiates a new <code>GLFWMouseInput</code> for the provided {@link MercuryContext}.
+	 * 
+	 * @param context The context to create the mouse input for.
+	 */
 	public GLFWMouseInput(MercuryContext context) {
+		Validator.nonNull(context);
 		this.context = context;
 		
 		lastClickTime.put(BUTTON_LEFT, 0L);
@@ -85,6 +102,10 @@ public final class GLFWMouseInput {
 		lastClickTime.put(BUTTON_MIDDLE, 0L);
 	}
 	
+	/**
+	 * Initialize the <code>GLFWMouseInput</code> instance by creating the needed GLFW callback to
+	 * keep track of mouse's informations such as button, cursor position, scroll.
+	 */
 	public void initialize() {
 		
 		final long window = context.getWindow();
@@ -124,6 +145,23 @@ public final class GLFWMouseInput {
 		setCursorVisible(cursorVisible);
 	}
 	
+	/**
+	 * Update the <code>GLFWMouseInput</code> by dispatching the pending {@link MouseEvent}
+	 * to the registered {@link InputProcessor}.
+	 */
+	public void update() {
+		
+		if(processor == null) {
+			logger.warning("No input processor assigned to the " + getClass().getSimpleName());
+			return;
+		}
+		
+		// Empty the queue of pending mouse events.
+		while (!mouseEvents.isEmpty()) {
+            processor.mouseEvent(mouseEvents.poll());
+        }
+	}
+	
 	private void onMouseMoved(long window, double xPos, double yPos) {
         final int x = (int) Math.round(xPos);
         final int y = currentHeight - (int) Math.round(yPos);
@@ -135,7 +173,7 @@ public final class GLFWMouseInput {
         final int button = lastEvent != null && (lastEvent.getType().equals(MouseEvent.MOUSE_PRESSED) 
         		|| lastEvent.getType().equals(MouseEvent.MOUSE_MOVED)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
         
-        final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_MOVED, button , x, y, dx, dy);
+        final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_MOVED, button , x, y, dx, dy, 0);
         event.setTime((long) (glfwGetTime() * 1_000_000_000));
         queueUpEvent(event);
 	}
@@ -159,13 +197,30 @@ public final class GLFWMouseInput {
 			lastClickTime.put(buttonCode, System.currentTimeMillis());
 		}
 		
-		final MouseEvent event = new MouseEvent(type, button(button), x, y, 0, 0);
+		final MouseEvent event = new MouseEvent(type, button(button), x, y, 0, 0, 0);
         event.setTime((long) (glfwGetTime() * 1_000_000_000));
         queueUpEvent(event);
 	}
 	
 	private void onWheelScroll(long window, double xOffset, double yOffset) {
+		double wheelAccum = 0.0;
+		wheelAccum += yOffset;
+        final int dw = (int) Math.floor(wheelAccum);
+        if (dw == 0) {
+            return;
+        }
+        wheelAccum -= dw;
 		
+		final int x = lastEvent != null ? lastEvent.getX() : 0;
+		final int y = lastEvent != null ? lastEvent.getY() : 0;
+	
+		// Keep track of the last pressed button.
+        final int button = lastEvent != null && (lastEvent.getType().equals(MouseEvent.MOUSE_PRESSED) || lastEvent.getType().equals(MouseEvent.MOUSE_MOVED) 
+        		|| lastEvent.getType().equals(MouseEvent.MOUSE_SCROLL)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
+		
+		final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_SCROLL, button(button), x, y, 0, 0, dw);
+        event.setTime(inputTime());
+        queueUpEvent(event);
 	}
 	
 	/**
@@ -196,6 +251,15 @@ public final class GLFWMouseInput {
 			default:
 				return BUTTON_UNDEFINED;
 		}
+	}
+	
+	/**
+	 * Return the current input time to set to a {@link MouseEvent} in nanoseconds.
+	 * 
+	 * @return The current input time in nanoseconds.
+	 */
+	private long inputTime() {
+		return (long) (glfwGetTime() * 1_000_000_000);
 	}
 	
 	/**

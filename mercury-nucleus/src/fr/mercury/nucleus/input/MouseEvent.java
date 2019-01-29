@@ -26,10 +26,16 @@ public class MouseEvent extends InputEvent {
 	public static final EventType<MouseEvent> MOUSE_RELEASED = 
 			EventType.create("MOUSE_RELEASED", MouseEvent.class);
 	/**
-	 * The event type returned whenever a mouse button is released.
+	 * The event type returned whenever a mouse button is being clicked 
+	 * (pressed and released in a small time interval). 
 	 */
 	public static final EventType<MouseEvent> MOUSE_CLICKED = 
 			EventType.create("MOUSE_CLICKED", MouseEvent.class);
+	/**
+	 * The event type returned whenever the mouse is scrolled.
+	 */
+	public static final EventType<MouseEvent> MOUSE_SCROLL = 
+			EventType.create("MOUSE_SCROLL", MouseEvent.class);
 	
 	/**
 	 * The mouse button being interacted.
@@ -51,29 +57,32 @@ public class MouseEvent extends InputEvent {
 	 * The delta Y-axis mouse coordinate.
 	 */
 	private final int dy;
+	/**
+	 * The delta of the mouse wheel movement.
+	 */
+	private final int dWheel;
 	
 	/**
-	 * Instantiates a new <code>MouseEvent</code> with the given {@link EventType}, position and the change 
-	 * amount based on the last event.
+	 * Instantiates a new <code>MouseEvent</code> with the given {@link EventType} and other informations
+	 * such as position, button interaction.
+	 * <p>
+	 * Note that the interaction depends on the event type, for example it will be pressed if the event 
+	 * type is {@link #MOUSE_PRESSED}.
 	 * 
-	 * @param type The mouse event type.
-	 * @param x    The X coordinate of the mouse in screen coordinates.
-	 * @param y    The Y coordinate of the mouse in screen coordinates.
-	 * @param dx   The change amount of the mouse X-coordinate in screen coordinates.
-	 * @param dy   The change amount of the mouse Y-coordinate in screen coordinates.
+	 * @param type   The mouse event type.
+	 * @param x      The X coordinate of the mouse in screen coordinates.
+	 * @param y      The Y coordinate of the mouse in screen coordinates.
+	 * @param dx     The change amount of the mouse X-coordinate in screen coordinates.
+	 * @param dy     The change amount of the mouse Y-coordinate in screen coordinates.
+	 * @param dWheel The change amount in the wheel movement.
 	 */
-	public MouseEvent(EventType<MouseEvent> type, int x, int y, int dx, int dy) {
-		super(type);
-		this.button = GLFWMouseInput.BUTTON_UNDEFINED;
-		this.x = x;
-		this.y = y;
-		this.dx = dx;
-		this.dy = dy;
+	public MouseEvent(EventType<MouseEvent> type, int x, int y, int dx, int dy, int dWheel) {
+		this(type, GLFWMouseInput.BUTTON_UNDEFINED, x, y, dx, dy, dWheel);
 	}
 	
 	/**
-	 * Instantiates a new <code>MouseEvent</code> with the given {@link EventType}, position and the change 
-	 * amount based on the last event as well as the button being interacted. 
+	 * Instantiates a new <code>MouseEvent</code> with the given {@link EventType} and other informations
+	 * such as position, button interaction.
 	 * <p>
 	 * Note that the interaction depends on the event type, for example it will be pressed if the event 
 	 * type is {@link #MOUSE_PRESSED}.
@@ -84,14 +93,16 @@ public class MouseEvent extends InputEvent {
 	 * @param y  	 The Y coordinate of the mouse in screen coordinates.
 	 * @param dx 	 The change amount of the mouse X-coordinate in screen coordinates.
 	 * @param dy 	 The change amount of the mouse Y-coordinate in screen coordinates.
+	 * @param dWheel The change amount in the wheel movement.
 	 */
-	public MouseEvent(EventType<MouseEvent> type, int button, int x, int y, int dx, int dy) {
+	public MouseEvent(EventType<MouseEvent> type, int button, int x, int y, int dx, int dy, int dWheel) {
 		super(type);
 		this.button = button;
 		this.x = x;
 		this.y = y;
 		this.dx = dx;
 		this.dy = dy;
+		this.dWheel = dWheel;
 	}
 	
 	/**
@@ -144,8 +155,17 @@ public class MouseEvent extends InputEvent {
 		return dy;
 	}
 	
+	/**
+	 * Return the change amount of the wheel movement based on the last <code>MouseEvent</code>.
+	 * 
+	 * @return The change amount of the wheel movement.
+	 */
+	public int getDWheel() {
+		return dWheel;
+	}
+	
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "[ type= " + type + ", button= " + button + ", x= " + x + ", y= " + y + " ]";
+		return getClass().getSimpleName() + "[ type= " + type + ", button= " + button + ", x= " + x + ", y= " + y + ", dWheel= " + dWheel + " ]";
 	}
 }
