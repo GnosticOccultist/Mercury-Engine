@@ -41,6 +41,7 @@ import org.lwjgl.opengl.GL13;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.input.GLFWMouseInput;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.NanoTimer;
 
@@ -99,6 +100,10 @@ public class MercuryContext implements Runnable {
 	 * The sleeping time of the frame.
 	 */
 	private double frameSleepTime;
+	/**
+	 * The mouse input handler.
+	 */
+	private GLFWMouseInput mouseInput;
 
 	/**
 	 * Instantiates and return the <code>MercuryContext</code> bound to the provided application
@@ -232,7 +237,11 @@ public class MercuryContext implements Runnable {
 			
 			createContext(settings);
 			
+			mouseInput = new GLFWMouseInput(this);
+			mouseInput.initialize();
+			
 			initialized.set(true);
+			
 		} catch (Exception ex) {
 			
 			// Creation failed destroying the context 
@@ -299,6 +308,10 @@ public class MercuryContext implements Runnable {
 		glfwSetWindowSizeCallback(window, (window, width, height) -> {
 			settings.setResolution(width, height);
 			application.resize(width, height);
+			
+			if(mouseInput != null) {
+				mouseInput.resize(width, height);
+			}
 		});
 		
 		// Setup window focus callback to stop updating or rendering when minimized.
@@ -357,6 +370,8 @@ public class MercuryContext implements Runnable {
 	private void destroyContext() {
 		try {
 			if(window != NULL) {
+				mouseInput.destroy();
+				
 				glfwDestroyWindow(window);
 				window = NULL;
 				glfwTerminate();
@@ -372,6 +387,15 @@ public class MercuryContext implements Runnable {
 	 */
 	private void showWindow() {
 		glfwShowWindow(window);
+	}
+	
+	/**
+	 * Return the <code>MercuryContext</code> window handle.
+	 * 
+	 * @return The window handle of the current context.
+	 */
+	public long getWindow() {
+		return window;
 	}
 	
 	/**

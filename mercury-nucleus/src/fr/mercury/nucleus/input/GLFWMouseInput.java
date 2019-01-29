@@ -1,0 +1,242 @@
+package fr.mercury.nucleus.input;
+
+import static org.lwjgl.glfw.GLFW.GLFW_CURSOR;
+import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_DISABLED;
+import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL;
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_MIDDLE;
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
+import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
+import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetDropCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetInputMode;
+import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetScrollCallback;
+
+import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Queue;
+
+import org.lwjgl.glfw.GLFWCursorPosCallback;
+import org.lwjgl.glfw.GLFWDropCallback;
+import org.lwjgl.glfw.GLFWMouseButtonCallback;
+import org.lwjgl.glfw.GLFWScrollCallback;
+
+import fr.alchemy.utilities.event.EventType;
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.application.MercuryContext;
+
+public final class GLFWMouseInput {
+	
+	private static final Logger logger = FactoryLogger.getLogger("mercury.input");
+	
+	/**
+	 * The undefined mouse button.
+	 */
+	public static final int BUTTON_UNDEFINED = -1;
+	/**
+	 * The left mouse button.
+	 */
+	public static final int BUTTON_LEFT = 0;
+	/**
+	 * The right mouse button.
+	 */
+	public static final int BUTTON_RIGHT = 1;
+	/**
+	 * The middle or scroll mouse button.
+	 */
+	public static final int BUTTON_MIDDLE = 2;
+	
+	/**
+	 * The context handling the mouse input.
+	 */
+	private MercuryContext context;
+	/**
+	 * The current width of the window.
+	 */
+	private int currentWidth;
+	/**
+	 * The current height of the window.
+	 */
+	private int currentHeight;
+    /**
+     * Whether the cursor is visible.
+     */
+	private boolean cursorVisible = true;
+	
+	private GLFWCursorPosCallback cursorPosCallback;
+	private GLFWMouseButtonCallback mouseButtonCallback;
+	private GLFWScrollCallback scrollCallback;
+	private GLFWDropCallback dropCallback;
+	
+	private final Queue<MouseEvent> mouseEvents = new ArrayDeque<>();
+	
+	HashMap<Integer, Long> lastClickTime = new HashMap<>();
+	
+	private MouseEvent lastEvent = null;
+	
+	public GLFWMouseInput(MercuryContext context) {
+		this.context = context;
+		
+		lastClickTime.put(BUTTON_LEFT, 0L);
+		lastClickTime.put(BUTTON_RIGHT, 0L);
+		lastClickTime.put(BUTTON_MIDDLE, 0L);
+	}
+	
+	public void initialize() {
+		
+		final long window = context.getWindow();
+		
+		glfwSetCursorPosCallback(window, cursorPosCallback = new GLFWCursorPosCallback() {
+			@Override
+			public void invoke(long window, double xPos, double yPos) {
+				onMouseMoved(window, xPos, yPos);
+			}
+		});
+		
+		glfwSetMouseButtonCallback(window, mouseButtonCallback = new GLFWMouseButtonCallback() {
+			@Override
+			public void invoke(long window, int button, int action, int mods) {
+				onMouseButtonPressed(window, button, action, mods);
+			}
+		});
+
+        glfwSetScrollCallback(window, scrollCallback = new GLFWScrollCallback() {
+            @Override
+            public void invoke(final long window, final double xOffset, final double yOffset) {
+                onWheelScroll(window, xOffset, yOffset * 120);
+            }
+        });
+        
+		glfwSetDropCallback(window, dropCallback = new GLFWDropCallback() {
+			@Override
+			public void invoke(long window, int count, long names) {
+				final String[] files = new String[count];
+				for (int i = 0; i < count; i++) {
+					files[i] = getName(names, i);
+					System.out.println(files[i]);
+				}
+			}
+		});
+		
+		setCursorVisible(cursorVisible);
+	}
+	
+	private void onMouseMoved(long window, double xPos, double yPos) {
+        final int x = (int) Math.round(xPos);
+        final int y = currentHeight - (int) Math.round(yPos);
+        
+        final int dx = lastEvent != null ? x - lastEvent.getX() : 0;
+        final int dy = lastEvent != null ? y - lastEvent.getY() : 0;
+        
+        // Keep track of the last pressed button to allow for dragging gesture.
+        final int button = lastEvent != null && (lastEvent.getType().equals(MouseEvent.MOUSE_PRESSED) 
+        		|| lastEvent.getType().equals(MouseEvent.MOUSE_MOVED)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
+        
+        final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_MOVED, button , x, y, dx, dy);
+        event.setTime((long) (glfwGetTime() * 1_000_000_000));
+        queueUpEvent(event);
+	}
+	
+	private void onMouseButtonPressed(long window, int button, int action, int mods) {
+		
+		final int x = lastEvent != null ? lastEvent.getX() : 0;
+		final int y = lastEvent != null ? lastEvent.getY() : 0;
+		
+		EventType<MouseEvent> type = action == GLFW_PRESS ? MouseEvent.MOUSE_PRESSED : MouseEvent.MOUSE_RELEASED;
+		final int buttonCode = button(button);
+		
+		// This looks like a clicked event so queue up a mouse event of this type in addition to the pressed/released event.
+		if(type.equals(MouseEvent.MOUSE_RELEASED) && System.currentTimeMillis() - lastClickTime.get(buttonCode) < 500L) {
+			final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_CLICKED, button(button), x, y, 0, 0);
+	        event.setTime((long) (glfwGetTime() * 1_000_000_000));
+	        queueUpEvent(event);
+		}
+		
+		if(type.equals(MouseEvent.MOUSE_PRESSED)) {
+			lastClickTime.put(buttonCode, System.currentTimeMillis());
+		}
+		
+		final MouseEvent event = new MouseEvent(type, button(button), x, y, 0, 0);
+        event.setTime((long) (glfwGetTime() * 1_000_000_000));
+        queueUpEvent(event);
+	}
+	
+	private void onWheelScroll(long window, double xOffset, double yOffset) {
+		
+	}
+	
+	/**
+	 * Queue up the specified {@link MouseEvent} to be dispatched on the next updating call.
+	 * 
+	 * @param event The mouse event to add to the dispatching queue.
+	 */
+	private void queueUpEvent(MouseEvent event) {
+		logger.info("Queued new event: " + event);
+		this.mouseEvents.add(event);
+        this.lastEvent = event;
+	}
+	
+	/**
+	 * Converts the provided GLFW button code into a <code>MercuryEngine</code> readable one.
+	 * 
+	 * @param glfwButton The GLFW button to convert.
+	 * @return			 The equivalent button of the provided GLFW button code.
+	 */
+	private int button(int glfwButton) {
+		switch (glfwButton) {
+			case GLFW_MOUSE_BUTTON_LEFT:
+				return BUTTON_LEFT;
+			case GLFW_MOUSE_BUTTON_RIGHT:
+				return BUTTON_RIGHT;
+			case GLFW_MOUSE_BUTTON_MIDDLE:
+				return BUTTON_MIDDLE;
+			default:
+				return BUTTON_UNDEFINED;
+		}
+	}
+	
+	/**
+	 * Sets whether the cursor of the mouse should be visible.
+	 * <ul>
+     * <li><code>true</code> makes the cursor visible and behaving normally.</li>
+     * <li><code>false</code> hides and grabs the cursor, providing virtual and unlimited cursor movement.</li>
+     * </ul>
+	 * 
+	 * @param cursorVisible Whether the cursor is visible.
+	 */
+	public void setCursorVisible(boolean cursorVisible) {
+		this.cursorVisible = cursorVisible;
+		
+		if(cursorVisible) {
+			glfwSetInputMode(context.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		} else {
+			glfwSetInputMode(context.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		}
+	}
+	
+	/**
+	 * Resize the width and height of the window used by the <code>GLFWMouseInput</code>.
+	 * This function is called by the {@link MercuryContext} when the window is being resized.
+	 * 
+	 * @param width	 The width of the window.
+	 * @param height The height of the window.
+	 */
+	public void resize(int width, int height) {
+		this.currentWidth = width;
+		this.currentHeight = height;
+	}
+	
+	/**
+	 * Destroy the <code>GLFWMouseInput</code> by closing the registered GLFW callback.
+	 * This function is called by the {@link MercuryContext} when the context is being destroyed.
+	 */
+	public void destroy() {
+		cursorPosCallback.close();
+		mouseButtonCallback.close();
+		scrollCallback.close();
+		dropCallback.close();
+	}
+}
