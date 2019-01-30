@@ -166,7 +166,7 @@ public final class GLFWMouseInput {
         final int button = lastEvent != null && (lastEvent.getType().equals(MouseEvent.MOUSE_PRESSED) 
         		|| lastEvent.getType().equals(MouseEvent.MOUSE_MOVED)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
         
-        final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_MOVED, button , x, y, dx, dy, 0);
+        final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_MOVED, button, 0, x, y, dx, dy, 0);
         event.setTime((long) (glfwGetTime() * 1_000_000_000));
         queueUpEvent(event);
 	}
@@ -190,7 +190,7 @@ public final class GLFWMouseInput {
 			lastClickTime.put(buttonCode, System.currentTimeMillis());
 		}
 		
-		final MouseEvent event = new MouseEvent(type, button(button), x, y, 0, 0, 0);
+		final MouseEvent event = new MouseEvent(type, button(button), mods, x, y, 0, 0, 0);
         event.setTime((long) (glfwGetTime() * 1_000_000_000));
         queueUpEvent(event);
 	}
@@ -211,7 +211,7 @@ public final class GLFWMouseInput {
         final int button = lastEvent != null && (lastEvent.getType().equals(MouseEvent.MOUSE_PRESSED) || lastEvent.getType().equals(MouseEvent.MOUSE_MOVED) 
         		|| lastEvent.getType().equals(MouseEvent.MOUSE_SCROLL)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
 		
-		final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_SCROLL, button(button), x, y, 0, 0, dw);
+		final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_SCROLL, button(button), 0, x, y, 0, 0, dw);
         event.setTime(inputTime());
         queueUpEvent(event);
 	}

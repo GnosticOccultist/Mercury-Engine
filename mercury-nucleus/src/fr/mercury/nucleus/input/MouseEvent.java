@@ -8,7 +8,7 @@ import fr.alchemy.utilities.event.EventType;
  * 
  * @author GnosticOccultist
  */
-public class MouseEvent extends InputEvent {
+public class MouseEvent extends InputEvent implements KeyModifiers {
 	
 	/**
 	 * The event type returned whenever the mouse position has changed.
@@ -41,6 +41,10 @@ public class MouseEvent extends InputEvent {
 	 * The mouse button being interacted.
 	 */
 	private final int button;
+	/**
+	 * The set of key modifiers interacted.
+	 */
+	private final int modifiers;
 	/**
 	 * The current X-axis mouse coordinate.
 	 */
@@ -77,7 +81,7 @@ public class MouseEvent extends InputEvent {
 	 * @param dWheel The change amount in the wheel movement.
 	 */
 	public MouseEvent(EventType<MouseEvent> type, int x, int y, int dx, int dy, int dWheel) {
-		this(type, GLFWMouseInput.BUTTON_UNDEFINED, x, y, dx, dy, dWheel);
+		this(type, GLFWMouseInput.BUTTON_UNDEFINED, 0, x, y, dx, dy, dWheel);
 	}
 	
 	/**
@@ -87,17 +91,19 @@ public class MouseEvent extends InputEvent {
 	 * Note that the interaction depends on the event type, for example it will be pressed if the event 
 	 * type is {@link #MOUSE_PRESSED}.
 	 * 
-	 * @param type   The mouse event type.
-	 * @param button The button being pressed, clicked or released.
-	 * @param x  	 The X coordinate of the mouse in screen coordinates.
-	 * @param y  	 The Y coordinate of the mouse in screen coordinates.
-	 * @param dx 	 The change amount of the mouse X-coordinate in screen coordinates.
-	 * @param dy 	 The change amount of the mouse Y-coordinate in screen coordinates.
-	 * @param dWheel The change amount in the wheel movement.
+	 * @param type   	The mouse event type.
+	 * @param button 	The button being pressed, clicked or released.
+	 * @param modifiers The set of modifiers key interacted.
+	 * @param x  	 	The X coordinate of the mouse in screen coordinates.
+	 * @param y  	 	The Y coordinate of the mouse in screen coordinates.
+	 * @param dx 	 	The change amount of the mouse X-coordinate in screen coordinates.
+	 * @param dy 	 	The change amount of the mouse Y-coordinate in screen coordinates.
+	 * @param dWheel 	The change amount in the wheel movement.
 	 */
-	public MouseEvent(EventType<MouseEvent> type, int button, int x, int y, int dx, int dy, int dWheel) {
+	public MouseEvent(EventType<MouseEvent> type, int button, int modifiers, int x, int y, int dx, int dy, int dWheel) {
 		super(type);
 		this.button = button;
+		this.modifiers = modifiers;
 		this.x = x;
 		this.y = y;
 		this.dx = dx;
@@ -113,6 +119,42 @@ public class MouseEvent extends InputEvent {
 	 */
 	public int getButton() {
 		return button;
+	}
+	
+	/**
+	 * Return the set of modifier keys which were held down during the <code>MouseEvent</code>.
+	 * 
+	 * @return The set of modifier keys.
+	 */
+	public int getModifiers() {
+		return modifiers;
+	}
+	
+	/**
+	 * Whether the shift key was held down during the <code>MouseEvent</code>.
+	 * 
+	 * @return Whether the shift key was held down.
+	 */
+	public boolean isShiftDown() {
+		return KeyModifiers.hasModifiers(modifiers, SHIFT_DOWN);
+	}
+	
+	/**
+	 * Whether the control key was held down during the <code>MouseEvent</code>.
+	 * 
+	 * @return Whether the control key was held down.
+	 */
+	public boolean isControlDown() {
+		return KeyModifiers.hasModifiers(modifiers, CONTROL_DOWN);
+	}
+	
+	/**
+	 * Whether the alt key was held down during the <code>MouseEvent</code>.
+	 * 
+	 * @return Whether the alt key was held down.
+	 */
+	public boolean isAltDown() {
+		return KeyModifiers.hasModifiers(modifiers, ALT_DOWN);
 	}
 	
 	/**
@@ -166,6 +208,10 @@ public class MouseEvent extends InputEvent {
 	
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "[ type= " + type + ", button= " + button + ", x= " + x + ", y= " + y + ", dWheel= " + dWheel + " ]";
+		String modStr = ", modifiers= ";
+		modStr += isShiftDown() ? "SHIFT " : "";
+		modStr += isControlDown() ? "CTRL " : "";
+		modStr += isAltDown() ? "ALT" : "";
+		return getClass().getSimpleName() + "[ type= " + type + ", button= " + button + modStr + ", x= " + x + ", y= " + y + ", dWheel= " + dWheel + " ]";
 	}
 }
