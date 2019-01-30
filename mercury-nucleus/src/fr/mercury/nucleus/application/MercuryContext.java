@@ -308,10 +308,6 @@ public class MercuryContext implements Runnable {
 		glfwSetWindowSizeCallback(window, (window, width, height) -> {
 			settings.setResolution(width, height);
 			application.resize(width, height);
-			
-			if(mouseInput != null) {
-				mouseInput.resize(width, height);
-			}
 		});
 		
 		// Setup window focus callback to stop updating or rendering when minimized.
@@ -453,5 +449,23 @@ public class MercuryContext implements Runnable {
 		if(initialized.get() && window != NULL) {
 			glfwSetWindowTitle(window, title);
 		}
+	}
+	
+	/**
+	 * Return the width of the <code>MercuryContext</code>'s window.
+	 * 
+	 * @return The width of the context window.
+	 */
+	public int getWidth() {
+		return settings.getWidth();
+	}
+	
+	/**
+	 * Return the height of the <code>MercuryContext</code>'s window.
+	 * 
+	 * @return The height of the context window.
+	 */
+	public int getHeight() {
+		return settings.getHeight();
 	}
 }

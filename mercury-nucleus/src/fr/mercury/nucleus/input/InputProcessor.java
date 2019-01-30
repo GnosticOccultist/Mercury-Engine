@@ -16,4 +16,11 @@ public interface InputProcessor {
 	 * @param event The mouse event to be processed.
 	 */
 	void mouseEvent(MouseEvent event);
+	
+	/**
+	 * Called when the <code>InputProcessor</code> receives event about dropped files on the context.
+	 * 
+	 * @param files The path of the files that were dropped.
+	 */
+	void dropEvent(String[] files);
 }

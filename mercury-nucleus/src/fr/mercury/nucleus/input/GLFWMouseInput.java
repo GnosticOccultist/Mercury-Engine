@@ -58,14 +58,6 @@ public final class GLFWMouseInput {
 	 * The input processor to dispatch the mouse event to.
 	 */
 	private InputProcessor processor;
-	/**
-	 * The current width of the window.
-	 */
-	private int currentWidth;
-	/**
-	 * The current height of the window.
-	 */
-	private int currentHeight;
     /**
      * Whether the cursor is visible.
      */
@@ -137,8 +129,9 @@ public final class GLFWMouseInput {
 				final String[] files = new String[count];
 				for (int i = 0; i < count; i++) {
 					files[i] = getName(names, i);
-					System.out.println(files[i]);
 				}
+				// Let the input processor handle the dropped files.
+				processor.dropEvent(files);
 			}
 		});
 		
@@ -164,7 +157,7 @@ public final class GLFWMouseInput {
 	
 	private void onMouseMoved(long window, double xPos, double yPos) {
         final int x = (int) Math.round(xPos);
-        final int y = currentHeight - (int) Math.round(yPos);
+        final int y = context.getHeight() - (int) Math.round(yPos);
         
         final int dx = lastEvent != null ? x - lastEvent.getX() : 0;
         final int dy = lastEvent != null ? y - lastEvent.getY() : 0;
@@ -279,18 +272,6 @@ public final class GLFWMouseInput {
 		} else {
 			glfwSetInputMode(context.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
-	}
-	
-	/**
-	 * Resize the width and height of the window used by the <code>GLFWMouseInput</code>.
-	 * This function is called by the {@link MercuryContext} when the window is being resized.
-	 * 
-	 * @param width	 The width of the window.
-	 * @param height The height of the window.
-	 */
-	public void resize(int width, int height) {
-		this.currentWidth = width;
-		this.currentHeight = height;
 	}
 	
 	/**
