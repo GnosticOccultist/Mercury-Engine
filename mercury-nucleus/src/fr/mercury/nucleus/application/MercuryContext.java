@@ -366,8 +366,6 @@ public class MercuryContext implements Runnable {
 	private void destroyContext() {
 		try {
 			if(window != NULL) {
-				mouseInput.destroy();
-				
 				glfwDestroyWindow(window);
 				window = NULL;
 				glfwTerminate();
@@ -467,5 +465,14 @@ public class MercuryContext implements Runnable {
 	 */
 	public int getHeight() {
 		return settings.getHeight();
+	}
+	
+	/**
+	 * Return the {@link GLFWMouseInput} for the <code>MercuryContext</code>.
+	 * 
+	 * @return The GLFW mouse input.
+	 */
+	public GLFWMouseInput getMouseInput() {
+		return mouseInput;
 	}
 }

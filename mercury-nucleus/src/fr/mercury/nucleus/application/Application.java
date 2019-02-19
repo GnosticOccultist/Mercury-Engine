@@ -1,5 +1,6 @@
 package fr.mercury.nucleus.application;
 
+import fr.mercury.nucleus.application.module.ApplicationModule;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
@@ -43,6 +44,23 @@ public interface Application {
 	 * @param height The new height.
 	 */
 	void resize(int width, int height);
+	
+	/**
+	 * Return an {@link ApplicationModule} matching the provided type linked to the 
+	 * <code>Application</code>.
+	 * 
+	 * @param type The type of module to return.
+	 * @return	   A module matching the given type, or null if none is linked to 
+	 * 			   the application.
+	 */
+	<M extends ApplicationModule> M getModule(Class<M> type);
+	
+	/**
+	 * Links the provided {@link ApplicationModule} to the <code>Application</code>.
+	 * 
+	 * @param module The module to be linked.
+	 */
+	void linkModule(ApplicationModule module);
 	
 	/**
 	 * Notify the <code>Application</code> about a maximized or focused 

@@ -222,7 +222,6 @@ public final class GLFWMouseInput {
 	 * @param event The mouse event to add to the dispatching queue.
 	 */
 	private void queueUpEvent(MouseEvent event) {
-		logger.info("Queued new event: " + event);
 		this.mouseEvents.add(event);
         this.lastEvent = event;
 	}
@@ -272,6 +271,16 @@ public final class GLFWMouseInput {
 		} else {
 			glfwSetInputMode(context.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
+	}
+	
+	/**
+	 * Sets the {@link InputProcessor} to dispatch the {@link MouseEvent} of the
+	 * <code>GLFWMouseInput</code> to.
+	 * 
+	 * @param processor The processor which will receive input events.
+	 */
+	public void setProcessor(InputProcessor processor) {
+		this.processor = processor;
 	}
 	
 	/**

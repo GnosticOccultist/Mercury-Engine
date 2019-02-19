@@ -1,10 +1,17 @@
 package fr.mercury.nucleus.application;
 
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.application.module.ApplicationModule;
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.input.BaseInputProcessor;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Renderer;
+import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.utils.OpenGLCall;
@@ -35,9 +42,17 @@ public abstract class MercuryApplication implements Application {
 	 */
 	protected MercurySettings settings;
 	/**
+	 * The set of modules linked to the application.
+	 */
+	protected final Set<ApplicationModule> modules = new HashSet<>();
+	/**
 	 * The asset manager.
 	 */
 	protected AssetManager assetManager = new AssetManager();
+	/**
+	 * The base input processor.
+	 */
+	protected BaseInputProcessor inputProcessor;
 	/**
 	 * The timer of the application in nanoseconds.
 	 */
@@ -88,9 +103,15 @@ public abstract class MercuryApplication implements Application {
 		// Initialize renderer.
 		renderer = new Renderer(camera, assetManager);
 		
+		// Initialize input processor with context inputs.
+		inputProcessor = new BaseInputProcessor(context.getMouseInput());
+		
 		// Reset the timer before invoking anything else,
 		// to ensure the first time per frame isn't too large...
 		timer.reset();
+		
+		// Initialize application's modules.
+		modules.stream().forEach(module -> module.initialize(this));
 		
 		// Initialize the implementation.
 		initialize();
@@ -130,7 +151,12 @@ public abstract class MercuryApplication implements Application {
 			context.setTitle(settings.getTitle() + " - " + (int) (timer.getFrameRate()) + " FPS");
 		}
 		
+		inputProcessor.update();
+		
 		float tpf = timer.getTimePerFrame() * timer.getSpeed();
+		
+		// Update application's modules.
+		modules.stream().filter(ApplicationModule::isEnabled).forEach(module -> module.update(tpf));
 		
 		// Update the implementation.
 		update(tpf);
@@ -160,6 +186,12 @@ public abstract class MercuryApplication implements Application {
 	@Override
 	@OpenGLCall
 	public void cleanup() {
+		
+		modules.stream().forEach(ApplicationModule::cleanup);
+		
+		inputProcessor.destroy();
+		inputProcessor = null;
+		
 		timer.reset();
 		renderer.cleanup(scene);
 		
@@ -173,6 +205,47 @@ public abstract class MercuryApplication implements Application {
 	public void restart() {
 		context.setSettings(settings);
 		context.restart();
+	}
+	
+	/**
+	 * Return an optional value of an {@link ApplicationModule} matching the provided type
+	 * linked to the <code>MercuryApplication</code>.
+	 * 
+	 * @param type The type of module to return.
+	 * @return     An optional value containing either a module matching the given type, or 
+	 * 			   nothing if none is linked to the application.
+	 */
+	public <M extends ApplicationModule> Optional<M> getOptionalModule(Class<M> type) {
+		return Optional.ofNullable(getModule(type));
+	}
+	
+	/**
+	 * Return an {@link ApplicationModule} matching the provided type linked to the 
+	 * <code>Application</code>.
+	 * 
+	 * @param type The type of module to return.
+	 * @return	   A module matching the given type, or null if none is linked to 
+	 * 			   the application.
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public <M extends ApplicationModule> M getModule(Class<M> type) {
+		for(ApplicationModule module : modules) {
+			if(module.getClass().isAssignableFrom(type)) {
+				return (M) module;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * Links the provided {@link ApplicationModule} to the <code>Application</code>.
+	 * 
+	 * @param module The module to be linked.
+	 */
+	@Override
+	public void linkModule(ApplicationModule module) {
+		this.modules.add(module);
 	}
 	
 	/**
