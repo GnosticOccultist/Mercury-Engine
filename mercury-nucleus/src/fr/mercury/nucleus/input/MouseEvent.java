@@ -1,5 +1,7 @@
 package fr.mercury.nucleus.input;
 
+import static fr.mercury.nucleus.input.Input.Modifiers.*;
+import static fr.mercury.nucleus.input.Input.Buttons.*;
 import fr.alchemy.utilities.event.EventType;
 
 /**
@@ -8,7 +10,7 @@ import fr.alchemy.utilities.event.EventType;
  * 
  * @author GnosticOccultist
  */
-public class MouseEvent extends InputEvent implements KeyModifiers {
+public class MouseEvent extends InputEvent implements Input {
 	
 	/**
 	 * The event type returned whenever the mouse position has changed.
@@ -81,7 +83,7 @@ public class MouseEvent extends InputEvent implements KeyModifiers {
 	 * @param dWheel The change amount in the wheel movement.
 	 */
 	public MouseEvent(EventType<MouseEvent> type, int x, int y, int dx, int dy, int dWheel) {
-		this(type, GLFWMouseInput.BUTTON_UNDEFINED, 0, x, y, dx, dy, dWheel);
+		this(type, BUTTON_UNDEFINED, 0, x, y, dx, dy, dWheel);
 	}
 	
 	/**
@@ -136,7 +138,7 @@ public class MouseEvent extends InputEvent implements KeyModifiers {
 	 * @return Whether the shift key was held down.
 	 */
 	public boolean isShiftDown() {
-		return KeyModifiers.hasModifiers(modifiers, SHIFT_DOWN);
+		return hasModifiers(modifiers, SHIFT_DOWN);
 	}
 	
 	/**
@@ -145,7 +147,7 @@ public class MouseEvent extends InputEvent implements KeyModifiers {
 	 * @return Whether the control key was held down.
 	 */
 	public boolean isControlDown() {
-		return KeyModifiers.hasModifiers(modifiers, CONTROL_DOWN);
+		return hasModifiers(modifiers, CONTROL_DOWN);
 	}
 	
 	/**
@@ -154,7 +156,7 @@ public class MouseEvent extends InputEvent implements KeyModifiers {
 	 * @return Whether the alt key was held down.
 	 */
 	public boolean isAltDown() {
-		return KeyModifiers.hasModifiers(modifiers, ALT_DOWN);
+		return hasModifiers(modifiers, ALT_DOWN);
 	}
 	
 	/**

@@ -1,8 +1,9 @@
 package fr.mercury.nucleus.input;
 
+import static fr.mercury.nucleus.input.Input.Modifiers.*;
 import fr.alchemy.utilities.event.EventType;
 
-public class KeyEvent extends InputEvent implements KeyModifiers {
+public class KeyEvent extends InputEvent implements Input {
 
 	/**
 	 * The event type returned whenever a keyboard key has been pressed, it the key is held 
@@ -123,7 +124,7 @@ public class KeyEvent extends InputEvent implements KeyModifiers {
 	 * @return Whether the shift key was held down.
 	 */
 	public boolean isShiftDown() {
-		return KeyModifiers.hasModifiers(modifiers, SHIFT_DOWN);
+		return hasModifiers(modifiers, SHIFT_DOWN);
 	}
 	
 	/**
@@ -132,7 +133,7 @@ public class KeyEvent extends InputEvent implements KeyModifiers {
 	 * @return Whether the control key was held down.
 	 */
 	public boolean isControlDown() {
-		return KeyModifiers.hasModifiers(modifiers, CONTROL_DOWN);
+		return hasModifiers(modifiers, CONTROL_DOWN);
 	}
 	
 	/**
@@ -141,7 +142,7 @@ public class KeyEvent extends InputEvent implements KeyModifiers {
 	 * @return Whether the alt key was held down.
 	 */
 	public boolean isAltDown() {
-		return KeyModifiers.hasModifiers(modifiers, ALT_DOWN);
+		return hasModifiers(modifiers, ALT_DOWN);
 	}
 	
 	/**

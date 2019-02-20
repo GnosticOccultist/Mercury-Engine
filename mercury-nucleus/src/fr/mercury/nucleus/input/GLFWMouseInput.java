@@ -1,5 +1,9 @@
 package fr.mercury.nucleus.input;
 
+import static fr.mercury.nucleus.input.Input.Buttons.BUTTON_LEFT;
+import static fr.mercury.nucleus.input.Input.Buttons.BUTTON_MIDDLE;
+import static fr.mercury.nucleus.input.Input.Buttons.BUTTON_RIGHT;
+import static fr.mercury.nucleus.input.Input.Buttons.BUTTON_UNDEFINED;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_DISABLED;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL;
@@ -32,23 +36,6 @@ import fr.mercury.nucleus.application.MercuryContext;
 public final class GLFWMouseInput {
 	
 	private static final Logger logger = FactoryLogger.getLogger("mercury.input");
-	
-	/**
-	 * The undefined mouse button.
-	 */
-	public static final int BUTTON_UNDEFINED = -1;
-	/**
-	 * The left mouse button.
-	 */
-	public static final int BUTTON_LEFT = 0;
-	/**
-	 * The right mouse button.
-	 */
-	public static final int BUTTON_RIGHT = 1;
-	/**
-	 * The middle or scroll mouse button.
-	 */
-	public static final int BUTTON_MIDDLE = 2;
 	
 	/**
 	 * The context handling the mouse input.
