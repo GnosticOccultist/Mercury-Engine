@@ -155,6 +155,8 @@ public abstract class MercuryApplication implements Application {
 		
 		float tpf = timer.getTimePerFrame() * timer.getSpeed();
 		
+		// Initialize modules which haven't already.
+		modules.stream().filter(module -> !module.isInitialized()).forEach(module -> module.initialize(this));
 		// Update application's modules.
 		modules.stream().filter(ApplicationModule::isEnabled).forEach(module -> module.update(tpf));
 		

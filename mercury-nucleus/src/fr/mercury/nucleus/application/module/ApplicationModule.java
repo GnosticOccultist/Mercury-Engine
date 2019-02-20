@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.application.module;
 
 import fr.mercury.nucleus.application.Application;
+import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
  * <code>ApplicationModule</code> represents an addon which rely only on the existence of an {@link Application}. It contains
@@ -15,6 +16,7 @@ public interface ApplicationModule {
 	 * 
 	 * @param application The application which owns the module.
 	 */
+	@OpenGLCall
 	void initialize(Application application);
 	
 	/**
@@ -23,12 +25,22 @@ public interface ApplicationModule {
 	 * 
 	 * @param tpf The time per frame in seconds.
 	 */
+	@OpenGLCall
 	void update(float tpf);
 	
 	/**
-	 * Cleanup the <code>ApplicationModule</code>.
+	 * Cleanup the <code>ApplicationModule</code> and de-initialized it.
 	 */
+	@OpenGLCall
 	void cleanup();
+	
+	/**
+	 * Return whether the <code>ApplicationModule</code> has been initialized with its 
+	 * current <code>Application</code>.
+	 * 
+	 * @return Whether the module has been initialized.
+	 */
+	boolean isInitialized();
 	
 	/**
 	 * Return whether the <code>ApplicationModule</code> is enabled.
