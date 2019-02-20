@@ -31,7 +31,7 @@ public abstract class InputEvent {
 	 * @param type The type describing the event.
 	 */
 	protected InputEvent(EventType<? extends InputEvent> type) {
-		Validator.nonNull(type);
+		Validator.nonNull(type, "The provided input event type can't be null!");
 		this.type = type;
 	}
 	

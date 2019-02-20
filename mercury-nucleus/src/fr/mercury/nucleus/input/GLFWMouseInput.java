@@ -53,19 +53,19 @@ public final class GLFWMouseInput {
 	/**
 	 * The context handling the mouse input.
 	 */
-	private MercuryContext context;
+	private final MercuryContext context;
 	/**
-	 * The input processor to dispatch the mouse event to.
+	 * The input processor to dispatch the mouse events to.
 	 */
 	private InputProcessor processor;
-    /**
-     * Whether the cursor is visible.
-     */
-	private boolean cursorVisible = true;
 	/**
 	 * The queue of mouse events to be dispatched.
 	 */
 	private final Queue<MouseEvent> mouseEvents = new ArrayDeque<>();
+    /**
+     * Whether the cursor is visible.
+     */
+	private boolean cursorVisible = true;
 	/**
 	 * The table containing the click time of each mouse button.
 	 */
@@ -142,7 +142,7 @@ public final class GLFWMouseInput {
 	 * Update the <code>GLFWMouseInput</code> by dispatching the pending {@link MouseEvent}
 	 * to the registered {@link InputProcessor}.
 	 */
-	public void update() {
+	public void dispatch() {
 		
 		if(processor == null) {
 			logger.warning("No input processor assigned to the " + getClass().getSimpleName());
@@ -167,7 +167,7 @@ public final class GLFWMouseInput {
         		|| lastEvent.getType().equals(MouseEvent.MOUSE_MOVED)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
         
         final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_MOVED, button, 0, x, y, dx, dy, 0);
-        event.setTime((long) (glfwGetTime() * 1_000_000_000));
+        event.setTime(inputTime());
         queueUpEvent(event);
 	}
 	
@@ -191,7 +191,7 @@ public final class GLFWMouseInput {
 		}
 		
 		final MouseEvent event = new MouseEvent(type, button(button), mods, x, y, 0, 0, 0);
-        event.setTime((long) (glfwGetTime() * 1_000_000_000));
+        event.setTime(inputTime());
         queueUpEvent(event);
 	}
 	

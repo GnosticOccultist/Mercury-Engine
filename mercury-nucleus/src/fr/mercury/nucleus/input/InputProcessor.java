@@ -18,6 +18,13 @@ public interface InputProcessor {
 	void mouseEvent(MouseEvent event);
 	
 	/**
+	 * Called when the <code>InputProcessor</code> receives a new {@link KeyEvent} to be processed.
+	 * 
+	 * @param event The key event to be processed.
+	 */
+	void keyEvent(KeyEvent event);
+	
+	/**
 	 * Called when the <code>InputProcessor</code> receives event about dropped files on the context.
 	 * 
 	 * @param files The path of the files that were dropped.

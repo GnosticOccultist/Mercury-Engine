@@ -41,6 +41,7 @@ import org.lwjgl.opengl.GL13;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.input.GLFWKeyInput;
 import fr.mercury.nucleus.input.GLFWMouseInput;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.NanoTimer;
@@ -104,6 +105,10 @@ public class MercuryContext implements Runnable {
 	 * The mouse input handler.
 	 */
 	private GLFWMouseInput mouseInput;
+	/**
+	 * The mouse input handler.
+	 */
+	private GLFWKeyInput keyInput;
 
 	/**
 	 * Instantiates and return the <code>MercuryContext</code> bound to the provided application
@@ -239,6 +244,9 @@ public class MercuryContext implements Runnable {
 			
 			mouseInput = new GLFWMouseInput(this);
 			mouseInput.initialize();
+			
+			keyInput = new GLFWKeyInput(this);
+			keyInput.initialize();
 			
 			initialized.set(true);
 			
@@ -474,5 +482,14 @@ public class MercuryContext implements Runnable {
 	 */
 	public GLFWMouseInput getMouseInput() {
 		return mouseInput;
+	}
+	
+	/**
+	 * Return the {@link GLFWKeyInput} for the <code>MercuryContext</code>.
+	 * 
+	 * @return The GLFW key input.
+	 */
+	public GLFWKeyInput getKeyInput() {
+		return keyInput;
 	}
 }

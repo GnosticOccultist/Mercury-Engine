@@ -104,7 +104,7 @@ public abstract class MercuryApplication implements Application {
 		renderer = new Renderer(camera, assetManager);
 		
 		// Initialize input processor with context inputs.
-		inputProcessor = new BaseInputProcessor(context.getMouseInput());
+		inputProcessor = new BaseInputProcessor(context.getMouseInput(), context.getKeyInput());
 		
 		// Reset the timer before invoking anything else,
 		// to ensure the first time per frame isn't too large...
