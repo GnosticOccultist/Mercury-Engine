@@ -9,27 +9,34 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.module.ApplicationModule;
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.input.BaseInputProcessor;
+import fr.mercury.nucleus.input.InputProcessor;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
-import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 
 /**
- * <code>MercuryApplication</code> is a basic implementation of a usable application
- * using the <code>Mercury-Engine</code>.
+ * <code>MercuryApplication</code> is an abstract implementation of a usable {@link Application} using the <code>Mercury-Engine</code>.
+ * It implements the initialization, updating and cleaning methods as well as managing the {@link MercurySettings} and a set of {@link ApplicationModule}
+ * extending its basic capabilities depending on the user needs.
  * <p>
- * It implements the initialization, updating and cleaning methods as well as 
- * the <code>MercurySettings</code> handling.
+ * Such application is capable of rendering a 3D scene described by a hierarchy of {@link AnimaMundi} extending from the {@link #scene root-node}
+ * using its own {@link Camera} and {@link Renderer}.
+ * <p>
+ * An {@link AssetManager} and an {@link InputProcessor} are contained within the application in order to handle asset loading and being 
+ * notified about inputs related events.
+ * 
+ * @see #getScene()
+ * @see #getModule(Class)
  * 
  * @author GnosticOccultist
  */
 public abstract class MercuryApplication implements Application {
 
 	/**
-	 * The logger for the Mercury Application.
+	 * The logger for the application.
 	 */
 	protected static final Logger logger = FactoryLogger.getLogger("mercury.app");
 	
@@ -71,10 +78,10 @@ public abstract class MercuryApplication implements Application {
 	protected NucleusMundi scene = new NucleusMundi("root-nucleus");
 	
 	/**
-	 * Starts the <code>MercuryApplication</code> and creates the <code>MercuryContext</code>.
+	 * Starts the <code>MercuryApplication</code> and creates the {@link MercuryContext}.
 	 * While initializing the context, it will start the main application loop and show the configured window.
 	 * <p>
-	 * If no <code>MercurySettings</code> are set, it will use the default ones.
+	 * If no {@link MercurySettings} are set, it will use the default ones.
 	 */
 	public void start() {
 		if(settings == null) {
@@ -88,7 +95,7 @@ public abstract class MercuryApplication implements Application {
 	
 	/**
 	 * <b>Don't call manually</b>
-	 * 
+	 * <p>
 	 * It is automatically called when the context is initialized.
 	 */
 	@Override
@@ -118,8 +125,13 @@ public abstract class MercuryApplication implements Application {
 	}
 	
 	/**
+	 * <b>Don't call manually</b>
+	 * <p>
+	 * It is automatically called internally in {@link #internalInitialize()}.
+	 * <p>
 	 * Initialize the implementation of <code>MercuryApplication</code>.
-	 * This is automatically called internally in {@link #internalInitialize()}.
+	 * 
+	 * @see #internalInitialize()
 	 */
 	@OpenGLCall
 	protected abstract void initialize();
@@ -134,7 +146,7 @@ public abstract class MercuryApplication implements Application {
 
 	/**
 	 * <b>Don't call manually</b>
-	 * 
+	 * <p>
 	 * It is automatically called during the context updating logic.
 	 */
 	@Override
@@ -171,17 +183,22 @@ public abstract class MercuryApplication implements Application {
 	}
 	
 	/**
+	 * <b>Don't call manually</b>
+	 * <p>
+	 * It is automatically called internally in {@link #internalUpdate()}.
+	 * <p>
 	 * Update the implementation of <code>MercuryApplication</code>.
-	 * This is automatically called internally in {@link #internalUpdate()}.
 	 * 
 	 * @param tpf The time per frame.
+	 * 
+	 * @see #internalUpdate()
 	 */
 	@OpenGLCall
 	protected void update(float tpf) {}
 
 	/**
 	 * <b>Don't call manually</b>
-	 * 
+	 * <p>
 	 * It is automatically called when closing the application, 
 	 * before the context destruction.
 	 */
@@ -201,7 +218,7 @@ public abstract class MercuryApplication implements Application {
 	}
 	
 	/**
-     * Set the context settings to the application ones, and
+     * Sets the context settings to the application ones, and
      * restart the <code>MercuryContext</code> in order to apply any changes.
      */
 	public void restart() {
@@ -212,10 +229,15 @@ public abstract class MercuryApplication implements Application {
 	/**
 	 * Return an optional value of an {@link ApplicationModule} matching the provided type
 	 * linked to the <code>MercuryApplication</code>.
+	 * <p>
+	 * This function is supposed to be used to access the module, however it shouldn't be used 
+	 * to detach it from the application, use {@link #unlinkModule(ApplicationModule)} instead.
 	 * 
 	 * @param type The type of module to return.
 	 * @return     An optional value containing either a module matching the given type, or 
 	 * 			   nothing if none is linked to the application.
+	 * 
+	 * @see #getModule(Class)
 	 */
 	public <M extends ApplicationModule> Optional<M> getOptionalModule(Class<M> type) {
 		return Optional.ofNullable(getModule(type));
@@ -223,11 +245,17 @@ public abstract class MercuryApplication implements Application {
 	
 	/**
 	 * Return an {@link ApplicationModule} matching the provided type linked to the 
-	 * <code>Application</code>.
+	 * <code>MercuryApplication</code>.
+	 * <p>
+	 * This function is supposed to be used to access the module, however it shouldn't be used 
+	 * to detach it from the application, use {@link #unlinkModule(ApplicationModule)} instead.
 	 * 
 	 * @param type The type of module to return.
 	 * @return	   A module matching the given type, or null if none is linked to 
 	 * 			   the application.
+	 * 
+	 * @see #unlinkModule(ApplicationModule)
+	 * @see #getOptionalModule(Class)
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
@@ -241,7 +269,8 @@ public abstract class MercuryApplication implements Application {
 	}
 	
 	/**
-	 * Links the provided {@link ApplicationModule} to the <code>Application</code>.
+	 * Links the provided {@link ApplicationModule} to the <code>MercuryApplication</code>.
+	 * Note that the module will be initialized during the next update cycle if it hasn't been yet.
 	 * 
 	 * @param module The module to be linked.
 	 */
@@ -251,11 +280,22 @@ public abstract class MercuryApplication implements Application {
 	}
 	
 	/**
-	 * Return the {@link NucleusMundi} representing the root-node
-	 * of the scene. 
-	 * <br>
-	 * Call {@link NucleusMundi#attach(AnimaMundi) attach} to add an 
-	 * {@link PhysicaMundi object} to the scene.
+	 * Unlinks the provided {@link ApplicationModule} from the <code>MercuryApplication</code>
+	 * and terminate the module by calling the {@link ApplicationModule#cleanup()} method.
+	 * 
+	 * @param module The module which is to be cleaned up and removed.
+	 */
+	public void unlinkModule(ApplicationModule module) {
+		if(modules.remove(module)) {
+			module.cleanup();
+		}
+	}
+	
+	/**
+	 * Return the {@link NucleusMundi} representing the root-node of the scene meaning 
+	 * all scenegraph elements are expanding down from this one.
+	 * <p>
+	 * In order to attach an {@link AnimaMundi} to this one, call the method {@link NucleusMundi#attach(AnimaMundi)}.
 	 * 
 	 * @return The root-node of the scene.
 	 */

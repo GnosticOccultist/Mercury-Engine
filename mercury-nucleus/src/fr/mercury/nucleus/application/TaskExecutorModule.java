@@ -13,8 +13,24 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.module.AbstractApplicationModule;
 
+/**
+ * <code>TaskExecutorModule</code> is an implementation of {@link AbstractApplicationModule} which allows
+ * for asynchronous execution of submitted tasks using an {@link ExecutorService} containing multiple 
+ * separate {@link Thread}.
+ * <p>
+ * The module will automatically shutdown its execution service when {@link #cleanup()} is called and 
+ * waits for any running task to finish.  A new service is being created during the initialization of the module, 
+ * but the tasks can already be submitted right after instantiation.
+ * <p>
+ * Note however that the {@link #enable()} or {@link #disable()} methods has no effect on the execution of tasks.
+ * 
+ * @author GnosticOccultist
+ */
 public class TaskExecutorModule extends AbstractApplicationModule {
 	
+	/**
+	 * The logger for the tasking module.
+	 */
 	private static final Logger logger = FactoryLogger.getLogger("mercury.tasks");
 	
 	/**

@@ -3,7 +3,7 @@ package fr.mercury.nucleus.application;
 import java.util.HashMap;
 
 /**
- * <code>MercurySettings</code> stores the settings to be used by the <code>Application</code>.
+ * <code>MercurySettings</code> stores the settings to be used by the {@link Application}.
  * <p>
  * The settings can be loaded from default, changed or added.
  * 

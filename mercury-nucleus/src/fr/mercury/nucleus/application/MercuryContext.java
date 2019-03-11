@@ -192,7 +192,7 @@ public class MercuryContext implements Runnable {
     			destroyContext();
     			createContext(settings);
     		} catch (Exception ex) {
-    			logger.error("Failed to set display settings!" + ex.getMessage());
+    			logger.error("Failed to set display settings!", ex);
     		}
     	}
 		
@@ -378,9 +378,8 @@ public class MercuryContext implements Runnable {
 				window = NULL;
 				glfwTerminate();
 			}
-		} catch (Exception e) {
-			logger.error("Failed to destroy context !");
-			e.printStackTrace();
+		} catch (Exception ex) {
+			logger.error("Failed to destroy context !", ex);
 		}
 	}
 	
