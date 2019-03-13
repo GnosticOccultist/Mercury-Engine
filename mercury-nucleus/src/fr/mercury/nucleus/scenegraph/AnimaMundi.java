@@ -1,19 +1,21 @@
 package fr.mercury.nucleus.scenegraph;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.array.Array;
+import fr.alchemy.utilities.array.ReadOnlyArray;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Quaternion;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
-import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformStructure;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
+import fr.mercury.nucleus.scenegraph.environment.EnvironmentElement;
 import fr.mercury.nucleus.scenegraph.environment.EnvironmentMode;
 import fr.mercury.nucleus.scenegraph.visitor.AbstractVisitor;
 import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
@@ -76,19 +78,19 @@ public abstract class AnimaMundi {
 	 */
 	protected BucketType bucket = BucketType.LEGACY;
 	/**
-	 * The environment mode describing how environmental data should be
-	 * passed through the scene-tree.
+	 * The environment mode describing how environmental elements should be
+	 * passed through the scene-graph.
 	 */
 	protected EnvironmentMode envMode = EnvironmentMode.LOCAL_PRIORITY;
 	/**
-	 * The list of uniform structures which can be used for rendering.
+	 * The array of environmental elements which are locally present on this anima-mundi.
 	 */
-	protected List<UniformStructure> environments = new ArrayList<>(3);
+	protected final Array<EnvironmentElement> envElements = Array.ofType(EnvironmentElement.class);
 	/**
 	 * The accumulated dirty marks by the anima-mundi. At instantiation
 	 * it will contain {@link DirtyType#TRANSFORM}.
 	 */
-	protected EnumSet<DirtyType> dirtyMarks = EnumSet.of(DirtyType.TRANSFORM);
+	protected final EnumSet<DirtyType> dirtyMarks = EnumSet.of(DirtyType.TRANSFORM);
 	/**
 	 * The queue distance computed by the {@link RenderBucket}.
 	 */
@@ -516,25 +518,81 @@ public abstract class AnimaMundi {
 		return bucket;
 	}
 	
-	public UniformStructure getEnvironmentProperty(String name) {
+	/**
+	 * Sets the used {@link BucketType} for the rendering of this <code>AnimaMundi</code>.
+	 * 
+	 * @param bucket The bucket type used to render the anima-mundi (not null).
+	 */
+	public void setBucket(BucketType bucket) {
+		Validator.nonNull(bucket, "The bucket type can't be null!");
+		this.bucket = bucket;
+	}
+	
+	/**
+	 * Adds the provided {@link EnvironmentElement} locally to the <code>AnimaMundi</code>.
+	 * 
+	 * @param element The element to add locally to this anima-mundi (not null).
+	 * 
+	 * @throws IllegalArgumentException Throw if the element added is already present on this anima-mundi,
+	 * 									and only one can be present.
+	 */
+	public void addEnvironmentElement(EnvironmentElement element) {
+		Validator.nonNull(element, "The provided environment element can't be null!");
+		if(element.isSingleton() && containsLocal(element.name())) {
+			throw new IllegalArgumentException("The provided environment element is already defined for '" + getName() + "' !");
+		}
+		
+		envElements.add(element);
+	}
+	
+	/**
+	 * Removes the provided {@link EnvironmentElement} locally from the <code>AnimaMundi</code>.
+	 * 
+	 * @param element The element to remove locally from this anima-mundi (not null).
+	 * @return 		  Whether the element was removed from this anima-mundi.
+	 */
+	public boolean removeEnvironmentElement(EnvironmentElement element) {
+		Validator.nonNull(element, "The provided environment element can't be null!");
+		return envElements.remove(element);
+	}
+	
+	/**
+	 * Return whether an {@link EnvironmentElement} matching the provided name is present
+	 * locally on this <code>AnimaMundi</code>.
+	 * 
+	 * @param name The name of the environment element to check.
+	 * @return	   Whether an element matching the name is present locally.
+	 */
+	public boolean containsLocal(String name) {
+		return getLocalEnvironmentElementOpt(name).isPresent();
+	}
+	
+	/**
+	 * Return an {@link EnvironmentElement} matching the provided name by searching locally and 
+	 * through upper-hierarchy depending on the {@link EnvironmentMode} of the <code>AnimaMundi</code>.
+	 * 
+	 * @param name The name of the enviromnent element to get.
+	 * @return	   The environment element matching the name.
+	 */
+	public EnvironmentElement getEnvironmentElement(String name) {
 		// Search on the local environment only.
 		if(envMode.equals(EnvironmentMode.LOCAL_ONLY)) {
-			return getLocalEnvironmentProperty(name);
+			return getLocalEnvironmentElement(name);
 		}
 		
 		var parent = getParent();
 		if(envMode.equals(EnvironmentMode.LOCAL_PRIORITY)) {
-			var property = getLocalEnvironmentProperty(name);
+			var property = containsLocal(name) ? getLocalEnvironmentElementOpt(name).get() : null;
 			if(property == null && parent != null) {
-				property = parent.getEnvironmentProperty(name);
+				property = parent.getEnvironmentElement(name);
 			}
 			return property;
 		}
 		
 		if(envMode.equals(EnvironmentMode.ANCESTOR_PRIORITY)) {
-			var property = parent != null ? parent.getEnvironmentProperty(name) : null;
+			var property = parent != null ? parent.getEnvironmentElement(name) : null;
 			if(property == null) {
-				property = getLocalEnvironmentProperty(name);
+				property = getLocalEnvironmentElement(name);
 			}
 			
 			return property;
@@ -543,28 +601,49 @@ public abstract class AnimaMundi {
 		return null;
 	}
 	
-	public void addLocalEnvironmentProperty(UniformStructure structure) {
-		environments.add(structure);
-	}
-	
-	public UniformStructure getLocalEnvironmentProperty(String name) {
-		for(int i = 0; i < environments.size(); i++) {
-			
-			var env = environments.get(i);
-			if(env.name().equalsIgnoreCase(name)) {
-				return env;
-			}
-		}
-		return null;
+	/**
+	 * Return an {@link Optional} value containing the {@link EnvironmentElement} present 
+	 * locally on the <code>AnimaMundi</code> matching the provided name.
+	 * <p>
+	 * If no such element exists it will return an empty optional value.
+	 * 
+	 * @param name The name of the enviromnent element to get.
+	 * @return	   An optional value containing the environment element matching the name,
+	 * 			   or empty if no such element exists.
+	 * 
+	 * @see #getLocalEnvironmentElement(String)
+	 */
+	public Optional<EnvironmentElement> getLocalEnvironmentElementOpt(String name) {
+		var optionalElement = envElements.stream().filter(element -> element.name()
+				.equalsIgnoreCase(name)).findFirst();
+		
+		return optionalElement;
 	}
 	
 	/**
-	 * Sets the used {@link BucketType} for the rendering of this <code>AnimaMundi</code>.
+	 * Return an {@link EnvironmentElement} present locally on the <code>AnimaMundi</code>
+	 * matching the provided name.
 	 * 
-	 * @param bucket The bucket type used to render the anima-mundi.
+	 * @param name The name of the enviromnent element to get.
+	 * @return	   The environment element matching the name.
+	 * 
+	 * @see #getLocalEnvironmentElementOpt(String)
+	 * 
+	 * @throws NoSuchElementException Thrown if no element present on the anima-mundi 
+	 * 								  is matching the provided name.
 	 */
-	public void setBucket(BucketType bucket) {
-		this.bucket = bucket;
+	public EnvironmentElement getLocalEnvironmentElement(String name) {
+		return getLocalEnvironmentElementOpt(name).get();
+	}
+	
+	/**
+	 * Return a readable-only array of the {@link EnvironmentElement} locally present on the 
+	 * <code>AnimaMundi</code>.
+	 * 
+	 * @return A readable only version of the local environment elements.
+	 */
+	public ReadOnlyArray<EnvironmentElement> getLocalEnvironmentElements() {
+		return envElements.readOnly();
 	}
 	
 	/**

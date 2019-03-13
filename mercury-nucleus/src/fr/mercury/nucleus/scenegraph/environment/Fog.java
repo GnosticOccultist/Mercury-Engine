@@ -5,7 +5,6 @@ import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
-import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformStructure;
 
 /**
  * <code>Fog</code> represents the ambient fog present on the scene. The fog object is
@@ -14,7 +13,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformStructure;
  * 
  * @author GnosticOccultist
  */
-public final class Fog implements UniformStructure {
+public final class Fog implements EnvironmentElement {
 
 	/**
 	 * The name of the structure to access the uniforms.

@@ -175,7 +175,7 @@ public abstract class AbstractRenderer {
 		for(int i = 0; i < prefabUniforms.size(); i++) {
 			
 			var prefabName = prefabUniforms.get(i);
-			var property = physica.getEnvironmentProperty(prefabName);
+			var property = physica.getEnvironmentElement(prefabName);
 			
 			if(property != null) {
 				property.uniforms(shader);

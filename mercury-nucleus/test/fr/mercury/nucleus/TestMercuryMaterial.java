@@ -1,6 +1,7 @@
 package fr.mercury.nucleus;
 
 import fr.mercury.nucleus.application.MercuryApplication;
+import fr.mercury.nucleus.application.TaskExecutorModule;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.scenegraph.Material;
@@ -44,8 +45,11 @@ public class TestMercuryMaterial extends MercuryApplication {
 		cube.getMesh().texture = texture;
 		
 		Fog fog = new Fog(new Color(1, 0, 0, 1), 0.1f);
-		scene.addLocalEnvironmentProperty(fog);
+		scene.addEnvironmentElement(fog);
 		scene.attach(cube);
+		
+		TaskExecutorModule module = new TaskExecutorModule();
+		linkModule(module);
 	}
 	
 	@Override
