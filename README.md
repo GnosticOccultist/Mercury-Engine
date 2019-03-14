@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/GnosticOccultist/Mercury-Engine/master/docs/test-logo.png" alt="Mercury-Engine" height="260px">
+<img src="https://raw.githubusercontent.com/GnosticOccultist/Mercury-Engine/master/docs/test-logo.png" alt="Mercury-Engine" height="130px">
 
 Mercury-Engine is a 3D game engine, which is still in very early development. It is designed to implement
 the bedrock of any game or application for you (graphics, assets, scenegraph,...), while still being 
