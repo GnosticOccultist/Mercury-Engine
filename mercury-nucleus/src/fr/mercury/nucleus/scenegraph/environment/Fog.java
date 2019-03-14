@@ -7,9 +7,8 @@ import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
 
 /**
- * <code>Fog</code> represents the ambient fog present on the scene. The fog object is
- * defined by a {@link Color} and a density, and can be applied to any rendered {@link AnimaMundi} 
- * if specified so in the shaders.
+ * <code>Fog</code> is an implementation of {@link EnvironmentElement} representing an ambient fog present on the scene. 
+ * The fog object is defined by a {@link Color} and a density, and can be applied to any rendered {@link AnimaMundi}.
  * 
  * @author GnosticOccultist
  */

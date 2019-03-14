@@ -35,7 +35,8 @@ import fr.mercury.nucleus.scenegraph.visitor.Visitor;
  * <li><i>Note: A tree hierarchy can't have any cycle and a structure with no nodes is called <b>null</b> or <b>empty</b> tree.</i></li>
  * <p>
  * Each of these anima must have a parent except for the root element of the tree. They are also defined by a {@link Transform} representing 
- * their position/rotation/scale inside the global or local (node) space.
+ * their position/rotation/scale inside the global or local (node) space. A set of {@link EnvironmentElement} can be defined for the anima-mundi
+ * to alter the visual property of local or subsequent nodes.
  * 
  * @author GnosticOccultist
  */
@@ -108,10 +109,8 @@ public abstract class AnimaMundi {
 	/**
 	 * Instantiates a new <code>AnimaMundi</code> with the {@link Transform}
 	 * set to identity values and the given name.
-	 * <p>
-	 * The name cannot be null.
 	 * 
-	 * @param name The name of the anima-mundi.
+	 * @param name The name of the anima-mundi (not null).
 	 */
 	protected AnimaMundi(String name) {
 		this();
@@ -152,10 +151,8 @@ public abstract class AnimaMundi {
 	/**
 	 * Return whether the <code>AnimaMundi</code> contains the specified
 	 * {@link DirtyType} mark, meaning it has to refresh this type of data.
-	 * <p>
-	 * The provided dirty type cannot be null.
 	 * 
-	 * @param type The data type to check for dirtiness.
+	 * @param type The data type to check for dirtiness (not null).
 	 * @return	   Whether the specified data type is dirty.
 	 */
 	protected boolean isDirty(DirtyType type) {
@@ -166,10 +163,8 @@ public abstract class AnimaMundi {
 	/**
 	 * Sets the dirty mark for the specified {@link DirtyType} to this
 	 * <code>AnimaMundi</code> and all of its hierarchy.
-	 * <p>
-	 * The provided dirty type cannot be null.
 	 * 
-	 * @param type The dirty mark to apply.
+	 * @param type The dirty mark to apply (not null).
 	 */
 	protected void dirty(DirtyType type) {
 		Validator.nonNull(type);

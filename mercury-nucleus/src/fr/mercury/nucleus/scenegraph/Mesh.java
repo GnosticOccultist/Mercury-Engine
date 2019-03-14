@@ -5,10 +5,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 
 import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.renderer.opengl.GLBuffer.BufferType;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexArray;
@@ -90,10 +90,10 @@ public class Mesh {
 	
 	protected void unbind() {
 		
-		vao.unbind();
+		VertexArray.unbind();
 		
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+		VertexBuffer.unbind(BufferType.VERTEX_DATA);
+		VertexBuffer.unbind(BufferType.VERTEX_INDEXING);
 	}
 	
 	/**

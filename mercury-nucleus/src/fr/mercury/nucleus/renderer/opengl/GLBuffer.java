@@ -51,6 +51,23 @@ public abstract class GLBuffer extends GLObject {
 	}
 	
 	/**
+	 * Unbinds the currently bound <code>GLBuffer</code> from the OpenGL context.
+	 * <p>
+	 * The methods is mainly used for proper cleaning of the OpenGL context or to avoid errors of
+	 * misbindings, because it doesn't need to be called before binding a new buffer.
+	 * <p>
+	 * The method has been set static because it can be called from any <code>GLBuffer</code> instance,
+	 * and will only unbind the lastest bind on the <code>OpenGL</code> context matching the provided
+	 * {@link Buffer}.
+	 * 
+	 * @param type The buffer type to unbind from the context (not null).
+	 */
+	public static void unbind(BufferType type) {
+		Validator.nonNull(type, "The buffer type can't be null!");
+		GL15.glBindBuffer(GLBuffer.getOpenGLType(type), 0);
+	}
+	
+	/**
 	 * Binds the <code>GLBuffer</code> to the OpenGL context, allowing it to be used or updated. 
 	 * <p>
 	 * Note that there is only one bound buffer per {@link BufferType}.
@@ -160,8 +177,8 @@ public abstract class GLBuffer extends GLObject {
 	}
 	
 	/**
-	 * Return the OpenGL equivalent buffer type as an int corresponding to the enum
-	 * value of the <code>BufferType</code>
+	 * Return the <code>OpenGL</code> equivalent buffer type as an int corresponding to the enum
+	 * value of the {@link BufferType}.
 	 * 
 	 * @return The type of buffer.
 	 */
@@ -174,6 +191,27 @@ public abstract class GLBuffer extends GLObject {
 			default:
 				throw new UnsupportedOperationException("Cannot convert the buffer type: " 
 						+ getType() + " to an OpenGL equivalent!");
+		}
+	}
+	
+
+	/**
+	 * Return the <code>OpenGL</code> equivalent buffer type as an int corresponding to the provided
+	 * enum value of the {@link BufferType}.
+	 * 
+	 * @return The type of buffer (not null).
+	 */
+	public static int getOpenGLType(BufferType type) {
+		Validator.nonNull(type, "The buffer type to convert can't be null!");
+		
+		switch(type) {
+			case VERTEX_DATA:
+				return GL15.GL_ARRAY_BUFFER;
+			case VERTEX_INDEXING:
+				return GL15.GL_ELEMENT_ARRAY_BUFFER;
+			default:
+				throw new UnsupportedOperationException("Cannot convert the buffer type: " 
+						+ type + " to an OpenGL equivalent!");
 		}
 	}
 	

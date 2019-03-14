@@ -34,7 +34,8 @@ public final class BucketType {
 	 */
 	public static final BucketType LEGACY = get("Legacy");
 	/**
-	 * Disable bucketing and render immediately the {@link AnimaMundi} to the back buffer.
+	 * Disable bucketing and render immediately the {@link AnimaMundi} to the back buffer, without
+	 * any sorting.
 	 */
 	public static final BucketType NONE = get("None");
 	
@@ -74,6 +75,14 @@ public final class BucketType {
 	 */
 	private BucketType(String name) {
 		this.name = name;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if(o != null && o instanceof BucketType) {
+			return name == ((BucketType) o).name;
+		}
+		return false;
 	}
 	
 	/**

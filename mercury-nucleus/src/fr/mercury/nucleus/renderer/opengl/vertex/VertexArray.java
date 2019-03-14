@@ -48,13 +48,14 @@ public final class VertexArray extends GLObject {
 	/**
 	 * Unbinds the currently bound <code>VertexArray</code> from the OpenGL context.
 	 * <p>
-	 * This methods is mainly used for proper cleaning of the OpenGL context or to avoid errors of
-	 * misbindings, because it doesn't need to be called before binding a vertex array.
-	 * Note that it works even if the currently bound buffer isn't the one invoking this method 
-	 * (<i>maybe it should be static, or handled by a manager?</i>).
+	 * This methods is mainly used for proper cleaning of the <code>OpenGL</code> context or to avoid 
+	 * errors of misbindings, because it doesn't need to be called before binding a vertex array.
+	 * <p>
+	 * The method has been set static because it can be called from any <code>VertexArray</code> instance,
+	 * and will only unbind the lastest bind on the <code>OpenGL</code> context.
 	 */
 	@OpenGLCall
-	public void unbind() {
+	public static void unbind() {
 		GL30.glBindVertexArray(0);
 	}
 	

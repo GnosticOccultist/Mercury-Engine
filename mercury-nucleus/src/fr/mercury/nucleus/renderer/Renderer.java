@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.renderer;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL11C;
 
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.renderer.logic.DefaultRenderLogic;
@@ -134,15 +135,15 @@ public class Renderer extends AbstractRenderer {
 	public void resize(int width, int height) {
 		if(camera != null) {
 			camera.resize(width, height);
-			GL11.glViewport(0, 0, camera.getWidth(), camera.getHeight());
-			GL11.glEnable(GL11.GL_SCISSOR_TEST);
-			GL11.glScissor(0, 0, width, height);
+			GL11C.glViewport(0, 0, camera.getWidth(), camera.getHeight());
+			GL11C.glEnable(GL11.GL_SCISSOR_TEST);
+			GL11C.glScissor(0, 0, width, height);
 		}
 	}
 
 	@OpenGLCall
 	public void setDepthRange(double depthRangeNear, double depthRangeFar) {
-		GL11.glDepthRange(depthRangeNear, depthRangeFar);
+		GL11C.glDepthRange(depthRangeNear, depthRangeFar);
 	}
 	
 	/**

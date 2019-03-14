@@ -32,10 +32,8 @@ public class PhysicaMundi extends AnimaMundi {
 	/**
 	 * Instantiates a new <code>PhysicaMundi</code> by setting its {@link Mesh} 
 	 * to the provided one.
-	 * <p>
-	 * The provided mesh cannot be null.
 	 * 
-	 * @param mesh The mesh to use.
+	 * @param mesh The mesh to use (not null).
 	 */
 	public PhysicaMundi(Mesh mesh) {
 		super();

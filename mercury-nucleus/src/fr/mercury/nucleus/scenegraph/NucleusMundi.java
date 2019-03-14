@@ -36,10 +36,8 @@ public class NucleusMundi extends AnimaMundi {
 	/**
 	 * Instantiates a new <code>AnimaMundi</code> with the {@link Transform}
 	 * set to identity values and the given name.
-	 * <p>
-	 * The name cannot be null.
 	 * 
-	 * @param name The name of the nucleus-mundi.
+	 * @param name The name of the nucleus-mundi (not null).
 	 */
 	public NucleusMundi(String name) {
 		super(name);
