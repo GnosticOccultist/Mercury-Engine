@@ -64,4 +64,13 @@ public interface ReadableVector3f {
 	default boolean isIdentity() {
 		return x() == 1 && y() == 1 && z() == 1;
 	}
+
+	/**
+     * Calculates the distance between the <code>ReadableVector3f</code> and 
+     * the provided one.
+     *
+     * @param other The vector to determine the distance from.
+     * @return 		The distance between the two vectors.
+     */
+	double distance(ReadableVector3f translation);
 }

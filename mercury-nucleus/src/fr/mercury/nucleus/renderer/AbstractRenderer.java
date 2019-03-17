@@ -4,6 +4,8 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.lwjgl.opengl.GL11C;
+
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
@@ -19,6 +21,7 @@ import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.utils.MercuryException;
+import fr.mercury.nucleus.utils.OpenGLCall;
 
 public abstract class AbstractRenderer {
 	
@@ -139,6 +142,11 @@ public abstract class AbstractRenderer {
 	 * @param anima The anima to render.
 	 */
 	public abstract void render(PhysicaMundi anima);
+	
+	@OpenGLCall
+	protected void setDepthRange(double nearDepthRange, double farDepthRange) {
+		GL11C.glDepthRange(nearDepthRange, farDepthRange);
+	}
 	
 	/**
 	 * Setup the {@link Uniform} corresponding to the needed {@link MatrixType} specified by the provided

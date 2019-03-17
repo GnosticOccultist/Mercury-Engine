@@ -341,6 +341,7 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
      * @param other The vector to determine the distance from.
      * @return 		The distance between the two vectors.
      */
+    @Override
     public double distance(ReadableVector3f other) {
         return Math.sqrt(distanceSquared(other));
     }

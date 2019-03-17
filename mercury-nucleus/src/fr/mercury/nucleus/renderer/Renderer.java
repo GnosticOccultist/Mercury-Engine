@@ -80,11 +80,8 @@ public class Renderer extends AbstractRenderer {
 	public void renderScene(NucleusMundi scene) {
 		// Clears the buffer before writing to it.
 		clearBuffers();
-	
-		camera.updateViewMatrix();
-		
-		setMatrix(MatrixType.VIEW, camera.getViewMatrix());
-		setMatrix(MatrixType.PROJECTION, camera.getProjectionMatrix());
+
+		camera.setup(this);
 		
 		// Visit the scene and render objects which doesn't use the bucket logic.
 		scene.visit(RENDER_NONE_BUCKET, VisitType.POST_ORDER);
@@ -139,11 +136,6 @@ public class Renderer extends AbstractRenderer {
 			GL11C.glEnable(GL11.GL_SCISSOR_TEST);
 			GL11C.glScissor(0, 0, width, height);
 		}
-	}
-
-	@OpenGLCall
-	public void setDepthRange(double depthRangeNear, double depthRangeFar) {
-		GL11C.glDepthRange(depthRangeNear, depthRangeFar);
 	}
 	
 	/**
