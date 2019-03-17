@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.module.ApplicationModule;
@@ -104,7 +105,7 @@ public abstract class MercuryApplication implements Application {
 		
 		// Initialize the camera.
 		camera = new Camera(settings.getWidth(), settings.getHeight());
-		camera.getLocation().set(0f, 0f, 8f);
+		camera.setLocation(0f, 0f, 8f);
 		camera.setProjectionMatrix(45f, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
 		
 		// Initialize renderer.
@@ -118,7 +119,7 @@ public abstract class MercuryApplication implements Application {
 		timer.reset();
 		
 		// Initialize application's modules.
-		modules.stream().forEach(module -> module.initialize(this));
+		modules.forEach(module -> module.initialize(this));
 		
 		// Initialize the implementation.
 		initialize();
@@ -206,7 +207,7 @@ public abstract class MercuryApplication implements Application {
 	@OpenGLCall
 	public void cleanup() {
 		
-		modules.stream().forEach(ApplicationModule::cleanup);
+		modules.forEach(ApplicationModule::cleanup);
 		
 		inputProcessor.destroy();
 		inputProcessor = null;
@@ -250,7 +251,7 @@ public abstract class MercuryApplication implements Application {
 	 * This function is supposed to be used to access the module, however it shouldn't be used 
 	 * to detach it from the application, use {@link #unlinkModule(ApplicationModule)} instead.
 	 * 
-	 * @param type The type of module to return.
+	 * @param type The type of module to return (not null).
 	 * @return	   A module matching the given type, or null if none is linked to 
 	 * 			   the application.
 	 * 
@@ -260,6 +261,7 @@ public abstract class MercuryApplication implements Application {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <M extends ApplicationModule> M getModule(Class<M> type) {
+		Validator.nonNull(type, "The module's type can't be null!");
 		for(ApplicationModule module : modules) {
 			if(module.getClass().isAssignableFrom(type)) {
 				return (M) module;
@@ -272,10 +274,11 @@ public abstract class MercuryApplication implements Application {
 	 * Links the provided {@link ApplicationModule} to the <code>MercuryApplication</code>.
 	 * Note that the module will be initialized during the next update cycle if it hasn't been yet.
 	 * 
-	 * @param module The module to be linked.
+	 * @param module The module to be linked (not null).
 	 */
 	@Override
 	public void linkModule(ApplicationModule module) {
+		Validator.nonNull(module, "The module can't be null!");
 		this.modules.add(module);
 	}
 	
@@ -283,9 +286,10 @@ public abstract class MercuryApplication implements Application {
 	 * Unlinks the provided {@link ApplicationModule} from the <code>MercuryApplication</code>
 	 * and terminate the module by calling the {@link ApplicationModule#cleanup()} method.
 	 * 
-	 * @param module The module which is to be cleaned up and removed.
+	 * @param module The module which is to be cleaned up and removed (not null).
 	 */
 	public void unlinkModule(ApplicationModule module) {
+		Validator.nonNull(module, "The module can't be null!");
 		if(modules.remove(module)) {
 			module.cleanup();
 		}

@@ -1,17 +1,17 @@
 package fr.mercury.nucleus.scenegraph;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import fr.alchemy.utilities.ReadOnlyException;
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.array.Array;
+import fr.alchemy.utilities.array.ReadOnlyArray;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
 import fr.mercury.nucleus.scenegraph.visitor.Visitor;
 
 /**
- * <code>NucleusMundi</code> represents a node ('<i>nucleus</i>') constituting a manifestation of the <code>AnimaMundi</code>.
- * The node can contain children either another node or a <code>PhysicaMundi</code> and can own a parent node or be orphan.
+ * <code>NucleusMundi</code> represents a node ('<i>nucleus</i>') constituting a manifestation of the {@link AnimaMundi}.
+ * The node can contain children either another node or a {@link PhysicaMundi} and can own a parent node or be orphan.
  * <p>
  * The node is mainly used for translating/rotating/scaling a group of children easily all at once, or for very fast culling of
  * the entire node.
@@ -23,7 +23,7 @@ public class NucleusMundi extends AnimaMundi {
 	/**
 	 * The children of the nucleus-mundi (either another node or a physica-mundi).
 	 */
-	private final List<AnimaMundi> children = new ArrayList<>();
+	private final Array<AnimaMundi> children = Array.ofType(AnimaMundi.class);
 	
 	/**
 	 * Instantiates a new <code>NucleusMundi</code> with the {@link Transform}
@@ -45,10 +45,8 @@ public class NucleusMundi extends AnimaMundi {
 	
 	/**
 	 * Attach an <code>AnimaMundi</code> to the <code>NucleusMundi</code>.
-	 * <p>
-	 * The anima-mundi cannot be null.
 	 * 
-	 * @param child The anima-mundi to attach.
+	 * @param child The anima-mundi to attach (not null).
 	 */
 	public void attach(AnimaMundi child) {
 		Validator.nonNull(child, "The child to attach cannot be null!");
@@ -65,10 +63,8 @@ public class NucleusMundi extends AnimaMundi {
 	
 	/**
 	 * Detach an <code>AnimaMundi</code> from the <code>NucleusMundi</code>.
-	 * <p>
-	 * The anima-mundi cannot be null.
 	 * 
-	 * @param child The anima-mundi to detach.
+	 * @param child The anima-mundi to detach (not null).
 	 */
 	public void detach(AnimaMundi child) {
 		Validator.nonNull(child, "The child to detach cannot be null!");
@@ -90,17 +86,20 @@ public class NucleusMundi extends AnimaMundi {
 	}
 	
 	/**
-	 * Return the children of the <code>NucleusMundi</code>.
+	 * Return a readable-only array containing the children of the <code>NucleusMundi</code>.
+	 * To actually modify the array, use {@link #attach(AnimaMundi)} or {@link #detach(AnimaMundi)} 
+	 * methods instead.
 	 * 
-	 * @return All the children of the nucleus-mundi.
+	 * @return A readable-only array with the children of the nucleus-mundi.
+	 * 
+	 * @throws ReadOnlyException Thrown if the read-only array is being modified.
 	 */
-	public List<AnimaMundi> children() {
-		return children;
+	public ReadOnlyArray<AnimaMundi> children() {
+		return children.readOnly();
 	}
 	
 	/**
-	 * Return the number of {@link AnimaMundi} contained in the
-	 * <code>NucleusMundi</code>.
+	 * Return the number of {@link AnimaMundi} contained in the <code>NucleusMundi</code>.
 	 * 
 	 * @return The number of elements.
 	 */
@@ -109,8 +108,7 @@ public class NucleusMundi extends AnimaMundi {
 	}
 	
 	/**
-	 * Return whether the <code>NucleusMundi</code> is an external one,
-	 * meaning it has no children.
+	 * Return whether the <code>NucleusMundi</code> is an external one, meaning it has no children.
 	 * 
 	 * @return Whether the node is external.
 	 */

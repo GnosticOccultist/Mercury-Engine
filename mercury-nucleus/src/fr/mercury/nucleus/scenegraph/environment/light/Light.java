@@ -53,17 +53,17 @@ public abstract class Light implements EnvironmentElement {
 	 * Copy the component of this <code>Light</code> to the provided one.
 	 * The provided light can't be null and must be of the same type as this one.
 	 * 
-	 * @param other The other light to copy components from.
+	 * @param other The other light to copy components from (not null).
 	 */
 	public void copy(Light other) {
-		Validator.nonNull(other);
+		Validator.nonNull(other, "The light can't be null!");
 		if(other.getClass() != getClass()) {
 			throw new IllegalArgumentException("The provided light to copy must be the same type!");
 		}
 		
-		this.ambient.set(other.ambient);
-		this.diffuse.set(other.diffuse);
-		this.specular.set(other.specular);
+		setAmbient(other.ambient);
+		setDiffuse(other.diffuse);
+		setSpecular(other.specular);
 	}
 	
 	/**

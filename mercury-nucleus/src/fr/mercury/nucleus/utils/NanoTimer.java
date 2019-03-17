@@ -8,7 +8,7 @@ package fr.mercury.nucleus.utils;
  */
 public class NanoTimer {
 
-	protected static final float TIMER_RESOLUTION = 1_000_000_000L;
+	protected static final long TIMER_RESOLUTION = 1_000_000_000L;
 	
 	/**
 	 * The time at the start.
@@ -28,7 +28,8 @@ public class NanoTimer {
 	protected float fps;
 	
 	/**
-	 * Initialize a new <code>NanoTimer</code> and starting it.
+	 * Instantiates a new <code>NanoTimer</code> and starting it by setting
+	 * its starting time to {@link System#nanoTime()}.
 	 */
 	public NanoTimer() {
 		startTime = System.nanoTime();

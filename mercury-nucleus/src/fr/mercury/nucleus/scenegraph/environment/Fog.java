@@ -48,20 +48,30 @@ public final class Fog implements EnvironmentElement {
 	 * @param density The density of the fog (&ge;0).
 	 */
 	public Fog(Color color, float density) {
-		Validator.nonNull(color);
-		Validator.nonNegative(density);
+		Validator.nonNull(color, "The color can't be null!");
+		Validator.nonNegative(density, "The density can't be negative!");
 		
 		this.color = color;
 		this.density = density;
 	}
 	
 	/**
-	 * Return the color of the <code>Fog</code>.
+	 * Return the {@link Color} of the <code>Fog</code>.
 	 * 
 	 * @return The fog's color.
 	 */
 	public Color getColor() {
 		return color;
+	}
+	
+	/**
+	 * Sets the {@link Color} of the <code>Fog</code>.
+	 * 
+	 * @param color The fog's color (not null).
+	 */
+	public void setColor(Color color) {
+		Validator.nonNull(color, "The color can't be null!");
+		this.color.set(color);
 	}
 	
 	/**
@@ -71,6 +81,16 @@ public final class Fog implements EnvironmentElement {
 	 */
 	public float getDensity() {
 		return density;
+	}
+	
+	/**
+	 * Sets the density of the <code>Fog</code>.
+	 * 
+	 * @param density The fog's density (&ge;0).
+	 */
+	public void setDensity(float density) {
+		Validator.nonNegative(density, "The density can't be negative!");
+		this.density = density;
 	}
 	
 	@Override

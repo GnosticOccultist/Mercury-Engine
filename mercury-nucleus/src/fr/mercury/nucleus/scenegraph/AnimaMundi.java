@@ -145,6 +145,7 @@ public abstract class AnimaMundi {
         } else {
             worldTransform.set(localTransform);
         }
+        
         dirtyMarks.remove(DirtyType.TRANSFORM);
 	}
 	
@@ -194,7 +195,6 @@ public abstract class AnimaMundi {
 	 * @see #getWorldTransform
 	 */
 	public ReadableTransform getLocalTransform() {
-		dirty(DirtyType.TRANSFORM);
 		return localTransform;
 	}
 	
@@ -432,13 +432,11 @@ public abstract class AnimaMundi {
 	
 	/**
 	 * Sets the name of the <code>AnimaMundi</code>.
-	 * <p>
-	 * The name cannot be null.
 	 * 
-	 * @param name The name of the anima-mundi.
+	 * @param name The name of the anima-mundi (not null or empty).
 	 */
 	public void setName(String name) {
-		Validator.nonNull(name);
+		Validator.nonEmpty(name, "The name can't be null");
 		this.name = name;
 	}
 	
@@ -454,13 +452,10 @@ public abstract class AnimaMundi {
 	/**
 	 * Sets the parent of the <code>AnimaMundi</code>. The method should be
 	 * called internally by the {@link NucleusMundi} implementation.
-	 * <p>
-	 * The parent cannot be null.
 	 * 
 	 * @param parent The parent of the anima-mundi.
 	 */
 	protected void setParent(NucleusMundi parent) {
-		Validator.nonNull(parent);
 		this.parent = parent;
 	}
 	

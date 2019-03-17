@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.application;
+package fr.mercury.nucleus.application.module;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -11,7 +11,7 @@ import java.util.concurrent.ThreadFactory;
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
-import fr.mercury.nucleus.application.module.AbstractApplicationModule;
+import fr.mercury.nucleus.application.Application;
 
 /**
  * <code>TaskExecutorModule</code> is an implementation of {@link AbstractApplicationModule} which allows

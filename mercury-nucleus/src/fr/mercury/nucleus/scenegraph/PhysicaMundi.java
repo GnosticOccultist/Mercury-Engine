@@ -43,10 +43,9 @@ public class PhysicaMundi extends AnimaMundi {
 	/**
 	 * Instantiates a new <code>PhysicaMundi</code> with the given name and 
 	 * by setting its {@link Mesh} to the provided one.
-	 * <p>
-	 * The provided mesh cannot be null.
 	 * 
-	 * @param mesh The mesh to use.
+	 * @param name The name of the physica-mundi (not null).
+	 * @param mesh The mesh to use (not null).
 	 */
 	public PhysicaMundi(String name, Mesh mesh) {
 		super(name);
@@ -64,10 +63,8 @@ public class PhysicaMundi extends AnimaMundi {
 	
 	/**
 	 * Sets the {@link Mesh} used by the <code>PhysicaMundi</code>.
-	 * <p>
-	 * The provided mesh cannot be null.
 	 * 
-	 * @param mesh The mesh to be rendered.
+	 * @param mesh The mesh to be rendered (not null).
 	 */
 	public void setMesh(Mesh mesh) {
 		Validator.nonNull(mesh, "The mesh cannot be null!");
@@ -86,10 +83,8 @@ public class PhysicaMundi extends AnimaMundi {
 	
 	/**
 	 * Sets the {@link Material} used by the <code>PhysicaMundi</code>.
-	 * <p>
-	 * The provided material cannot be null.
 	 * 
-	 * @param material The material used to render the physica-mundi.
+	 * @param material The material used to render the physica-mundi (not null).
 	 */
 	public void setMaterial(Material material) {
 		Validator.nonNull(material, "The material cannot be null!");
