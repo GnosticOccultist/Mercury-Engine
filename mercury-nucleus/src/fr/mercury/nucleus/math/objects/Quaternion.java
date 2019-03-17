@@ -93,13 +93,13 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
 	 * 
 	 * @param other The other quaternion to copy from.
 	 */
-	public Quaternion set(Quaternion other) {
+	public Quaternion set(ReadableQuaternion other) {
 		Validator.nonNull(other, "The quaternion cannot be null!");
 		
-		this.x = other.x;
-		this.y = other.y;
-		this.z = other.z;
-		this.w = other.w;
+		this.x = other.x();
+		this.y = other.y();
+		this.z = other.z();
+		this.w = other.w();
 		return this;
 	}
 	
@@ -268,6 +268,47 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
 		return this;
 	}
     
+    public Vector3f getRotationColumn(int index, Vector3f store) {
+    	if(store == null) {
+    		store = new Vector3f();
+    	}
+    	
+    	float norm = norm();
+    	if(norm != 1.0f) {
+    		norm = MercuryMath.invSqrt(norm);
+    	}
+    	
+        float xx = x * x * norm;
+        float xy = x * y * norm;
+        float xz = x * z * norm;
+        float xw = x * w * norm;
+        float yy = y * y * norm;
+        float yz = y * z * norm;
+        float yw = y * w * norm;
+        float zz = z * z * norm;
+        float zw = z * w * norm;
+
+        switch (index) {
+            case 0:
+                store.x = 1 - 2 * (yy + zz);
+                store.y = 2 * (xy + zw);
+                store.z = 2 * (xz - yw);
+                break;
+            case 1:
+                store.x = 2 * (xy - zw);
+                store.y = 1 - 2 * (xx + zz);
+                store.z = 2 * (yz + xw);
+                break;
+            case 2:
+                store.x = 2 * (xz + yw);
+                store.y = 2 * (yz - xw);
+                store.z = 1 - 2 * (xx + yy);
+                break;
+        }
+        
+        return store;
+    }
+    
     /**
      * Converts the <code>Quaternion</code> to a rotation <code>Matrix4f</code>, 
      * stored into the provided matrix.
@@ -321,41 +362,6 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
         // Finally restore the scale of the matrix.
         result.setScale(originalScale);
 
-        return result;
-    }
-    
-    public Matrix4f rotationMatrix(Matrix4f result) {
-        float norm = norm();
-        // Check first if the norm is equal to one to avoid the division,
-        // don't know if it's really necessary?
-        float s = (norm == 1f) ? 2f : (norm > 0f) ? 2f / norm : 0;
-
-        // Compute xs/ys/zs first to save 6 multiplications, since xs/ys/zs
-        // will be used 2-4 times each.
-        float xs = x * s;
-        float ys = y * s;
-        float zs = z * s;
-        float xx = x * xs;
-        float xy = x * ys;
-        float xz = x * zs;
-        float xw = w * xs;
-        float yy = y * ys;
-        float yz = y * zs;
-        float yw = w * ys;
-        float zz = z * zs;
-        float zw = w * zs;
-
-        // Using s = 2/norm (instead of 1/norm) saves 9 multiplications by 2 here.
-        result.m00 = 1 - (yy + zz);
-        result.m01 = (xy - zw);
-        result.m02 = (xz + yw);
-        result.m10 = (xy + zw);
-        result.m11 = 1 - (xx + zz);
-        result.m12 = (yz - xw);
-        result.m20 = (xz - yw);
-        result.m21 = (yz + xw);
-        result.m22 = 1 - (xx + yy);
-        
         return result;
     }
     

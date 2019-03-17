@@ -98,7 +98,7 @@ public final class Matrix4f implements Reusable {
      * 
      * @return The builded view matrix.
      */
-	public Matrix4f viewMatrix(Vector3f location, Quaternion rotation) {
+	public Matrix4f view(Vector3f location, Quaternion rotation) {
 		
         float sinX = (float) Math.sin(rotation.x);
         float cosX = (float) Math.cos(rotation.x);
