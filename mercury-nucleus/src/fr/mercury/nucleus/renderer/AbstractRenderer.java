@@ -48,12 +48,6 @@ public abstract class AbstractRenderer {
 		
 		this.camera = camera;
 		registerBucket(BucketType.OPAQUE);
-		
-		// Instantiates the matrices used for rendering.
-		matrixMap.put(MatrixType.MODEL, new Matrix4f());
-		matrixMap.put(MatrixType.VIEW, new Matrix4f());
-		matrixMap.put(MatrixType.PROJECTION, new Matrix4f());
-		matrixMap.put(MatrixType.VIEW_PROJECTION_MODEL, new Matrix4f());
 	}
 	
 	/**
@@ -143,6 +137,12 @@ public abstract class AbstractRenderer {
 	 */
 	public abstract void render(PhysicaMundi anima);
 	
+	/**
+	 * Sets the depth range for the viewport to the provided near and far values.
+	 * 
+	 * @param nearDepthRange The near depth range (&ge; 0 &le;1, default &rarr; 0).
+	 * @param farDepthRange  The far depth range (&ge; 0 &le;1, default &rarr; 1).
+	 */
 	@OpenGLCall
 	protected void setDepthRange(double nearDepthRange, double farDepthRange) {
 		GL11C.glDepthRange(nearDepthRange, farDepthRange);
@@ -161,7 +161,7 @@ public abstract class AbstractRenderer {
 			
 			if(material.getPrefabUniforms().contains(name)) {
 				// First force-compute the matrix before adding it to the uniform.
-				if(type.isComputed()) {
+				if(type.canCompute()) {
 					computeMatrix(type);
 				}
 				
@@ -198,7 +198,7 @@ public abstract class AbstractRenderer {
 	 * @param matrix The rendering matrix to store.
 	 */
 	public void setMatrix(MatrixType type, Matrix4f matrix) {
-		var buffer = matrixMap.get(type);
+		var buffer = matrixMap.computeIfAbsent(type, k -> new Matrix4f());
 		buffer.set(matrix);
 	}
 	
@@ -209,34 +209,44 @@ public abstract class AbstractRenderer {
 	 * @param matrix The rendering matrix to store.
 	 */
 	public void setMatrix(MatrixType type, ReadableTransform transform) {
-		var buffer = matrixMap.get(type);
+		var buffer = matrixMap.computeIfAbsent(type, k -> new Matrix4f());
 		transform.asModelMatrix(buffer);
 	}
 	
 	/**
 	 * Compute the specified {@link MatrixType}, if possible, with the other matrices if they are provided.
-	 * The type of matrix that can be computed are marked as {@link MatrixType#isComputed()}.
+	 * The type of matrix that can be computed are marked as {@link MatrixType#canCompute()}.
 	 * 
 	 * @param type The type of matrix to compute.
 	 */
 	public void computeMatrix(MatrixType type) {
-		if(!type.isComputed()) {
+		if(!type.canCompute()) {
 			throw new IllegalArgumentException("The provided type of matrix: " + 
 					type + " can't be computed!");
 		}
 		
-		var buffer = matrixMap.get(type);
+		var buffer = matrixMap.computeIfAbsent(type, k -> new Matrix4f());
 		
 		switch (type) {
 			case VIEW_PROJECTION_MODEL:
-				var projection = matrixMap.get(MatrixType.PROJECTION);
-				var view = matrixMap.get(MatrixType.VIEW);
+				var viewProj = matrixMap.get(MatrixType.VIEW_PROJECTION);
 				
-				buffer.set(projection.mult(view, buffer));
+				// First compute the view projection if not already present.
+				if(viewProj == null) {
+					computeMatrix(MatrixType.VIEW_PROJECTION);
+					viewProj = matrixMap.get(MatrixType.VIEW_PROJECTION);
+				}
+				
+				buffer.set(viewProj);
 				
 				var model = matrixMap.get(MatrixType.MODEL);
 				buffer.mult(model, buffer);
 				break;
+			case VIEW_PROJECTION:
+				var projection = matrixMap.get(MatrixType.PROJECTION);
+				var view = matrixMap.get(MatrixType.VIEW);
+				
+				buffer.set(projection.mult(view, buffer));
 			default:
 				throw new UnsupportedOperationException("The provided type of matrix: " + type + " can't be computed!");
 		}
@@ -264,6 +274,11 @@ public abstract class AbstractRenderer {
 		 */
 		PROJECTION("projectionMatrix", false),
 		/**
+		 * The view-projection matrix is computed by the camera (or the renderer) depending on
+		 * implementations. It is mostly used to compute the {@link #VIEW_PROJECTION_MODEL}.
+		 */
+		VIEW_PROJECTION("viewProjectionMatrix", true),
+		/**
 		 * The view-projection-model matrix used to display an entire scene-graph
 		 * correctly in 3D-space taking into account the camera, window and object's transform.
 		 */
@@ -274,13 +289,13 @@ public abstract class AbstractRenderer {
 		 */
 		private final String uniformName;
 		/**
-		 * Whether the matrix type should be computed.
+		 * Whether the matrix type can be computed.
 		 */
-		private final boolean computed;
+		private final boolean compute;
 		
-		private MatrixType(String uniformName, boolean computed) {
+		private MatrixType(String uniformName, boolean compute) {
 			this.uniformName = uniformName;
-			this.computed = computed;
+			this.compute = compute;
 		}
 		
 		/**
@@ -298,8 +313,8 @@ public abstract class AbstractRenderer {
 		 * 
 		 * @return Whether the matrix should be computed.
 		 */
-		public boolean isComputed() {
-			return computed;
+		public boolean canCompute() {
+			return compute;
 		}
 	}
 }

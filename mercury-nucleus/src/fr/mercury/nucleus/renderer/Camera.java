@@ -33,11 +33,11 @@ public final class Camera {
 	 /**
      * The camera's location.
      */
-    private final Vector3f location;
+    private final Vector3f location = new Vector3f();
     /**
      * The orientation of the camera.
      */
-    private final Quaternion rotation;
+    private final Quaternion rotation = new Quaternion();
     /**
      * The near depth range for the viewport.
      */
@@ -66,19 +66,25 @@ public final class Camera {
 			CameraDirtyFields.PROJECTION_MATRIX, CameraDirtyFields.VIEW_MATRIX);
 	
 	/**
-	 * Instantiates a new <code>Camera</code> object with the specified
-	 * width and height.
+	 * Instantiates a new <code>Camera</code> object with the specified width and height.
 	 * 
-	 * @param width  The width.
-	 * @param height The height.
+	 * @param width  The width of the camera viewport.
+	 * @param height The height of the camera viewport.
 	 */
 	public Camera(int width, int height) {
-		this.location = new Vector3f();
-		this.rotation = new Quaternion();
 		this.width = width;
 		this.height = height;
 	}
 	
+	/**
+	 * Resize the <code>Camera</code> with the provided new width and height values if they
+	 * have been modified.
+	 * It will recompute the projection matrix using the new width and height during the next call
+	 * of {@link #prepare(AbstractRenderer)} which should occur before every rendering cycle.
+	 * 
+	 * @param width  The new width of the camera.
+	 * @param height The new height of the camera.
+	 */
 	public void resize(int width, int height) {
 		// Prevent useless computations.
 		if(this.width == width && this.height == height) {
@@ -89,17 +95,12 @@ public final class Camera {
 		this.height = height;
 		
 		dirtyFields.add(CameraDirtyFields.PROJECTION_MATRIX);
-		dirtyFields.add(CameraDirtyFields.VIEW_MATRIX);
 	}
 	
 	public void updateViewMatrix() {
-		viewMatrix.viewMatrix(location, rotation);
+		viewMatrix.view(location, rotation);
 		
-		updateViewProjectionMatrix();
-	}
-	
-	private void updateViewProjectionMatrix() {
-		viewProjectionMatrix.set(projectionMatrix).mult(viewMatrix, viewProjectionMatrix);
+		dirtyFields.add(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
 	}
 	
 	public void setProjectionMatrix(float fovY, float aspect, float near, float far) {
@@ -108,22 +109,34 @@ public final class Camera {
 	    float w = h * aspect;
 	    
 	    projectionMatrix.projection(near, far, -w, w, h, -h);
+	    dirtyFields.add(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
+	}
+	
+	public void lookAt(ReadableVector3f position, ReadableVector3f worldUpVector) {
+		lookAt(position.x(), position.y(), position.z(), worldUpVector);
 	}
 	
 	public void lookAt(float x, float y, float z, ReadableVector3f worldUpVector) {
-		Vector3f newDirection = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class, Vector3f::new);
-		Vector3f newUp = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class, Vector3f::new);
-		Vector3f newLeft = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class, Vector3f::new);
 		
+		Vector3f newDirection = MercuryMath.getVector3f();
 		newDirection.set(x, y, z).sub(location).normalize();
+		
+		// Check to see if we haven't really updated camera -- no need to call sets.
+		if(newDirection.equals(getDirection(null))) {
+			return;
+		}
+		
+		Vector3f newUp = MercuryMath.getVector3f();
+		Vector3f newLeft = MercuryMath.getVector3f();
+		
 		newUp.set(worldUpVector).normalize();
 		if(newUp.equals(Vector3f.ZERO)) {
 			newUp.set(Vector3f.UNIT_Y);
 		}
 		
 		newLeft.set(newUp).cross(newDirection).normalize();
-		if (newLeft.equals(Vector3f.ZERO)) {
-			if (newDirection.x != 0) {
+		if(newLeft.equals(Vector3f.ZERO)) {
+			if(newDirection.x != 0) {
 				newLeft.set(newDirection.y, -newDirection.x, 0f);
 			} else {
 				newLeft.set(0f, newDirection.z, -newDirection.y);
@@ -133,11 +146,29 @@ public final class Camera {
 		newUp.set(newDirection).cross(newLeft).normalize();
 		this.rotation.fromAxes(newLeft, newUp, newDirection);
 		this.rotation.normalize();
+		
+		// We need to recompute the view matrix since we modified the 
+		// rotation of the camera.
+		dirtyFields.add(CameraDirtyFields.VIEW_MATRIX);
 	}
 	
-	public void setup(AbstractRenderer renderer) {
+	/**
+	 * Prepares the <code>Camera</code> before performing the rendering using the provided
+	 * {@link AbstractRenderer}.
+	 * This method will update fields or recompute useful matrices.
+	 * 
+	 * @param renderer The renderer which will be used for rendering (not null).
+	 */
+	public void prepare(AbstractRenderer renderer) {
+		Validator.nonNull(renderer, "The renderer can't be null!");
+		
 		if(dirtyFields.contains(CameraDirtyFields.DEPTH_RANGE)) {
 			renderer.setDepthRange(nearDepthRange, farDepthRange);
+		}
+		
+		if(dirtyFields.contains(CameraDirtyFields.PROJECTION_MATRIX)) {
+			setProjectionMatrix(70f, (float) width / height, 1f, 1000f);
+			renderer.setMatrix(MatrixType.PROJECTION, getProjectionMatrix());
 		}
 		
 		if(dirtyFields.contains(CameraDirtyFields.VIEW_MATRIX)) {
@@ -145,9 +176,10 @@ public final class Camera {
 			renderer.setMatrix(MatrixType.VIEW, getViewMatrix());
 		}
 		
-		if(dirtyFields.contains(CameraDirtyFields.PROJECTION_MATRIX)) {
-			setProjectionMatrix(70f, (float) width / height, 1f, 1000f);
-			renderer.setMatrix(MatrixType.PROJECTION, getProjectionMatrix());
+		if(dirtyFields.contains(CameraDirtyFields.VIEW_PROJECTION_MATRIX)) {
+			// Recompute the view-projection matrix after.
+			viewProjectionMatrix.set(projectionMatrix).mult(viewMatrix, viewProjectionMatrix);
+			renderer.setMatrix(MatrixType.VIEW_PROJECTION, getViewProjectionMatrix());
 		}
 	}
 	
@@ -173,7 +205,7 @@ public final class Camera {
 	}
 	
 	/**
-	 * Sets the location of the <code>Camera</code> to the provided coordinates.
+	 * Sets the location of the <code>Camera</code> to the provided vector.
 	 * 
 	 * @param location The location vector of the camera (not null).
 	 */
@@ -189,6 +221,46 @@ public final class Camera {
 	 */
 	public ReadableQuaternion getRotation() {
 		return rotation;
+	}
+	
+	/**
+	 * Sets the rotation of the <code>Camera</code> to the provided quaternion.
+	 * 
+	 * @param rotation The rotation quaternion of the camera (not null).
+	 */
+	public void setRotation(ReadableQuaternion rotation) {
+		Validator.nonNull(rotation, "The rotation quaternion can't be null!");
+		this.rotation.set(rotation);
+	}
+	
+	/**
+	 * Return the readable-only left-axis vector of this <code>Camera</code>.
+	 * 
+	 * @param store The store for the result.
+	 * @return		The left-axis vector of the camera (readable-only).
+	 */
+	public ReadableVector3f getLeft(Vector3f store) {
+		return rotation.getRotationColumn(0, store);
+	}
+	
+	/**
+	 * Return the readable-only up-axis vector of this <code>Camera</code>.
+	 * 
+	 * @param store The store for the result.
+	 * @return		The up-axis vector of the camera (readable-only).
+	 */
+	public ReadableVector3f getUp(Vector3f store) {
+		return rotation.getRotationColumn(1, store);
+	}
+	
+	/**
+	 * Return the readable-only direction vector of this <code>Camera</code>.
+	 * 
+	 * @param store The store for the result.
+	 * @return		The direction vector of the camera (readable-only).
+	 */
+	public ReadableVector3f getDirection(Vector3f store) {
+		return rotation.getRotationColumn(2, store);
 	}
 	
 	/**
@@ -286,11 +358,31 @@ public final class Camera {
 		return height;
 	}
 	
-	public enum CameraDirtyFields {
+	/**
+	 * <code>CameraDirtyFields</code> is an enumeration to represent the fields which can
+	 * be dirty during the life-cycle of the {@link Camera}.
+	 * 
+	 * @author GnosticOccultist
+	 */
+	enum CameraDirtyFields {
+		/**
+		 * The depth range fields are dirty.
+		 */
 		DEPTH_RANGE,
-		
+		/**
+		 * The view matrix is dirty and needs to be recomputed and probably resent
+		 * to the renderer.
+		 */
 		VIEW_MATRIX,
-		
-		PROJECTION_MATRIX;
+		/**
+		 * The projection matrix is dirty and needs to be recomputed and probably 
+		 * resent to the renderer.
+		 */
+		PROJECTION_MATRIX,
+		/**
+		 * The view-projection matrix is dirty and needs to be recomputed and probably 
+		 * resent to the renderer.
+		 */
+		VIEW_PROJECTION_MATRIX;
 	}
 }

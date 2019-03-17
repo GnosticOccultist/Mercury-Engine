@@ -81,7 +81,7 @@ public class Renderer extends AbstractRenderer {
 		// Clears the buffer before writing to it.
 		clearBuffers();
 
-		camera.setup(this);
+		camera.prepare(this);
 		
 		// Visit the scene and render objects which doesn't use the bucket logic.
 		scene.visit(RENDER_NONE_BUCKET, VisitType.POST_ORDER);
