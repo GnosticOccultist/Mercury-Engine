@@ -3,10 +3,8 @@ package fr.mercury.nucleus.renderer;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
 
-import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.renderer.logic.DefaultRenderLogic;
 import fr.mercury.nucleus.renderer.logic.RenderLogic;
-import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
@@ -14,6 +12,7 @@ import fr.mercury.nucleus.scenegraph.NucleusMundi;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
 import fr.mercury.nucleus.scenegraph.visitor.Visitor;
+import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 public class Renderer extends AbstractRenderer {
@@ -61,7 +60,7 @@ public class Renderer extends AbstractRenderer {
 	
 	private final RenderLogic defaultLogic;
 	
-	public Renderer(Camera camera, AssetManager assetManager) {
+	public Renderer(Camera camera) {
 		super(camera);
 		
 		this.defaultLogic = new DefaultRenderLogic();
@@ -69,7 +68,7 @@ public class Renderer extends AbstractRenderer {
 	
 	/**
 	 * Clears the color and depth buffer. The function should be called before every rendering process
-	 * to clean these buffers before writing.
+	 * to clean these buffers before wQWWwriting.
 	 */
 	@OpenGLCall
 	public void clearBuffers() {
@@ -78,9 +77,15 @@ public class Renderer extends AbstractRenderer {
 	
 	@OpenGLCall
 	public void renderScene(NucleusMundi scene) {
+		// Check a camera is registered.
+		if(camera == null) {
+			throw new MercuryException("Unable to render scene without a camera!");
+		}
+		
 		// Clears the buffer before writing to it.
 		clearBuffers();
 
+		// Prepares the camera before rendering the scene.
 		camera.prepare(this);
 		
 		// Visit the scene and render objects which doesn't use the bucket logic.
@@ -102,13 +107,9 @@ public class Renderer extends AbstractRenderer {
 		
 		setMatrix(MatrixType.MODEL, physica.getWorldTransform());
 		
-		// this is temporary hopefully...
-		var shader = physica.getMaterial().getShader("Unlit", physica);
-		shader.addUniform("texture_sampler", UniformType.TEXTURE2D, 0);
+		var shader = physica.getMaterial().getFirstShader();
 		
-		var material = physica.getMaterial();
-		
-		setupMatrixUniforms(shader, material);
+		setupMatrixUniforms(shader, physica);
 		
 		setupPrefabUniforms(shader, physica);
 		
@@ -123,15 +124,15 @@ public class Renderer extends AbstractRenderer {
 	}
 
 	/**
-	 * Resize the camera and the viewport dimensions to the provided ones.
+	 * Resize the {@link Camera} viewport dimensions to the provided width and height, and update 
+	 * the <code>OpenGL</code> scissor test to discard any fragment outside the dimension of the rectangle.
 	 * 
 	 * @param width	 The new width of the window.
 	 * @param height The new height of the window.
 	 */
 	@OpenGLCall
 	public void resize(int width, int height) {
-		if(camera != null) {
-			camera.resize(width, height);
+		if(camera != null && camera.resize(width, height)) {
 			GL11C.glViewport(0, 0, camera.getWidth(), camera.getHeight());
 			GL11C.glEnable(GL11.GL_SCISSOR_TEST);
 			GL11C.glScissor(0, 0, width, height);

@@ -10,7 +10,6 @@ import fr.mercury.nucleus.scenegraph.environment.Fog;
 import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
-import fr.mercury.nucleus.texture.TextureState.WrapMode;
 
 public class TestMercuryMaterial extends MercuryApplication {
 	
@@ -25,7 +24,7 @@ public class TestMercuryMaterial extends MercuryApplication {
 	protected void initialize() {
 		Texture2D texture = assetManager.loadTexture2D("/model/octostone.png")
 				.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
-				.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
+				.setBorderColor(new Color(1, 0, 0), true);
 		texture.upload();
 		
 		cube = assetManager.loadPhysicaMundi("/model/cube.obj");
@@ -44,10 +43,10 @@ public class TestMercuryMaterial extends MercuryApplication {
 		cube1.setName("cube1");
 		cube1.setTranslation(3, 0, -5).setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
 		
-		cube.setMaterial(materials[0]);
+		cube.setMaterial(materials[1]);
 		//cube.setMaterial(materials[1]);
 		cube.getMesh().texture = texture;
-		cube1.setMaterial(materials[0]);
+		cube1.setMaterial(materials[1]);
 		//cube.setMaterial(materials[1]);
 		cube1.getMesh().texture = texture;
 		

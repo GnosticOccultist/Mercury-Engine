@@ -229,7 +229,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 * @return  The updated transform. 
 	 */
 	public Transform rotate(float x, float y, float z) {
-		Quaternion quat = MercuryMath.LOCAL_VARS.acquireNext(Quaternion.class, Quaternion::new);
+		Quaternion quat = MercuryMath.getQuaternion();
 		quat.fromAngles(x, y, z);
 		rotate(quat);
 		return this;
@@ -322,7 +322,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 		store.setRotation(rotation);
 		store.setTranslation(translation);
 		
-		Matrix4f scaleMatrix = MercuryMath.LOCAL_VARS.acquireNext(Matrix4f.class, Matrix4f::new);
+		Matrix4f scaleMatrix = MercuryMath.getMatrix4f();
 		scaleMatrix.identity();
 		scaleMatrix.scale(scale);
 		store.mult(scaleMatrix, store);

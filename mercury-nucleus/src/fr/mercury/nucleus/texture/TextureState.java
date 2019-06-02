@@ -4,6 +4,8 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL13;
 
+import fr.mercury.nucleus.math.objects.Color;
+
 /**
  * <code>TextureState</code> is a utility class used to keep track of a loaded 
  * {@link Texture} parameters inside the OpenGL context.
@@ -15,10 +17,12 @@ import org.lwjgl.opengl.GL13;
  */
 public class TextureState implements Comparable<TextureState> {
 	
-	public WrapMode sWrap, tWrap, rWrap;
-	public MagFilter magFilter;
-	public MinFilter minFilter;
-	public CompareMode compareMode;
+	WrapMode sWrap, tWrap, rWrap;
+	MagFilter magFilter;
+	MinFilter minFilter;
+	CompareMode compareMode;
+	
+	Color borderColor = new Color(-1, -1, -1, -1);
 	
 	/**
 	 * Whether the mipmaps are needed.
@@ -88,6 +92,8 @@ public class TextureState implements Comparable<TextureState> {
 		generatedMipMaps = false;
 		
 		compareMode = CompareMode.NONE;
+		
+		borderColor.set(-1, -1, -1, -1);
 	}
 	
 	/**

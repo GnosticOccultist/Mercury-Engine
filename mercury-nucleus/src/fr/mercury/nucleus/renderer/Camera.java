@@ -1,6 +1,8 @@
 package fr.mercury.nucleus.renderer;
 
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.MercuryMath;
@@ -10,6 +12,8 @@ import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.math.readable.ReadableQuaternion;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
 import fr.mercury.nucleus.renderer.AbstractRenderer.MatrixType;
+import fr.mercury.nucleus.renderer.queue.RenderLayer;
+import fr.mercury.nucleus.scenegraph.AnimaMundi;
 
 /**
  * <code>Camera</code> represents a mathematical object designed to render
@@ -59,21 +63,46 @@ public final class Camera {
 	 */
 	private final Matrix4f viewProjectionMatrix = new Matrix4f();
 	/**
+	 * The graphical projection mode used by the camera.
+	 */
+	private GraphicalProjectionMode projectionMode = GraphicalProjectionMode.PERSPECTIVE;
+	/**
 	 * The accumulated dirty fields by the camera. At instantiation it will contain {@link CameraDirtyFields#DEPTH_RANGE},
 	 * {@link CameraDirtyFields#PROJECTION_MATRIX}, {@link CameraDirtyFields#VIEW_MATRIX}.
 	 */
-	protected final EnumSet<CameraDirtyFields> dirtyFields = EnumSet.of(CameraDirtyFields.DEPTH_RANGE, 
+	private final EnumSet<CameraDirtyFields> dirtyFields = EnumSet.of(CameraDirtyFields.DEPTH_RANGE, 
 			CameraDirtyFields.PROJECTION_MATRIX, CameraDirtyFields.VIEW_MATRIX);
+	/**
+	 * The set of layer specifying which anima-mundis are to be queued and rendered.
+	 */
+	private final Set<RenderLayer> layers = new HashSet<RenderLayer>();
 	
 	/**
-	 * Instantiates a new <code>Camera</code> object with the specified width and height.
+	 * Instantiates a new perspective <code>Camera</code> object with the specified width and height.
 	 * 
 	 * @param width  The width of the camera viewport.
 	 * @param height The height of the camera viewport.
 	 */
 	public Camera(int width, int height) {
+		this(GraphicalProjectionMode.PERSPECTIVE, width, height);
+	}
+	
+	/**
+	 * Instantiates a new <code>Camera</code> object with the specified width and height as well as
+	 * the {@link GraphicalProjectionMode}.
+	 * 
+	 * @param projectionMode The graphical projection mode the camera uses to render the scene 
+	 * 						 on the screen (not null).
+	 * @param width  		 The width of the camera viewport.
+	 * @param height 		 The height of the camera viewport.
+	 */
+	public Camera(GraphicalProjectionMode projectionMode, int width, int height) {
+		Validator.nonNull(projectionMode, "The projection mode can't be null");
+		this.projectionMode = projectionMode;
 		this.width = width;
 		this.height = height;
+		
+		this.layers.add(RenderLayer.DEFAULT);
 	}
 	
 	/**
@@ -84,17 +113,20 @@ public final class Camera {
 	 * 
 	 * @param width  The new width of the camera.
 	 * @param height The new height of the camera.
+	 * @return 		 Whether the camera has been actually resized.
 	 */
-	public void resize(int width, int height) {
+	public boolean resize(int width, int height) {
 		// Prevent useless computations.
 		if(this.width == width && this.height == height) {
-			return;
+			return false;
 		}
 		
 		this.width = width;
 		this.height = height;
 		
 		dirtyFields.add(CameraDirtyFields.PROJECTION_MATRIX);
+		
+		return true;
 	}
 	
 	public void updateViewMatrix() {
@@ -108,7 +140,7 @@ public final class Camera {
 		float h = MercuryMath.tan(fovY * (Math.PI / 180.0f) * .5f) * near;
 	    float w = h * aspect;
 	    
-	    projectionMatrix.projection(near, far, -w, w, h, -h);
+	    projectionMatrix.projection(projectionMode, near, far, -w, w, h, -h);
 	    dirtyFields.add(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
 	}
 	
@@ -356,6 +388,59 @@ public final class Camera {
 	 */
 	public int getHeight() {
 		return height;
+	}
+	
+	/**
+	 * Return the {@link GraphicalProjectionMode} of the <code>Camera</code>. 
+	 * 
+	 * @return The projection mode used by the camera.
+	 */
+	public GraphicalProjectionMode getProjectionMode() {
+		return projectionMode;
+	}
+	
+	/**
+	 * Sets the {@link GraphicalProjectionMode} of the <code>Camera</code>.
+	 * 
+	 * @param mode The projection mode used by the camera (not null, default &rarr; perspective).
+	 */
+	public void setProjectionMode(GraphicalProjectionMode mode) {
+		Validator.nonNull(mode, "The projection mode of the camera can't be null!");
+		this.projectionMode = mode;
+		dirtyFields.add(CameraDirtyFields.PROJECTION_MATRIX);
+		dirtyFields.add(CameraDirtyFields.VIEW_MATRIX);
+	}
+	
+	/**
+	 * Checks whether the specified {@link RenderLayer} is used by the <code>Camera</code>, meaning
+	 * it will queue and render all {@link AnimaMundi} present on the layer.
+	 * 
+	 * @param layer The layer to check with the camera.	
+	 * @return		Whether the layer is queued and rendered by the camera.
+	 */
+	public boolean checkLayer(RenderLayer layer) {
+		return layers.contains(layer);
+	}
+	
+	/**
+	 * <code>GraphicalProjectionMode</code> enumerates all possible projection modes available for a <code>Camera</code>.
+	 * 
+	 * @author GnosticOccultist
+	 */
+	public enum GraphicalProjectionMode {
+		/**
+		 * A linear projection mode used to render three-dimensional geometries on a picture plane.
+		 * <p>
+		 * Distant object appears smaller than nearer ones and parallel line seems to converge into a single point 
+		 * named 'vanishing point'.
+		 */
+		PERSPECTIVE,
+		/**
+		 * A projection mode used to render two-dimensional representation of 3D geometries.
+		 * <p>
+		 * It is using an orthogonal line for each point of the geometry which is directly projected onto the projection plane.
+		 */
+		ORTHOGRAPHIC;
 	}
 	
 	/**

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
@@ -54,7 +55,25 @@ public class Material {
 		this.description = description;
 	}
 	
-	public ShaderProgram getShader(String name, AnimaMundi anima) {
+	public ShaderProgram getFirstShader() {
+		// TODO: Use a default material.
+		ShaderProgram shader = shaders.values().stream().findFirst().orElseGet(new Supplier<ShaderProgram>() {
+
+			@Override
+			public ShaderProgram get() {
+				// Compute the new shader.
+				var source = sources.values().stream().findFirst().orElseThrow();
+				var newShader = new ShaderProgram().attachSources(source);
+				newShader.upload();
+				shaders.put(name, newShader);
+				return newShader;
+			}
+		});
+		
+		return shader;
+	}
+	
+	public ShaderProgram getShader(String name) {
 		var shader = shaders.get(name);
 		if(shader == null) {
 			// Compute the new shader.

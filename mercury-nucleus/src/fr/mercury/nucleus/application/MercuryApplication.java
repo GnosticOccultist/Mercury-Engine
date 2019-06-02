@@ -109,7 +109,7 @@ public abstract class MercuryApplication implements Application {
 		camera.setProjectionMatrix(45f, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
 		
 		// Initialize renderer.
-		renderer = new Renderer(camera, assetManager);
+		renderer = new Renderer(camera);
 		
 		// Initialize input processor with context inputs.
 		inputProcessor = new BaseInputProcessor(context.getMouseInput(), context.getKeyInput());

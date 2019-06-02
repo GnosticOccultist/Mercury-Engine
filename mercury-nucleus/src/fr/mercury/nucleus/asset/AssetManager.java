@@ -15,7 +15,9 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
+import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.texture.Texture2D;
+import fr.mercury.nucleus.texture.TextureAtlas;
 import fr.mercury.nucleus.utils.MercuryException;
 
 /**
@@ -77,9 +79,38 @@ public class AssetManager {
 	 * @return	   The loaded texture or null.
 	 */
 	public Texture2D loadTexture2D(String path) {
-		AssetLoader<Texture2D> loader = acquireLoader(path);
+		AssetLoader<Image> loader = acquireLoader(path);
 		if(loader != null) {
-			return loader.load(path);
+			Image image = loader.load(path);
+			if(image != null) {
+				Texture2D texture = new Texture2D();
+				texture.setImage(image);
+				return texture;
+			}
+		}
+		
+		throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
+	}
+	
+	/**
+	 * Loads the provided asset by translating it into a <code>Texture2D</code>
+	 * using a {@link ImageReader}. The texture can then be used inside a <code>ShaderProgram</code>,
+	 * by creating an adapted {@link Uniform}.
+	 * <p>
+	 * If no loader is found it will throw an exception.
+	 * 
+	 * @param path The path of the asset to load, must be a texture file extension.
+	 * @return	   The loaded texture or null.
+	 */
+	public TextureAtlas loadTextureAtlas(String path, int columns, int rows) {
+		AssetLoader<Image> loader = acquireLoader(path);
+		if(loader != null) {
+			Image image = loader.load(path);
+			if(image != null) {
+				TextureAtlas texture = new TextureAtlas(columns, rows);
+				texture.setImage(image);
+				return texture;
+			}
 		}
 		
 		throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");

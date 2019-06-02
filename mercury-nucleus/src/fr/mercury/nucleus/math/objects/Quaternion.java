@@ -323,7 +323,7 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
        
     	// Saving the original scale before applying the rotation, to be restored
     	// at the end.
-    	Vector3f originalScale = MercuryMath.LOCAL_VARS.acquireNext(Vector3f.class, Vector3f::new);
+    	Vector3f originalScale = MercuryMath.getVector3f();
     	originalScale.set(0, 0, 0);
         result.getScale(originalScale);
         result.setScale(1, 1, 1);

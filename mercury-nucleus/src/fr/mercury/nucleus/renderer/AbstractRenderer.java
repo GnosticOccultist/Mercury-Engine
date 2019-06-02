@@ -9,6 +9,7 @@ import org.lwjgl.opengl.GL11C;
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
@@ -39,12 +40,16 @@ public abstract class AbstractRenderer {
 	 */
 	protected final EnumMap<MatrixType, Matrix4f> matrixMap = new EnumMap<>(MatrixType.class);
 	/**
+	 * The clear values for the color buffer used by the renderer.
+	 */
+	protected final Color clearColor = new Color(0, 0, 0, 0);
+	/**
 	 * The camera used by the renderer.
 	 */
-	protected final Camera camera;
+	protected Camera camera;
 	
 	protected AbstractRenderer(Camera camera) {
-		Validator.nonNull(camera);
+		Validator.nonNull(camera, "The camera can't be null!");
 		
 		this.camera = camera;
 		registerBucket(BucketType.OPAQUE);
@@ -52,12 +57,12 @@ public abstract class AbstractRenderer {
 	
 	/**
 	 * Register a new {@link RenderBucket} with the specified {@link BucketType} for
-	 * the <code>Renderer</code>.
+	 * the <code>AbstractRenderer</code>.
 	 * 
-	 * @param type The bucket type to register.
+	 * @param type The bucket type to register (not null).
 	 */
 	public void registerBucket(BucketType type) {
-		Validator.nonNull(type);
+		Validator.nonNull(type, "The bucket type to register can't be null!");
 		if(type.equals(BucketType.LEGACY) || type.equals(BucketType.NONE)) {
 			throw new MercuryException("The bucket '" + type + "' cannot be registered!");
 		}
@@ -69,7 +74,7 @@ public abstract class AbstractRenderer {
 	 * Submit the specified {@link AnimaMundi} to a {@link RenderBucket} matching 
 	 * the {@link BucketType}. 
 	 * <p>
-	 * If the type of bucket isn't registered for this <code>Renderer</code>,
+	 * If the type of bucket isn't registered for this <code>AbstractRenderer</code>,
 	 * it will not add the anima to be rendered, call {@link #registerBucket(BucketType)}
 	 * to register the needed bucket's type.
 	 * 
@@ -77,14 +82,11 @@ public abstract class AbstractRenderer {
 	 * @return		Whether the anima-mundi has been added to a bucket.
 	 */
 	protected boolean submitToBucket(AnimaMundi anima) {
-		if(anima.getBucket().equals(BucketType.NONE)) {
+		if(anima.getBucket().equals(BucketType.NONE) || !camera.checkLayer(anima.getRenderLayer())) {
 			return false;
 		}
 		
 		var type = anima.getBucket();
-		if(type.equals(BucketType.LEGACY)) {
-			type = BucketType.OPAQUE;
-		}
 		
 		var bucket = buckets.get(type);
 		if(bucket != null) {
@@ -120,7 +122,7 @@ public abstract class AbstractRenderer {
 	}
 	
 	/**
-	 * Flushes all registered {@link RenderBucket} in the <code>Renderer</code>, by
+	 * Flushes all registered {@link RenderBucket} in the <code>AbstractRenderer</code>, by
 	 * emptying the bucket of its {@link AnimaMundi} and reseting its size to 0.
 	 * 
 	 * @see RenderBucket#flush()
@@ -138,6 +140,20 @@ public abstract class AbstractRenderer {
 	public abstract void render(PhysicaMundi anima);
 	
 	/**
+	 * Sets the clear values of the <code>AbstractRenderer</code> for the color-buffer.
+	 * 
+	 * @param color The color to be cleared from the buffer (not null).
+	 */
+	@OpenGLCall
+	protected void setClearColor(Color color) {
+		Validator.nonNull(color, "The clear color can't be null!");
+		if(!clearColor.equals(color)) {
+			clearColor.set(color);
+			GL11C.glClearColor(clearColor.r, clearColor.g, clearColor.b, color.a);
+		}
+	}
+	
+	/**
 	 * Sets the depth range for the viewport to the provided near and far values.
 	 * 
 	 * @param nearDepthRange The near depth range (&ge; 0 &le;1, default &rarr; 0).
@@ -152,14 +168,16 @@ public abstract class AbstractRenderer {
 	 * Setup the {@link Uniform} corresponding to the needed {@link MatrixType} specified by the provided
 	 * {@link Material} and applied for the given {@link ShaderProgram}.
 	 * 
-	 * @param shader   The shader program to which the matrix uniforms need to be passed.
-	 * @param material The material specifying which matrix type should be passed.
+	 * @param shader  The shader program to which the matrix uniforms need to be passed.
+	 * @param physica The physica-mundi requesting the matrix uniforms.
 	 */
-	protected void setupMatrixUniforms(ShaderProgram shader, Material material) {
+	protected void setupMatrixUniforms(ShaderProgram shader, PhysicaMundi physica) {
+		var matrixUniforms = physica.getMaterial().getPrefabUniforms();
+		
 		for(MatrixType type : MatrixType.values()) {
 			var name = type.name();
 			
-			if(material.getPrefabUniforms().contains(name)) {
+			if(matrixUniforms.contains(name)) {
 				// First force-compute the matrix before adding it to the uniform.
 				if(type.canCompute()) {
 					computeMatrix(type);
@@ -250,6 +268,19 @@ public abstract class AbstractRenderer {
 			default:
 				throw new UnsupportedOperationException("The provided type of matrix: " + type + " can't be computed!");
 		}
+	}
+	
+	/**
+	 * Sets the {@link Camera} used for rendering in the <code>AbstractRenderer</code>.
+	 * It will automatically set the camera for the registered {@link RenderBucket} as well.
+	 * 
+	 * @param camera The camera to render with (not null).
+	 */
+	public void setCamera(Camera camera) {
+		Validator.nonNull(camera, "The camera can't be null");
+		
+		this.buckets.values().forEach(bucket -> bucket.setCamera(camera));
+		this.camera = camera;
 	}
 	
 	/**

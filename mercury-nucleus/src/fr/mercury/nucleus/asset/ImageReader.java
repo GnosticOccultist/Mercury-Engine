@@ -13,7 +13,6 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.texture.Texture;
-import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.utils.MercuryException;
 
 /**
@@ -23,7 +22,7 @@ import fr.mercury.nucleus.utils.MercuryException;
  * 
  * @author GnosticOccultist
  */
-public class ImageReader implements AssetLoader<Texture> {
+public class ImageReader implements AssetLoader<Image> {
 
 	/**
 	 * The logger of the application.
@@ -31,22 +30,20 @@ public class ImageReader implements AssetLoader<Texture> {
 	private static final Logger logger = FactoryLogger.getLogger("mercury.app");
 	
 	@Override
-	public Texture load(String path) {
+	public Image load(String path) {
 		
-		Texture2D texture = new Texture2D();
 		Image image = null;
 		
 		// Creating the image from byte buffer.	
 		ByteBuffer buffer = BufferUtils.createByteBuffer(16777216);
 		image = decodeImage(buffer, path);
 		
-		// Prevent setting the image if null, to limit OpenGL calls.
+		// Prevent the user that the image has been successfully loaded.
 		if(image != null) {
-			texture.setImage(image);
-			logger.info("Successfully loaded texture with image file: " + path);
+			logger.info("Successfully loaded image data with image file: " + path);
 		}
 		
-		return texture;
+		return image;
 	}
 	
 	/**

@@ -15,7 +15,7 @@ import fr.mercury.nucleus.renderer.opengl.vertex.VertexArray;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType.Format;
-import fr.mercury.nucleus.texture.Texture2D;
+import fr.mercury.nucleus.texture.Texture;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
@@ -48,7 +48,7 @@ public class Mesh {
 	private Mode mode = Mode.TRIANGLES;
 	
 	// TODO: Move to a material class.
-	public Texture2D texture;
+	public Texture texture;
 	
 	/**
 	 * Instantiates a new <code>Mesh</code> with no <code>VertexBuffer</code> set.
@@ -62,7 +62,7 @@ public class Mesh {
 	}
 	
 	protected void bind() {
-		vao.bind();
+		vao.upload();
 		
 		buffers.values().forEach(VertexBuffer::upload);
 	}
@@ -222,7 +222,9 @@ public class Mesh {
 		buffers.values().forEach(VertexBuffer::cleanup);
 		buffers.clear();
 		
-		texture.cleanup();
+		if(texture != null) {
+			texture.cleanup();
+		}
 		
 		vao.cleanup();
 	}

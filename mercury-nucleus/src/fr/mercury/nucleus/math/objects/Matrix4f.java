@@ -5,6 +5,8 @@ import java.nio.FloatBuffer;
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
+import fr.mercury.nucleus.renderer.Camera;
+import fr.mercury.nucleus.renderer.Camera.GraphicalProjectionMode;
 
 /**
  * <code>Matrix4f</code> defines a 4x4 matrix, which is mainly used to store
@@ -144,8 +146,32 @@ public final class Matrix4f implements Reusable {
     }
 
 	/**
-	 * Build the projection matrix with the <code>Matrix4f</code> with each frustum plane
-	 * distance from the <code>Camera</code>. 
+	 * Build a projection <code>Matrix4f</code> matching the given {@link GraphicalProjectionMode} and using 
+	 * each provided frustum plane distance from the {@link Camera}.
+	 * <p>
+	 * It is used in the shader to adjust an object depending on the window size.
+	 * 
+	 * @param mode   The projection mode to use for the matrix (not null).
+	 * @param near   The near frustum plane distance from the camera.
+	 * @param far    The far frustum plane distance from the camera.
+	 * @param left   The left frustum plane distance from the camera.
+	 * @param right  The right frustum plane distance from the camera.
+	 * @param top    The top frustum plane distance from the camera.
+	 * @param bottom The bottom frustum plane distance from the camera.
+	 */
+	public void projection(Camera.GraphicalProjectionMode mode, float near, float far, float left, float right, float top, float bottom) {
+		Validator.nonNull(mode, "The projection mode can't be null!");
+	
+		if(mode == GraphicalProjectionMode.PERSPECTIVE) {
+			perspective(near, far, left, right, top, bottom);
+		} else if(mode == GraphicalProjectionMode.ORTHOGRAPHIC) {
+			orthographic(near, far, left, right, top, bottom);
+		}
+	}
+	
+	/**
+	 * Build the perspective projection <code>Matrix4f</code> with each frustum plane distance 
+	 * from the {@link Camera}. 
 	 * <p>
 	 * It is used in the shader to adjust an object depending on the window size.
 	 * 
@@ -156,7 +182,7 @@ public final class Matrix4f implements Reusable {
 	 * @param top    The top frustum plane distance from the camera.
 	 * @param bottom The bottom frustum plane distance from the camera.
 	 */
-	public void projection(float near, float far, float left, float right, float top, float bottom) {
+	public void perspective(float near, float far, float left, float right, float top, float bottom) {
 		identity();
 		m00 = (2.0f * near) / (right - left);
 		m11 = (2.0f * near) / (top - bottom);
@@ -167,6 +193,45 @@ public final class Matrix4f implements Reusable {
 		m12 = (top + bottom) / (top - bottom);
 		m22 = -(far + near) / (far - near);
 		m23 = -(2.0f * far * near) / (far - near);
+	}
+	
+	/**
+	 * Build the orthographic projection <code>Matrix4f</code> with each frustum plane distance 
+	 * from the {@link Camera}. 
+	 * <p>
+	 * It is used in the shader to adjust an object depending on the window size.
+	 * 
+	 * @param near   The near frustum plane distance from the camera.
+	 * @param far    The far frustum plane distance from the camera.
+	 * @param left   The left frustum plane distance from the camera.
+	 * @param right  The right frustum plane distance from the camera.
+	 * @param top    The top frustum plane distance from the camera.
+	 * @param bottom The bottom frustum plane distance from the camera.
+	 */
+	public void orthographic(float near, float far, float left, float right, float top, float bottom) {
+		identity();
+
+        float rm00 = 2.0f / (right - left);
+        float rm11 = 2.0f / (top - bottom);
+        float rm30 = (right + left) / (left - right);
+        float rm31 = (top + bottom) / (bottom - top);
+		
+        m30 = m00 * rm30 + m10 * rm31 + m30;
+        m31 = m01 * rm30 + m11 * rm31 + m31;
+        m32 = m02 * rm30 + m12 * rm31 + m32;
+        m33 = m03 * rm30 + m13 * rm31 + m33;
+        m00 = m00 * rm00;
+        m01 = m01 * rm00;
+        m02 = m02 * rm00;
+        m03 = m03 * rm00;
+        m10 = m10 * rm11;
+        m11 = m11 * rm11;
+        m12 = m12 * rm11;
+        m13 = m13 * rm11;
+        m20 = -m20;
+        m21 = -m21;
+        m22 = -m22;
+        m23 = -m23;
 	}
 
 	/**

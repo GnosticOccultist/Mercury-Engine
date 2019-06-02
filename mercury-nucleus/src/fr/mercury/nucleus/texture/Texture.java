@@ -1,13 +1,16 @@
 package fr.mercury.nucleus.texture;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.util.function.Consumer;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryUtil;
 
+import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
@@ -101,22 +104,23 @@ public abstract class Texture extends GLObject {
 	 */
 	@OpenGLCall
 	protected void uploadImage() {
-		
-		if(image.isNeedUpdate()) {
-			// Don't know if it's really useful...
-			GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
-			
-			ByteBuffer buffer = MemoryUtil.memAlloc(image.sizeInPixel() * Float.BYTES);
-			
-			GL11.glTexImage2D(getOpenGLType(), 0, image.determineInternalFormat(), image.getWidth(), 
-					image.getHeight(), 0, image.determineFormat(), GL11.GL_UNSIGNED_BYTE, image.toByteBuffer(buffer));
-
-			MemoryUtil.memFree(buffer);
-			
-			// FIXME: If the image is used by multiple textures, it can conflict.
-			// Maybe add an atomic counter which decrements for each texture, until it reaches 0?
-			image.setNeedUpdate(false);
+		if(!image.isNeedUpdate()) {
+			return;
 		}
+		
+		// Don't know if it's really useful...
+		GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
+			
+		ByteBuffer buffer = MemoryUtil.memAlloc(image.sizeInPixel() * Float.BYTES);
+			
+		GL11.glTexImage2D(getOpenGLType(), 0, image.determineInternalFormat(), image.getWidth(), 
+				image.getHeight(), 0, image.determineFormat(), GL11.GL_UNSIGNED_BYTE, image.toByteBuffer(buffer));
+
+		MemoryUtil.memFree(buffer);
+			
+		// FIXME: If the image is used by multiple textures, it can conflict.
+		// Maybe add an atomic counter which decrements for each texture, until it reaches 0?
+		image.setNeedUpdate(false);
 	}
 	
 	/**
@@ -143,6 +147,18 @@ public abstract class Texture extends GLObject {
 		if(currentState.tWrap != toApply.tWrap) {
 			GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_WRAP_T, toApply.determineTWrapMode());
 			currentState.tWrap = toApply.tWrap;
+		}
+		
+		if(!currentState.borderColor.equals(toApply.borderColor) && (currentState.sWrap == WrapMode.CLAMP_BORDER 
+				|| currentState.tWrap == WrapMode.CLAMP_BORDER)) {
+			FloatBuffer buffer = MemoryUtil.memAllocFloat(4);
+			buffer.put(toApply.borderColor.r).put(toApply.borderColor.g).put(toApply.borderColor.b).put(toApply.borderColor.a);
+			buffer.rewind();
+			
+			GL11C.glTexParameterfv(getOpenGLType(), GL11C.GL_TEXTURE_BORDER_COLOR, buffer);
+			
+			MemoryUtil.memFree(buffer);
+			currentState.borderColor = toApply.borderColor;
 		}
 		
 		if(!toApply.isGeneratedMipMaps() && toApply.isNeedMipmaps()) {
@@ -205,14 +221,39 @@ public abstract class Texture extends GLObject {
 	 * The generation of the mipmaps will occur when invoking {@link #upload()}.
 	 * 
 	 * @param mipmaps Whether the texture needs mipmapping.
+	 * 
+	 * @return The texture with the new mipmapping parameter.
 	 */
-	public void setNeedMipMaps(boolean mipmaps) {
+	@SuppressWarnings("unchecked")
+	public <T extends Texture> T setNeedMipMaps(boolean mipmaps) {
 		if(currentState.isNeedMipmaps() != mipmaps) {
 			toApply.setNeedMipmaps(mipmaps);
 			if(mipmaps) {
 				toApply.setGeneratedMipMaps(false);
 			}
 		}
+		return (T) this;
+	}
+	
+	/**
+	 * Sets the provided {@link Color} to be used for the border of the <code>Texture</code> when 
+	 * the {@link WrapMode#CLAMP_BORDER} is set as the wrapping mode.
+	 * The function allow also to clamp the borders and to actually display the color.
+	 * 
+	 * @param color		  The color to set for the border (not null).
+	 * @param clampBorder Whether to clamp the border for the texture's wrap mode.
+	 * 
+	 * @return The texture with the new border color.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Texture> T setBorderColor(Color color, boolean clampBorder) {
+		Validator.nonNull(color, "The border color can't be null!");
+		if(clampBorder) {
+			setWrapMode(WrapMode.CLAMP_BORDER, WrapMode.CLAMP_BORDER);
+		}
+		
+		toApply.borderColor.set(color);
+		return (T) this;
 	}
 	
 	/**

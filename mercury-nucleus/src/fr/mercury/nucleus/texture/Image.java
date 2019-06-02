@@ -10,7 +10,15 @@ import org.lwjgl.opengl.GL30;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.objects.Color;
+import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 
+/**
+ * <code>Image</code> is a wrapper class containing the data of a graphical image. It is define with a {@link Format}, the byte data 
+ * as well as the width and height of the image. This class is mainly used to upload data into a {@link Texture} object which will
+ * actually be usable inside a {@link ShaderProgram}.
+ * 
+ * @author GnosticOccultist
+ */
 public class Image {
 
 	/**
@@ -50,12 +58,10 @@ public class Image {
 	/**
 	 * Instantiates a new <code>Image</code> with the provided 
 	 * width, height and format.
-	 * <p>
-	 * The image format cannot be null.
 	 * 
 	 * @param width  The width of the image (&gt 0).
 	 * @param height The height of the image (&gt 0).
-	 * @param format The format of the image.
+	 * @param format The format of the image (not null).
 	 */
 	public Image(int width, int height, Format format) {
 		this(width, height, format, null);
@@ -81,19 +87,17 @@ public class Image {
 	 * Instantiates a new <code>Image</code> with the provided 
 	 * width, height and format.
 	 * The internal buffer of the image copies the pixel data from the provided
-	 * byte buffer. 
-	 * <p>
-	 * The image format cannot be null.
+	 * byte buffer.
 	 * 
 	 * @param width  The width of the image (&gt 0).
 	 * @param height The height of the image (&gt 0).
-	 * @param format The format of the image.
+	 * @param format The format of the image (not null).
 	 * @param buffer The byte buffer to copy the pixel values from.
 	 */
 	public Image(int width, int height, Format format, ByteBuffer buffer) {
-		Validator.positive(width);
-		Validator.positive(height);
-		Validator.nonNull(format);
+		Validator.positive(width, "The image's width must be positive!");
+		Validator.positive(height, "The image's height must be positive!");
+		Validator.nonNull(format, "The image's format can't be null!");
 		
 		this.width = width;
 		this.height = height;
@@ -108,10 +112,8 @@ public class Image {
 	/**
 	 * Copy the data from the provided byte buffer and set it as the
 	 * <code>Image</code> data.
-	 * <p>
-	 * The buffer to copy from cannot be null.
 	 * 
-	 * @param buffer The buffer to copy from.
+	 * @param buffer The buffer to copy from (not null).
 	 * @return		 The image with its updated data.
 	 */
 	public Image fromByteBuffer(ByteBuffer buffer) {
@@ -137,13 +139,13 @@ public class Image {
 	 * Retrieves the <code>Image</code> data and fill the store 
 	 * {@link ByteBuffer} with it.
 	 * 
-	 * @param store The store buffer to fill.
+	 * @param store The store buffer to fill (not null).
 	 * @return		The buffer filled with pixel data.
 	 */
 	public ByteBuffer toByteBuffer(ByteBuffer store) {
 		Validator.nonNull(store, "The buffer store cannot be null!");
 		
-		Color color = MercuryMath.LOCAL_VARS.acquireNext(Color.class, Color::new);
+		Color color = MercuryMath.getColor();
 		int index = 0;
 
 		for (int x = 0; x < width; x++) {
@@ -171,7 +173,7 @@ public class Image {
 	 * 
 	 * @param x 	The x coordinate of the pixel.
 	 * @param y		The y coordinate of the pixel.
-	 * @param store The store to put the pixel color into.
+	 * @param store The store to put the pixel color into (not null).
 	 * @return		The filled store color.
 	 */
 	public Color getPixel(int x, int y, Color store) {
@@ -193,7 +195,7 @@ public class Image {
 	 * 
 	 * @param x 		 The x coordinate of the pixel.
 	 * @param y			 The y coordinate of the pixel.
-	 * @param pixelColor The color of the pixel.
+	 * @param pixelColor The color of the pixel (not null).
 	 * @return			 The image with the updated pixel color.
 	 */
 	public Image setPixel(int x, int y, Color pixelColor) {

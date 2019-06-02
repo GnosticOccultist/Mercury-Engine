@@ -1,23 +1,47 @@
 {
-	"Unlit": {
-		"description": "Simple default material used for rendering animae without any lighting but a fog effect.",
-		"shaders": [ 
-			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_FOG"] },
-			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_FOG"] }
-		],
-		"uniforms": {
-			"prefabs": ["FOG", "MODEL", "VIEW", "VIEW_PROJECTION_MODEL"]
-		}
-	},
-	
-	"Unlit_no_fog": {
-		"description": "Simple default material used for rendering animae without any lighting or fog.",
+
+	"Unlit_no_texture": {
+		"description": "Simple default material used for rendering animae without any lighting or fog and using a simple color.",
 		"shaders": [ 
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": [] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": [] }
 		],
 		"uniforms": {
 			"prefabs": ["VIEW_PROJECTION_MODEL"]
+		}
+	},
+	
+	"Unlit": {
+		"description": "Simple default material used for rendering animae without any lighting but a fog effect.",
+		"shaders": [ 
+			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_FOG", "USE_TEXTURE"] },
+			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_FOG", "USE_TEXTURE"] }
+		],
+		"uniforms": {
+			"prefabs": ["FOG", "MODEL", "VIEW", "VIEW_PROJECTION_MODEL"]
+		}
+	},
+	
+	
+	"Unlit_no_fog": {
+		"description": "Simple default material used for rendering animae without any lighting or fog.",
+		"shaders": [ 
+			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_TEXTURE"] },
+			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE"] }
+		],
+		"uniforms": {
+			"prefabs": ["VIEW_PROJECTION_MODEL"]
+		}
+	},
+	
+	"Unlit_atlas": {
+		"description": "Simple default material used for rendering animae without any lighting but a fog effect by using texture atlas",
+		"shaders": [ 
+			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_FOG", "USE_ATLAS", "USE_TEXTURE"] },
+			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_FOG", "USE_ATLAS", "USE_TEXTURE"] }
+		],
+		"uniforms": {
+			"prefabs": ["FOG", "MODEL", "VIEW", "VIEW_PROJECTION_MODEL"]
 		}
 	}
 }

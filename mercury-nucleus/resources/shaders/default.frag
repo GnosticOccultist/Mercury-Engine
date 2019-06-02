@@ -6,9 +6,15 @@
 
 out vec4 frag_Color;
 
-uniform sampler2D texture_sampler;
+#ifdef USE_TEXTURE
+	uniform sampler2D texture_sampler;
+#endif
 
-in vec2 frag_TexCoord;
+uniform vec4 diffuseColor;
+
+#ifdef USE_TEXTURE
+	in vec2 frag_TexCoord;
+#endif
 
 #ifdef USE_FOG
 	in vec4 viewPos;
@@ -17,7 +23,12 @@ in vec2 frag_TexCoord;
 
 void main() {
 	
-	vec4 baseColor = texture(texture_sampler, frag_TexCoord);
+	vec4 baseColor = diffuseColor;
+	
+	#ifdef USE_TEXTURE
+		baseColor = texture(texture_sampler, frag_TexCoord);
+	#endif
+	
 	#ifdef USE_FOG
 		frag_Color = mixFogColor(baseColor, fog.color, fog.density, abs(viewPos.z / viewPos.w));
 	#else

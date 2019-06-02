@@ -23,7 +23,7 @@ import fr.mercury.nucleus.utils.OpenGLCall;
  * 
  * @author GnosticOccultist
  */
-public abstract class GLObject {
+public abstract class GLObject implements Comparable<GLObject> {
 	
 	/**
 	 * The logger of the OpenGL context.
@@ -121,5 +121,28 @@ public abstract class GLObject {
 	 */
 	public void setID(int id) {
 		this.id = id;
+	}
+	
+	@Override
+	public int compareTo(GLObject other) {
+		return Integer.compare(id, other.id);
+	}
+	
+	@Override
+	public int hashCode() {
+		return Integer.hashCode(id);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(this == obj) {
+			return true;
+		}
+		
+		if(getClass().equals(obj.getClass())) {
+			return compareTo((GLObject) obj) == 0;
+		}
+		
+		return false;
 	}
 }

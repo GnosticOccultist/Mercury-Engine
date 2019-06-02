@@ -15,6 +15,7 @@ import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
+import fr.mercury.nucleus.renderer.queue.RenderLayer;
 import fr.mercury.nucleus.scenegraph.environment.EnvironmentElement;
 import fr.mercury.nucleus.scenegraph.environment.EnvironmentMode;
 import fr.mercury.nucleus.scenegraph.visitor.AbstractVisitor;
@@ -75,9 +76,13 @@ public abstract class AnimaMundi {
 	 */
 	protected NucleusMundi parent = null;
 	/**
-	 * The bucket used for rendering of the anima-mundi.
+	 * The bucket used for queueing and rendering the anima-mundi.
 	 */
 	protected BucketType bucket = BucketType.LEGACY;
+	/**
+	 * The layer the anima-mundi is present on.
+	 */
+	protected RenderLayer layer = RenderLayer.LEGACY;
 	/**
 	 * The environment mode describing how environmental elements should be
 	 * passed through the scene-graph.
@@ -501,13 +506,20 @@ public abstract class AnimaMundi {
 	 * @return The bucket type used to render the anima-mundi.
 	 */
 	public BucketType getBucket(boolean checkLegacy) {
+		var result = bucket;
 		if(checkLegacy && parent != null && bucket.equals(BucketType.LEGACY)) {
-			return parent.getBucket(true);
+			result = parent.getBucket(true);
 		}
 		
-		return bucket;
+		// If no other bucket type is specified in the hierarchy, default to the OPAQUE bucket.
+		if(checkLegacy && result.equals(BucketType.LEGACY)) {
+			result = BucketType.OPAQUE;
+		}
+		
+		return result;
 	}
 	
+
 	/**
 	 * Sets the used {@link BucketType} for the rendering of this <code>AnimaMundi</code>.
 	 * 
@@ -516,6 +528,49 @@ public abstract class AnimaMundi {
 	public void setBucket(BucketType bucket) {
 		Validator.nonNull(bucket, "The bucket type can't be null!");
 		this.bucket = bucket;
+	}
+	
+	/**
+	 * Return the {@link RenderLayer} on which the <code>AnimaMundi</code> is present.
+	 * It will try to find the ancestor's render layer if its type is {@link RenderLayer#LEGACY}.
+	 * 
+	 * @return The render layer on which the anima-mundi is present.
+	 */
+	public RenderLayer getRenderLayer() {
+		return getRenderLayer(true);
+	}
+	
+	/**
+	 * Return the {@link RenderLayer} on which the <code>AnimaMundi</code> is present.
+	 * If the <code>checkLegacy</code> is set to true, it will search the parent's render layer until
+	 * it founds something different than {@link RenderLayer#LEGACY} or until the ancestor is orphan.
+	 * 
+	 * @param checkLegacy Whether to return the legacy render layer or the {@link RenderLayer#LEGACY}.
+	 * 
+	 * @return The render layer on which the anima-mundi is present.
+	 */
+	public RenderLayer getRenderLayer(boolean checkLegacy) {
+		var result = layer;
+		if(checkLegacy && parent != null && layer.equals(RenderLayer.LEGACY)) {
+			result = parent.getRenderLayer(true);
+		}
+		
+		// If no other render layer is specified in the hierarchy, default to the DEFAULT layer.
+		if(checkLegacy && result.equals(RenderLayer.LEGACY)) {
+			result = RenderLayer.DEFAULT;
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Sets the used {@link RenderLayer} on which the <code>AnimaMundi</code> should be present.
+	 * 
+	 * @param bucket The render layer on which the anima-mundi is present. (not null).
+	 */
+	public void setRenderLayer(RenderLayer layer) {
+		Validator.nonNull(layer, "The render layer can't be null!");
+		this.layer = layer;
 	}
 	
 	/**

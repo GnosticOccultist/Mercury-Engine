@@ -206,6 +206,16 @@ public class RenderBucket {
 	}
 	
 	/**
+	 * Sets the {@link Camera} used by the <code>RenderBucket</code>.
+	 * 
+	 * @param camera The camera used by the bucket (not null).
+	 */
+	public void setCamera(Camera camera) {
+		Validator.nonNull(camera, "The camera can't be null!");
+		this.camera = camera;
+	}
+	
+	/**
 	 * Return the array of the <code>RenderBucket</code>.
 	 * 
 	 * @return The array of the bucket.
