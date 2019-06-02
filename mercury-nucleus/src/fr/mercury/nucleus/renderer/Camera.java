@@ -412,6 +412,26 @@ public final class Camera {
 	}
 	
 	/**
+	 * Adds the specified {@link RenderLayer} to be managed by the <code>Camera</code>.
+	 * 
+	 * @param layer The layer to manage with the camera (not null).
+	 */
+	public void addLayer(RenderLayer layer) {
+		Validator.nonNull(layer, "The render layer can't be null!");
+		this.layers.add(layer);
+	}
+	
+	/**
+	 * Removes the specified {@link RenderLayer} to no longer be managed by the <code>Camera</code>.
+	 * 
+	 * @param layer The layer to no longer manage with the camera (not null).
+	 */
+	public void removeLayer(RenderLayer layer) {
+		Validator.nonNull(layer, "The render layer can't be null!");
+		this.layers.remove(layer);
+	}
+	
+	/**
 	 * Checks whether the specified {@link RenderLayer} is used by the <code>Camera</code>, meaning
 	 * it will queue and render all {@link AnimaMundi} present on the layer.
 	 * 
