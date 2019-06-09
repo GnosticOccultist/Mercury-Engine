@@ -52,6 +52,10 @@ public interface RenderLogic {
 	 */
 	@OpenGLCall
 	default void drawElements(Mesh mesh) {
+		if(!mesh.hasIndices()) {
+			throw new IllegalArgumentException("The mesh can't be correctly rendered if no indices "
+					+ "have been setup. Please use the drawArrays method instead.");
+		}
 		GL11.glDrawElements(mesh.toOpenGLMode(), mesh.getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
 	}
 	
@@ -63,7 +67,7 @@ public interface RenderLogic {
 	
 	
 	@OpenGLCall
-	default void drawTriangles(Mesh mesh) {
+	default void drawArrays(Mesh mesh) {
 		GL11.glDrawArrays(mesh.toOpenGLMode(), 0, mesh.getVertexCount());
 	}
 	

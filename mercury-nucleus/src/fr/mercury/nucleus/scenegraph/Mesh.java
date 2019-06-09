@@ -97,6 +97,22 @@ public class Mesh {
 	}
 	
 	/**
+	 * Setup a {@link VertexBuffer} for the specified array of indices for the <code>Mesh</code>.
+	 * <p>
+	 * <b>Only one index buffer can be set</b>, but don't worry this method automatically update 
+	 * the stored data for the buffer type if it's already set.
+	 * <p>
+	 * If you want to use the <code>VertexBuffer</code>, you need to upload it to the GPU with the
+	 * OpenGL context using {@link #upload()}. Note that this function will upload all the buffers already
+	 * setup on this <code>Mesh</code>.
+	 * 
+	 * @param data The array of indices as integer values to store in the buffer.
+	 */
+	public void setupIndexBuffer(int[] data) {
+		setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, data);
+	}
+	
+	/**
 	 * Setup the {@link VertexBuffer} for the specified type and usage and store into
 	 * it the given buffer containing vertex data.
 	 * <p>
@@ -227,6 +243,18 @@ public class Mesh {
 		}
 		
 		vao.cleanup();
+	}
+	
+	/**
+	 * Return whether the <code>Mesh</code> as an indices {@link VertexBuffer} present.
+	 * <p>
+	 * Note that it only check its presence and not its content or if it had been correctly
+	 * uploaded to the GPU, this must be guaranteed by the user of the mesh.
+	 * 
+	 * @return Whether the mesh has an indices buffer setup.
+	 */
+	public boolean hasIndices() {
+		return getBuffer(VertexBufferType.INDEX) != null;
 	}
 	
 	/**

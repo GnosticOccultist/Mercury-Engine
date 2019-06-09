@@ -24,7 +24,12 @@ public class DefaultRenderLogic implements RenderLogic {
 		
 		Mesh mesh = physica.getMesh();
 		
-		drawElements(mesh);
+		// Check that our mesh as an indices buffer setup.
+		if(mesh.hasIndices()) {
+			drawElements(mesh);
+		} else {
+			drawArrays(mesh);
+		}
 	}
 
 	@Override
