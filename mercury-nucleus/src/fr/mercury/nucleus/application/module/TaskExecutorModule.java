@@ -47,7 +47,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	/**
 	 * The service to executed scheduled tasks. 
 	 */
-	private final ScheduledExecutorService scheduledService;
+	private ScheduledExecutorService scheduledService;
 
 	/**
 	 * Instantiates a new <code>TaskExecutorModule</code> with the default {@link #NB_THREADS}
@@ -64,15 +64,17 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	 * @param nbThreads The number of threads to generate in the pool.
 	 */
 	public TaskExecutorModule(int nbThreads) {
-		this.scheduledService = Executors.newSingleThreadScheduledExecutor();
-		
 		restartExecutor(nbThreads);
+		this.scheduledService = Executors.newSingleThreadScheduledExecutor();
 	}
 	
 	@Override
 	public void initialize(Application application) {
 		if(executor == null) {
 			restartExecutor(NB_THREADS);
+		}
+		if(scheduledService == null) {
+			this.scheduledService = Executors.newSingleThreadScheduledExecutor();
 		}
 		
 		super.initialize(application);
@@ -87,14 +89,17 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	public void cleanup() {
 		// Avoid any security exception with a privileged access.
 		AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
-			// Shutdown the executor service first.
+			// Shutdown the executor and scheduled service first.
 			executor.shutdown();
+			scheduledService.shutdown();
 			
 			return null;
 		});
 		
 		executor = null;
-		logger.info("TaskModule successfully shutdown.");
+		scheduledService = null;
+		
+		logger.info("TaskExecutorModule successfully shutdown.");
 		
 		super.cleanup();
 	}
@@ -116,13 +121,17 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	}
 	
 	/**
-     * Schedule the provided {@link Runnable} to be executed at a fixed rate with the <code>TaskExecutorModule</code>.
+     * Schedule the provided {@link Runnable} to be executed with the <code>TaskExecutorModule</code> 
+     * at a fixed rate with the provided delay in milliseconds.
      * 
-     * @param runnable The task to be scheduled.
-     * @param delay    The delay between each execution in milliseconds.
+     * @param runnable The task to be scheduled (not null).
+     * @param delay    The delay between each execution in milliseconds (&ge;0).
      */
-	public void scheduleAtFixedRate(Runnable runnable, long delay) {
-		scheduledService.scheduleAtFixedRate(runnable, delay, delay, TimeUnit.MILLISECONDS);
+	public void scheduleAtFixedRate(Runnable task, long delay) {
+		Validator.nonNull(task, "The task to be scheduled can't be null!");
+		Validator.nonNegative(delay, "The delay can't be negative!");
+		
+		scheduledService.scheduleAtFixedRate(task, delay, delay, TimeUnit.MILLISECONDS);
 	}
 	
 	/**
