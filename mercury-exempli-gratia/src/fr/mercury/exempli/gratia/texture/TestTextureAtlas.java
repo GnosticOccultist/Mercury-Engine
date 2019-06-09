@@ -1,4 +1,4 @@
-package fr.mercury.nucleus;
+package fr.mercury.exempli.gratia.texture;
 
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.application.module.TaskExecutorModule;
@@ -43,7 +43,7 @@ public class TestTextureAtlas extends MercuryApplication {
 	protected void initialize() {
 		// Load the 2x2 texture atlas, make sure to apply nearest filtering 
 		// to prevent adjacent texture borders.
-		atlas = assetManager.loadTextureAtlas("/model/simple_texture_atlas.png", 2, 2)
+		atlas = assetManager.loadTextureAtlas("/textures/simple_texture_atlas.png", 2, 2)
 				.setFilter(MinFilter.NEAREST, MagFilter.NEAREST)
 				.setWrapMode(WrapMode.CLAMP_EDGES, WrapMode.CLAMP_EDGES);
 		atlas.upload();
@@ -53,9 +53,9 @@ public class TestTextureAtlas extends MercuryApplication {
 		cube.setName("cube");
 		cube.setTranslation(0.0f, 0.0f, 0.0f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
-		// Select the third material which is "Unlit_atlas" to render the cube using
+		// Select the fourth material which is "Unlit_atlas" to render the cube using
 		// a texture atlas.
-		Material[] materials = assetManager.loadMaterial("/shaders/unlit.json");
+		Material[] materials = assetManager.loadMaterial("/materials/unlit.json");
 		assert materials[3] != null;
 		cube.setMaterial(materials[3]);
 		// Set the texture of the cube to the loaded texture atlas.
