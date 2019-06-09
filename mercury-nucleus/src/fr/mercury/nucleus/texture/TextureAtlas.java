@@ -3,6 +3,8 @@ package fr.mercury.nucleus.texture;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Vector2f;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformField;
 import fr.mercury.nucleus.scenegraph.Mesh;
 
 /**
@@ -86,6 +88,7 @@ public class TextureAtlas extends Texture {
 	 * 
 	 * @return The number of columns in the atlas (&gt;1).
 	 */
+	@UniformField(name="cols", type=UniformType.FLOAT)
 	public float getNumCols() {
 		return numCols;
 	}
@@ -95,6 +98,7 @@ public class TextureAtlas extends Texture {
 	 * 
 	 * @return The number of rows in the atlas (&gt;1).
 	 */
+	@UniformField(name="rows", type=UniformType.FLOAT)
 	public float getNumRows() {
 		return numRows;
 	}
@@ -105,6 +109,7 @@ public class TextureAtlas extends Texture {
 	 * 
 	 * @return A new vector containing the coordinates offset.
 	 */
+	@UniformField(name="uvOffset", type=UniformType.VECTOR2F)
 	public Vector2f offset() {
 		int col = index / numRows;
 		int row = index % numRows;

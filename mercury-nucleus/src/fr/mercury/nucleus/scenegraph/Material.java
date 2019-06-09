@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
+import fr.mercury.nucleus.texture.Texture;
 
 public class Material {
 	
@@ -33,6 +34,9 @@ public class Material {
 	 */
 	private final Map<String, ShaderProgram> shaders = new HashMap<String, ShaderProgram>();
 	
+	// TODO: Privatize field.
+	public Texture texture;
+	
 	/**
 	 * Instantiates a new empty <code>Material</code>.
 	 */
@@ -53,6 +57,12 @@ public class Material {
 		
 		this.name = name;
 		this.description = description;
+	}
+	
+	public void setupUniforms(ShaderProgram program) {
+		if(texture != null) {
+			program.register(texture);
+		}
 	}
 	
 	public ShaderProgram getFirstShader() {
@@ -107,6 +117,10 @@ public class Material {
 	
 	public void cleanup() {
 		shaders.values().forEach(ShaderProgram::cleanup);
+		
+		if(texture != null) {
+			texture.cleanup();
+		}
 	}
 	
 	@Override

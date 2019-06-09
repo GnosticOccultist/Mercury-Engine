@@ -14,15 +14,26 @@ import fr.mercury.nucleus.math.objects.Vector2f;
 import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.math.objects.Vector4f;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
+import fr.mercury.nucleus.scenegraph.environment.Fog;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
- * <code>Uniform</code> defines a variable inside a "glsl" file (<i>for example a shader</i>), to
- * which the user can attribute a value to pass through the <code>ShaderProgram</code>.
+ * <code>Uniform</code> defines a variable inside a "glsl" file (<i>for example a shader</i>), to which the user can 
+ * attribute a value to pass through the {@link ShaderProgram}.
+ * There multiple ways to declare a uniform inside a shader program:
+ * <ul><li>Invoke the basic method from an existing program {@link ShaderProgram#addUniform(String, UniformType, Object)}.</li>
+ * <li>Register all uniforms declared in a class using {@link ShaderProgram#register(Object)}.</li>
+ * <li>Create a structure class composed of uniforms which implements {@link UniformStructure}.</li></ul>
+ * In this last case, you must declare the structure in a material file as a prefab, for an example look at the {@link Fog} class.
+ * 
  * <p>
- * Note that the uniform is the same within a particular rendering call for each shader stage 
- * (rendering pipeline), but you can change its value between each invocation.
+ * Note that the uniform is the same within a particular rendering call for each shader stage (rendering pipeline), 
+ * but you can change its value between each invocation.
+ * 
+ * @see ShaderProgram
+ * @see UniformField
+ * @see UniformStructure
  * 
  * @author GnosticOccultist
  */

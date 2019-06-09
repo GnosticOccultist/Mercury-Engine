@@ -2,7 +2,6 @@ package fr.mercury.nucleus;
 
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.application.module.TaskExecutorModule;
-import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.Mesh;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
@@ -60,16 +59,10 @@ public class TestTextureAtlas extends MercuryApplication {
 		assert materials[3] != null;
 		cube.setMaterial(materials[3]);
 		// Set the texture of the cube to the loaded texture atlas.
-		cube.getMesh().texture = atlas;
+		cube.getMaterial().texture = atlas;
 		
 		// Finally, attach the cube to the main scene.
 		scene.attach(cube);
-		
-		// Add the uniforms for computing the texture coordinates based on the atlas index inside the shader.
-		// TODO: This should be managed automatically by the material or renderer.
-		var shader = cube.getMaterial().getShader("Unlit_atlas");
-		shader.addUniform("rows", UniformType.FLOAT, atlas.getNumRows());
-		shader.addUniform("cols", UniformType.FLOAT, atlas.getNumCols());
 		
 		// Link the task execution module to the application and schedule an updating index task each second.
 		TaskExecutorModule module = new TaskExecutorModule();
@@ -82,10 +75,6 @@ public class TestTextureAtlas extends MercuryApplication {
 	protected void update(float tpf) {
 		// Rotate slowly the cube.
 		cube.rotate(0.01f, 0.01f, 0.0f);
-		
-		// Update the 'uvOffset' uniform value to the shader.
-		var shader = cube.getMaterial().getShader("Unlit_atlas");
-		shader.addUniform("uvOffset", UniformType.VECTOR2F, atlas.offset());
 	}
 	
 	/**

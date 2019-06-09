@@ -113,6 +113,8 @@ public class Renderer extends AbstractRenderer {
 		
 		setupPrefabUniforms(shader, physica);
 		
+		physica.getMaterial().setupUniforms(shader);
+		
 		// Upload latest changes to the OpenGL state.
 		shader.upload();
 		

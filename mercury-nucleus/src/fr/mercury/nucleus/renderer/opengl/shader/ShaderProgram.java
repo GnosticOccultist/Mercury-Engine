@@ -1,5 +1,8 @@
 package fr.mercury.nucleus.renderer.opengl.shader;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,18 +17,22 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformField;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
- * <code>ShaderProgram</code> is a program defined by the user to compute rendering effects 
- * on the graphics hardware (GPU). The object to render go through a rendering pipeline to determine 
- * positions of vertices, vertices subdivisions, pixels colors, shading, lighting, normal/bump mapping 
- * and more effects.
+ * <code>ShaderProgram</code> is a program defined by the user to compute rendering effects on the graphics hardware (GPU). 
+ * The object to render go through a rendering pipeline to determine positions of vertices, vertices subdivisions, 
+ * pixels colors, shading, lighting, normal/bump mapping and more effects. 
+ * It can also be using variable called {@link Uniform} which can be modified at any time (<i>for example a color, or a texture sampler</i>).
  * <p>
  * In a final stage, it can also be used to apply a post-processing effect to the scene using a framebuffer
  * altering every desired objects (SSAO, Fog, FXAA/MSSA).
+ * 
+ * @see Uniform
+ * @see ShaderSource
  * 
  * @author GnosticOccultist
  */
@@ -228,6 +235,53 @@ public final class ShaderProgram extends GLObject {
 		
 		uniform.setValue(type, value);
 		return this;
+	}
+	
+	/**
+	 * Registers all {@link Uniform} present on the provided object into the <code>ShaderProgram</code>.
+	 * This method identifies getter methods of uniform value using the {@link UniformField} annotation, 
+	 * which must specify the name and {@link UniformType} of the uniform.
+	 * <p>
+	 * A uniform getter method is declared as valid by the method if:
+	 * <ul><li>The method is annotated with the <code>UniformField</code> annotation.</li>
+	 * <li>The method is declared as public and accessible.</li>
+	 * <li>The method doesn't need any parameters.</li></ul>
+	 * 
+	 * Note that the method, however, doesn't need to start with the 'get...' syntax, as opposed to 
+	 * <code>Java</code> getters.
+	 * 
+	 * @param object The object instance to register uniforms from (not null).
+	 * 
+	 * @see UniformField
+	 */
+	public void register(Object object) {
+		var clazz = object.getClass();
+		
+    	// Find all methods that are annotated with 'UniformField'.
+    	Method[] methods = clazz.getMethods();
+    	for(Method method : methods) {
+    		var mods = method.getModifiers();
+    		if(!Modifier.isPublic(mods)) {
+    			continue;
+    		}
+    		if(!method.isAnnotationPresent(UniformField.class)) {
+    			continue;
+    		}
+    		if(method.getParameterTypes().length != 0) {
+    			continue;
+    		}
+    		
+    		// Make sure we are using the right shader program.
+    		use();
+    		
+    		var annotation = method.getAnnotation(UniformField.class);
+    		try {
+    			var uniformValue = method.invoke(object);
+    			addUniform(annotation.name(), annotation.type(), uniformValue);
+    		} catch(IllegalAccessException | InvocationTargetException ex) {
+    			throw new RuntimeException("Error occured during registering of uniforms for: " + object, ex);
+    		}
+    	}
 	}
 	
 	/**

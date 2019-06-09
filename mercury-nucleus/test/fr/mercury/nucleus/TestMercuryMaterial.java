@@ -45,10 +45,10 @@ public class TestMercuryMaterial extends MercuryApplication {
 		
 		cube.setMaterial(materials[1]);
 		//cube.setMaterial(materials[1]);
-		cube.getMesh().texture = texture;
+		cube.getMaterial().texture = texture;
 		cube1.setMaterial(materials[1]);
 		//cube.setMaterial(materials[1]);
-		cube1.getMesh().texture = texture;
+		cube1.getMaterial().texture = texture;
 		
 		Fog fog = new Fog(new Color(0.4f, 0.4f, 0.5f, 1), 0.1f);
 		scene.addEnvironmentElement(fog);

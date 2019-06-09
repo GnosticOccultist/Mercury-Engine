@@ -15,7 +15,6 @@ import fr.mercury.nucleus.renderer.opengl.vertex.VertexArray;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType.Format;
-import fr.mercury.nucleus.texture.Texture;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
@@ -47,9 +46,6 @@ public class Mesh {
 	 */
 	private Mode mode = Mode.TRIANGLES;
 	
-	// TODO: Move to a material class.
-	public Texture texture;
-	
 	/**
 	 * Instantiates a new <code>Mesh</code> with no <code>VertexBuffer</code> set.
 	 * The mode is set by default to {@link Mode#TRIANGLES}.
@@ -70,20 +66,12 @@ public class Mesh {
 	public void bindBeforeRender() {
 		bind();
 		
-		if(texture != null) {
-			texture.bindToUnit(0);
-		}
-		
 		buffers.keySet().forEach(t -> GL20.glEnableVertexAttribArray(t.ordinal()));
 	}
 	
 	public void unbindAfterRender() {
 		
 		buffers.keySet().forEach(t -> GL20.glDisableVertexAttribArray(t.ordinal()));
-		
-		if(texture != null) {
-			texture.unbind();
-		}
 		
 		unbind();
 	}
@@ -237,10 +225,6 @@ public class Mesh {
 	public void cleanup() {
 		buffers.values().forEach(VertexBuffer::cleanup);
 		buffers.clear();
-		
-		if(texture != null) {
-			texture.cleanup();
-		}
 		
 		vao.cleanup();
 	}
