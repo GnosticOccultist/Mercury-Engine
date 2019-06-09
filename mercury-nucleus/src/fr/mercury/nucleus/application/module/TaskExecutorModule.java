@@ -6,7 +6,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
@@ -42,13 +44,17 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	 * The executor for tasks.
 	 */
 	private ExecutorService executor;
+	/**
+	 * The service to executed scheduled tasks. 
+	 */
+	private final ScheduledExecutorService scheduledService;
 
 	/**
 	 * Instantiates a new <code>TaskExecutorModule</code> with the default {@link #NB_THREADS}
 	 * number of {@link Thread} to generate in the pool.
 	 */
 	public TaskExecutorModule() {
-		restartExecutor(NB_THREADS);
+		this(NB_THREADS);
 	}
 	
 	/**
@@ -58,13 +64,15 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	 * @param nbThreads The number of threads to generate in the pool.
 	 */
 	public TaskExecutorModule(int nbThreads) {
+		this.scheduledService = Executors.newSingleThreadScheduledExecutor();
+		
 		restartExecutor(nbThreads);
 	}
 	
 	@Override
 	public void initialize(Application application) {
 		if(executor == null) {
-			restartExecutor(10);
+			restartExecutor(NB_THREADS);
 		}
 		
 		super.initialize(application);
@@ -105,6 +113,16 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	public <T> Future<T> submit(Callable<T> task) {
 		Validator.nonNull(task, "The task to be executed can't be null!");
 		return executor.submit(task);
+	}
+	
+	/**
+     * Schedule the provided {@link Runnable} to be executed at a fixed rate with the <code>TaskExecutorModule</code>.
+     * 
+     * @param runnable The task to be scheduled.
+     * @param delay    The delay between each execution in milliseconds.
+     */
+	public void scheduleAtFixedRate(Runnable runnable, long delay) {
+		scheduledService.scheduleAtFixedRate(runnable, delay, delay, TimeUnit.MILLISECONDS);
 	}
 	
 	/**

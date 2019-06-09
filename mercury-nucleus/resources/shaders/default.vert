@@ -13,8 +13,8 @@ layout (location = 2) in vec3 normal;
 #endif
 
 #ifdef USE_ATLAS
-	uniform int cols;
-	uniform int rows;
+	uniform float cols;
+	uniform float rows;
 	uniform vec2 uvOffset;
 #endif
 
@@ -34,8 +34,8 @@ void main() {
 	
 	#ifdef USE_ATLAS
 		// Support for texture atlas, update texture coordinates
-		float x = (texCoord.x / cols + uvOffset.x);
-		float y = (texCoord.y / rows + uvOffset.y);
+		float x = (texCoord.x / cols) + uvOffset.x;
+		float y = (texCoord.y / rows) + uvOffset.y;
 		frag_TexCoord = vec2(x, y);
 	#endif
 	

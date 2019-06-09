@@ -17,7 +17,7 @@ public class Texture2D extends Texture {
 	public Texture2D() {}
 	
 	/**
-	 * Return the {@link TextureType type} of the <code>Texture</code>:
+	 * Return the {@link TextureType type} of the <code>Texture2D</code>:
 	 * {@link TextureType#TEXTURE_2D}.
 	 * 
 	 * @return The 2D texture type.
