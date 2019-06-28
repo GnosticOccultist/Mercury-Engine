@@ -21,7 +21,7 @@ import fr.mercury.nucleus.application.Application;
  * separate {@link Thread}.
  * <p>
  * The module will automatically shutdown its execution service when {@link #cleanup()} is called and 
- * waits for any running task to finish.  A new service is being created during the initialization of the module, 
+ * waits for any running task to finish. A new service is being created during the initialization of the module, 
  * but the tasks can already be submitted right after instantiation.
  * <p>
  * Note however that the {@link #enable()} or {@link #disable()} methods has no effect on the execution of tasks.

@@ -35,7 +35,7 @@ import fr.mercury.nucleus.utils.SpeedableNanoTimer;
  * @author GnosticOccultist
  */
 public abstract class MercuryApplication implements Application {
-
+	
 	/**
 	 * The logger for the application.
 	 */

@@ -211,9 +211,9 @@ public class MercuryContext implements Runnable {
 		}
 		
 		if(frameRateLimit > 0) {
-    		final double sleep = frameSleepTime - (timer.getTimePerFrame() / 1000.0);
-    		final long sleepMillis = (long) sleep;
-    		final int additionalNanos = (int) ((sleep - sleepMillis) * 1000000.0);
+    		var sleep = frameSleepTime - (timer.getTimePerFrame() / 1000.0);
+    		var sleepMillis = (long) sleep;
+    		var additionalNanos = (int) ((sleep - sleepMillis) * 1000000.0);
     		
     		if(sleepMillis >= 0 && additionalNanos >= 0) {
     			try {

@@ -44,7 +44,7 @@ public class VertexBuffer extends GLBuffer {
 	 */
 	private Format format;
 	/**
-	 * The offset at which the vertex data is situated, by default 0.
+	 * The offset at which the vertex data is situated in a {@link VertexArray}, by default 0.
 	 */
 	private short offset = 0;
 	/**
@@ -198,6 +198,15 @@ public class VertexBuffer extends GLBuffer {
 	 */
 	public VertexBufferType getVertexBufferType() {
 		return vertexBufferType;
+	}
+	
+	/**
+	 * Return whether the <code>VertexBuffer</code> is an {@link VertexBufferType#INDEX}.
+	 * 
+	 * @return Whether the vertex buffer contains index data.
+	 */
+	public boolean isIndexBuffer() {
+		return vertexBufferType == VertexBufferType.INDEX;
 	}
 	
 	/**

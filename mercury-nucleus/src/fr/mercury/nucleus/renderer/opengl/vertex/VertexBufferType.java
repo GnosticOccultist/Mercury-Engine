@@ -141,6 +141,8 @@ public enum VertexBufferType {
 	 */
 	public static int getOpenGLFormat(Format format) {
 		switch (format) {
+			case UNSIGNED_BYTE:
+				return GL11.GL_UNSIGNED_BYTE;
 			case UNSIGNED_SHORT:
 				return GL11.GL_UNSIGNED_SHORT;
 			case FLOAT:

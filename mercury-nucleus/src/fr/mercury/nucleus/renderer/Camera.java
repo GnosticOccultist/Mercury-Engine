@@ -34,7 +34,17 @@ public final class Camera {
 	 * The height of the camera.
 	 */
 	private int height;
-	 /**
+	/**
+	 * The field of view in the Y-axis in degrees, only used in 
+	 * {@link GraphicalProjectionMode#PERSPECTIVE}.
+	 */
+	private float fov = 45f;
+	/**
+	 * The zooming factor of the camera, only used in 
+	 * {@link GraphicalProjectionMode#ORTHOGRAPHIC}.
+	 */
+	private float zoom = 1f;
+	/**
      * The camera's location.
      */
     private final Vector3f location = new Vector3f();
@@ -136,11 +146,22 @@ public final class Camera {
 	}
 	
 	public void setProjectionMatrix(float fovY, float aspect, float near, float far) {
-		
-		float h = MercuryMath.tan(fovY * (Math.PI / 180.0f) * .5f) * near;
+		this.fov = fovY;
+		setProjectionMatrix(aspect, near, far);
+	}
+	
+	public void setProjectionMatrix(float aspect, float near, float far) {
+
+		float h = MercuryMath.tan(fov * (Math.PI / 180.0f) * .5f) * near;
 	    float w = h * aspect;
 	    
-	    projectionMatrix.projection(projectionMode, near, far, -w, w, h, -h);
+	    if(projectionMode == GraphicalProjectionMode.ORTHOGRAPHIC) {
+	    	projectionMatrix.projection(projectionMode, near, far, zoom * (-width / 2), 
+	    			zoom * (width / 2), zoom * (-height / 2), zoom * (height / 2));
+	    } else {
+	    	projectionMatrix.projection(projectionMode, near, far, -w, w, h, -h);
+	    }
+	   
 	    dirtyFields.add(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
 	}
 	
@@ -199,7 +220,7 @@ public final class Camera {
 		}
 		
 		if(dirtyFields.contains(CameraDirtyFields.PROJECTION_MATRIX)) {
-			setProjectionMatrix(70f, (float) width / height, 1f, 1000f);
+			setProjectionMatrix((float) width / height, 1f, 1000f);
 			renderer.setMatrix(MatrixType.PROJECTION, getProjectionMatrix());
 		}
 		
@@ -213,6 +234,75 @@ public final class Camera {
 			viewProjectionMatrix.set(projectionMatrix).mult(viewMatrix, viewProjectionMatrix);
 			renderer.setMatrix(MatrixType.VIEW_PROJECTION, getViewProjectionMatrix());
 		}
+	}
+	
+	/**
+	 * Return the width of the <code>Camera</code>, usually the
+	 * width of the display.
+	 * 
+	 * @return The width of the camera.
+	 */
+	public int getWidth() {
+		return width;
+	}
+	
+	/**
+	 * Return the height of the <code>Camera</code>, usually the
+	 * height of the display.
+	 * 
+	 * @return The height of the camera.
+	 */
+	public int getHeight() {
+		return height;
+	}
+	
+	/**
+	 * Return the field of view in the Y-axis of the <code>Camera</code> exprimed 
+	 * in degrees.
+	 * The value is only used when the camera is in {@link GraphicalProjectionMode#PERSPECTIVE}.
+	 * 
+	 * @return The field of view of the camera in degrees.
+	 */
+	public float getFOV() {
+		return fov;
+	}
+	
+	/**
+	 * Sets the field of view in the Y-axis of the <code>Camera</code> in degrees.
+	 * The method will set automatically the camera into {@link GraphicalProjectionMode#PERSPECTIVE} 
+	 * and compute the new projection matrix.
+	 * 
+	 * @param fov The field of view of the camera in degrees.
+	 */
+	public void setFOV(float fov) {
+		this.fov = fov;
+		
+		setProjectionMode(GraphicalProjectionMode.PERSPECTIVE);
+		dirtyFields.add(CameraDirtyFields.PROJECTION_MATRIX);
+	}
+	
+	/**
+	 * Return the zooming factor of the <code>Camera</code>.
+	 * The value is only used when the camera is in {@link GraphicalProjectionMode#ORTHOGRAPHIC}.
+	 * 
+	 * @return The zooming factor of the camera.
+	 */
+	public float getZoom() {
+		return zoom;
+	}
+	
+	/**
+	 * Sets the zooming factor of the <code>Camera</code>.
+	 * The method will set automatically the camera into {@link GraphicalProjectionMode#ORTHOGRAPHIC} 
+	 * and compute the new projection matrix.
+	 * 
+	 * @param zoom The zooming factor of the camera.
+	 */
+	public void setZoom(float zoom) {
+		this.zoom = zoom;
+		
+		setProjectionMode(GraphicalProjectionMode.ORTHOGRAPHIC);
+		dirtyFields.add(CameraDirtyFields.PROJECTION_MATRIX);
 	}
 	
 	/**
@@ -368,26 +458,6 @@ public final class Camera {
 	 */
 	public Matrix4f getViewMatrix() {
 		return viewMatrix;
-	}
-	
-	/**
-	 * Return the width of the camera, usually the
-	 * width of the display.
-	 * 
-	 * @return The width of the camera.
-	 */
-	public int getWidth() {
-		return width;
-	}
-	
-	/**
-	 * Return the height of the camera, usually the
-	 * height of the display.
-	 * 
-	 * @return The height of the camera.
-	 */
-	public int getHeight() {
-		return height;
 	}
 	
 	/**

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL20C;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.BufferType;
@@ -197,7 +198,6 @@ public class Mesh {
 			
 			vertexBuffer.upload();
 			
-			
 			VertexBufferType type = vertexBuffer.getVertexBufferType();
 			
 			Format format = vertexBuffer.getFormat() == null ? 
@@ -205,11 +205,12 @@ public class Mesh {
 			// Normalized for floating-point data type isn't possible, disable it.
 			boolean normalized = format.isFloatingPoint() ? false : vertexBuffer.isNormalized();
 			
-			if(!type.equals(VertexBufferType.INDEX)) {
+			// Creates a vertex attribute pointer for all buffers except for the indices.
+			if(!vertexBuffer.isIndexBuffer()) {
 				
-				// TODO: Attribute class to handle attribs creation and enabling.
+				// TODO: Attribute class to handle attribs creation and enabling, should I ?
 				
-				GL20.glVertexAttribPointer(type.ordinal(), type.getSize(), VertexBufferType.getOpenGLFormat(format), 
+				GL20C.glVertexAttribPointer(type.ordinal(), type.getSize(), VertexBufferType.getOpenGLFormat(format), 
 						normalized, vertexBuffer.getStride(), vertexBuffer.getOffset());
 			}
 		}

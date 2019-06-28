@@ -17,13 +17,27 @@ import fr.mercury.nucleus.math.objects.Color;
  */
 public class TextureState implements Comparable<TextureState> {
 	
-	WrapMode sWrap, tWrap, rWrap;
-	MagFilter magFilter;
-	MinFilter minFilter;
-	CompareMode compareMode;
-	
-	Color borderColor = new Color(-1, -1, -1, -1);
-	
+	/**
+	 * The wrapping mode to use for each texture coordinates axis S (u), T (v) or R (w).
+	 */
+	protected WrapMode sWrap, tWrap, rWrap;
+	/**
+	 * The magnification filter used for the textured pixels.
+	 */
+	protected MagFilter magFilter;
+	/**
+	 * The minifying filter used for the textured pixels.
+	 */
+	protected MinFilter minFilter;
+	/**
+	 * The compare mode for a depth texture (default&rarr;{@link CompareMode#NONE}).
+	 */
+	protected CompareMode compareMode;
+	/**
+	 * The color to use for the border, only visible when {@link WrapMode#CLAMP_BORDER} 
+	 * is set (default&rarr;[-1, -1, -1, -1]).
+	 */
+	protected Color borderColor = new Color(-1, -1, -1, -1);
 	/**
 	 * Whether the mipmaps are needed.
 	 */
@@ -246,9 +260,8 @@ public class TextureState implements Comparable<TextureState> {
 	}
 	
 	/**
-	 * <code>CompareMode</code> specifies the texture comparison for
-	 * a depth texture. For example compare the texture depth to the red
-	 * texture component.
+	 * <code>CompareMode</code> specifies the texture comparison for a depth texture. 
+	 * For example compare the texture depth to the red texture component.
 	 * <p>
 	 * OpenGL Correspondance: <code>GL_TEXTURE_COMPARE_MODE</code>.
 	 */
