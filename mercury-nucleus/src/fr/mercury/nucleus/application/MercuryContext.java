@@ -63,7 +63,7 @@ public class MercuryContext implements Runnable {
 	/**
 	 * A reference of the rendering thread.
 	 */
-	static Thread GL_RENDER_THREAD = null;
+	protected static final String GL_THREAD_NAME = "OpenGL Render Thread";
 	
 	/**
 	 * The application which manages the context.
@@ -159,6 +159,9 @@ public class MercuryContext implements Runnable {
 	@Override
 	public void run() {
 		
+		// Set the correct name for the thread.
+		Thread.currentThread().setName(GL_THREAD_NAME);
+		
 		if(application == null) {
 			throw new IllegalArgumentException("The bounded application cannot be null !");
 		}
@@ -235,8 +238,6 @@ public class MercuryContext implements Runnable {
 	 */
 	private boolean initializeInMercury() {
 		try {
-			
-			GL_RENDER_THREAD = Thread.currentThread();
 			
 			timer = new NanoTimer();
 			
@@ -400,13 +401,13 @@ public class MercuryContext implements Runnable {
 	}
 	
 	/**
-	 * Check that the currently used thread is the one use by the OpenGL context for rendering.
+	 * Check that the currently used thread is the one used by the <code>OpenGL</code> context for rendering.
 	 * 
 	 * @throws GLException Thrown if the current thread isn't the rendering one.
 	 */
 	public static void checkGLThread() {
-		if(GL_RENDER_THREAD != Thread.currentThread()) {
-			throw new GLException("The method should only be called from the GL render thread!");
+		if(!GL_THREAD_NAME.equals(Thread.currentThread().getName())) {
+			throw new GLException("The method should only be called from '" + GL_THREAD_NAME + "'!");
 		}
 	}
 	

@@ -3,6 +3,7 @@ package fr.mercury.nucleus.application.module;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -11,20 +12,26 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.concurrent.TaskExecutor;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.Application;
+import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
  * <code>TaskExecutorModule</code> is an implementation of {@link AbstractApplicationModule} which allows
  * for asynchronous execution of submitted tasks using an {@link ExecutorService} containing multiple 
  * separate {@link Thread}.
+ * It also allows execution of tasks in the <code>OpenGL</code> {@link Thread}, for any graphics related methods.
  * <p>
  * The module will automatically shutdown its execution service when {@link #cleanup()} is called and 
  * waits for any running task to finish. A new service is being created during the initialization of the module, 
  * but the tasks can already be submitted right after instantiation.
  * <p>
  * Note however that the {@link #enable()} or {@link #disable()} methods has no effect on the execution of tasks.
+ * 
+ * @see #submit(Callable)
+ * @see #submitGraphics(Runnable)
  * 
  * @author GnosticOccultist
  */
@@ -48,6 +55,10 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	 * The service to executed scheduled tasks. 
 	 */
 	private ScheduledExecutorService scheduledService;
+	/**
+	 * The executor for tasks to be executed on the rendering thread.
+	 */
+	private TaskExecutor graphicsExecutor;
 
 	/**
 	 * Instantiates a new <code>TaskExecutorModule</code> with the default {@link #NB_THREADS}
@@ -66,9 +77,11 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	public TaskExecutorModule(int nbThreads) {
 		restartExecutor(nbThreads);
 		this.scheduledService = Executors.newSingleThreadScheduledExecutor();
+		this.graphicsExecutor = new TaskExecutor();
 	}
 	
 	@Override
+	@OpenGLCall
 	public void initialize(Application application) {
 		if(executor == null) {
 			restartExecutor(NB_THREADS);
@@ -76,16 +89,22 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 		if(scheduledService == null) {
 			this.scheduledService = Executors.newSingleThreadScheduledExecutor();
 		}
+		if(graphicsExecutor == null) {
+			this.graphicsExecutor = new TaskExecutor();
+		}
 		
 		super.initialize(application);
 	}
 
 	@Override
+	@OpenGLCall
 	public void update(float tpf) {
-		// No need for updating this module.
+		// Run the graphics tasks in the rendering thread.
+		graphicsExecutor.execute();
 	}
 	
 	@Override
+	@OpenGLCall
 	public void cleanup() {
 		// Avoid any security exception with a privileged access.
 		AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
@@ -98,6 +117,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 		
 		executor = null;
 		scheduledService = null;
+		graphicsExecutor = null;
 		
 		logger.info("TaskExecutorModule successfully shutdown.");
 		
@@ -121,10 +141,24 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	}
 	
 	/**
+	 * Submits the provided {@link Runnable} to be executed with the <code>TaskExecutorModule</code>,
+	 * in the <code>OpenGL</code> {@link Thread}.
+	 * <p>
+	 * The task will be executed the next time this module gets updated by the {@link Application} managing it.
+	 * 
+	 * @param task The task to be executed in the graphics thread (not null).
+	 */
+	@OpenGLCall
+	public void submitGraphics(Runnable task) {
+		Validator.nonNull(task, "The task to be executed can't be null!");
+		graphicsExecutor.execute(task);
+	}
+	
+	/**
      * Schedule the provided {@link Runnable} to be executed with the <code>TaskExecutorModule</code> 
      * at a fixed rate with the provided delay in milliseconds.
      * 
-     * @param runnable The task to be scheduled (not null).
+     * @param task The task to be scheduled (not null).
      * @param delay    The delay between each execution in milliseconds (&ge;0).
      */
 	public void scheduleAtFixedRate(Runnable task, long delay) {
@@ -152,5 +186,15 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 				return thread;
 			}
 		});
+	}
+	
+	/**
+	 * Return the {@link Executor} of the <code>TaskExecutorModule</code> which is running on 
+	 * the <code>OpenGL</code> {@link Thread}.
+	 * 
+	 * @return The executor for tasks to be executed on the rendering thread.
+	 */
+	public Executor getGraphicsExecutor() {
+		return graphicsExecutor;
 	}
 }
