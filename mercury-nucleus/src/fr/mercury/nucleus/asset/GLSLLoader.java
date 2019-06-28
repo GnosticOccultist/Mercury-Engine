@@ -35,6 +35,7 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
 	 * @param path The file path.
 	 * @return     The readed shader source code.
 	 */
+	@Override
 	public ShaderSource load(String path) {
 		
 		StringBuilder sb = new StringBuilder();
