@@ -207,7 +207,6 @@ public class Mesh {
 			
 			// Creates a vertex attribute pointer for all buffers except for the indices.
 			if(!vertexBuffer.isIndexBuffer()) {
-				
 				// TODO: Attribute class to handle attribs creation and enabling, should I ?
 				
 				GL20C.glVertexAttribPointer(type.ordinal(), type.getSize(), VertexBufferType.getOpenGLFormat(format), 

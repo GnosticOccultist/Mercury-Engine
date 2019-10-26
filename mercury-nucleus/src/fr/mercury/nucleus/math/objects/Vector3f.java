@@ -37,6 +37,10 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 	 * The unit <code>Vector3f</code> in the Z-axis &rarr; [0,0,1].
 	 */
 	public static final Vector3f UNIT_Z = new Vector3f(0, 0, 1);
+	/**
+	 * The one components <code>Vector3f</code> &rarr; [1,1,1].
+	 */
+	public static final Vector3f ONE = new Vector3f(1, 1, 1);
 	
 	/**
 	 * The X-component of the vector.
@@ -138,12 +142,12 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 	 * 
 	 * @return		The vector with its new components values.
 	 */
-	public Vector3f add(Vector3f other) {
-        Validator.nonNull(other, "The vector cannot be null!");
+	public Vector3f add(ReadableVector3f other) {
+		Validator.nonNull(other, "The vector cannot be null!");
 		
-		this.x += other.x;
-        this.y += other.y;
-        this.z += other.z;
+		this.x += other.x();
+		this.y += other.y();
+		this.z += other.z();
         return this;
 	}
 	
@@ -180,6 +184,17 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
         this.z -= other.z;
         return this;
 	}
+	
+	/**
+	 * Multiplies the provided components to this <code>Vector3f</code> components.
+	 * 
+	 * @param scalar The scalar value to multiply by.
+	 * 
+	 * @return 		 The vector with its new components values. 
+	 */
+    public Vector3f mul(float scalar) {
+    	return mul(scalar);
+    }
 	
 	/**
 	 * Multiplies the provided components to this <code>Vector3f</code> components.
@@ -358,6 +373,17 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
     }
     
     /**
+     * Sets the X-component of the <code>Vector3f</code>.
+     * 
+     * @param x The X-coordinate value of the vector.
+     * @return	The vector for chaining purposes.
+     */
+    public Vector3f setX(float x) {
+		this.x = x;
+		return this;
+	}
+    
+    /**
 	 * Return the Y-component of the <code>ReadableVector3f</code>,
 	 * as a single-precision float.
 	 * 
@@ -367,6 +393,17 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
     public float y() {
     	return y;
     }
+    
+    /**
+     * Sets the Y-component of the <code>Vector3f</code>.
+     * 
+     * @param y The Y-coordinate value of the vector.
+     * @return	The vector for chaining purposes.
+     */
+    public Vector3f setY(float y) {
+		this.y = y;
+		return this;
+	}
 
     /**
 	 * Return the Z-component of the <code>ReadableVector3f</code>,
@@ -378,6 +415,17 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
     public float z() {
     	return z;
     }
+    
+    /**
+     * Sets the Z-component of the <code>Vector3f</code>.
+     * 
+     * @param z The Z-coordinate value of the vector.
+     * @return	The vector for chaining purposes.
+     */
+    public Vector3f setZ(float z) {
+		this.z = z;
+		return this;
+	}
 	
 	/**
 	 * Set each component value of the <code>Vector3f</code> to 0.
