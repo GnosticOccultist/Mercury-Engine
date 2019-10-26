@@ -20,7 +20,7 @@ import fr.mercury.nucleus.utils.OpenGLCall;
  * @author GnosticOccultist
  */
 public final class VertexArray extends GLObject {
-
+	
 	/**
 	 * Determines if the provided {@link VertexArray} correspond to an OpenGL 
 	 * vertex array object.

@@ -17,6 +17,7 @@ import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
+import fr.mercury.nucleus.utils.Timer;
 
 /**
  * <code>MercuryApplication</code> is an abstract implementation of a usable {@link Application} using the <code>Mercury-Engine</code>.
@@ -64,7 +65,7 @@ public abstract class MercuryApplication implements Application {
 	/**
 	 * The timer of the application in nanoseconds.
 	 */
-	protected SpeedableNanoTimer timer = new SpeedableNanoTimer();
+	protected Timer timer = new SpeedableNanoTimer();
 	/**
 	 * The camera used for rendering.
 	 */
