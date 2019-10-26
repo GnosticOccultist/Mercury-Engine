@@ -71,7 +71,7 @@ public abstract class GLObject implements Comparable<GLObject> {
 	/**
 	 * Acquire an ID for the object using the OpenGL context.
 	 * 
-	 * @return
+	 * @return A new unique identifier for the object.
 	 */
 	@OpenGLCall
 	protected abstract Integer acquireID();
