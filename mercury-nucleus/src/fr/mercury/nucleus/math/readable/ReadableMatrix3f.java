@@ -1,5 +1,14 @@
 package fr.mercury.nucleus.math.readable;
 
+import fr.mercury.nucleus.math.objects.Matrix3f;
+
+/**
+ * <code>ReadableMatrix3f</code> is an interface to implement a readable-only 3x3 matrix of single-precision floats, 
+ * meaning its fields can be accessed but not modified.
+ * The actual implementation of this interface is the {@link Matrix3f} class.
+ * 
+ * @author GnosticOccultist
+ */
 public interface ReadableMatrix3f {
 	
 	/**

@@ -206,16 +206,24 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
     	return mul(other.x, other.y, other.z, other.w);
     }
     
-    public Quaternion mul(Quaternion q, Quaternion res) {
-        if (res == null) {
-            res = new Quaternion();
-        }
+    /**
+     * Multiplies the <code>Quaternion</code> by the provided one and store the result in
+     * the given quaternion store or a new instance one if null.
+     * 
+     * @param q		The quaternion to multiply by.
+     * @param store	The quaternion to store the result.
+     * @return		The result in the store or a new quaternion instance.
+     */
+    public Quaternion mul(Quaternion q, Quaternion store) {
+    	Validator.nonNull(q, "The quaternion can't be null!");
+    	var result = (store == null) ? new Quaternion() : store;
+    	
         float qw = q.w, qx = q.x, qy = q.y, qz = q.z;
-        res.x = x * qw + y * qz - z * qy + w * qx;
-        res.y = -x * qz + y * qw + z * qx + w * qy;
-        res.z = x * qy - y * qx + z * qw + w * qz;
-        res.w = -x * qx - y * qy - z * qz + w * qw;
-        return res;
+        result.x = x * qw + y * qz - z * qy + w * qx;
+        result.y = -x * qz + y * qw + z * qx + w * qy;
+        result.z = x * qy - y * qx + z * qw + w * qz;
+        result.w = -x * qx - y * qy - z * qz + w * qw;
+        return result;
     }
     
     /**
@@ -227,21 +235,21 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
      * @param vector The vector to multiply the quaternion by.
      * @return		 The storing vector with the result.
      */
-    public Vector3f mul(Vector3f v) {
-    	Validator.nonNull(v, "The vector cannot be null!");
+    public Vector3f mul(Vector3f vector) {
+    	Validator.nonNull(vector, "The vector cannot be null!");
     	
     	float tempX, tempY;
-        tempX = w * w * v.x + 2 * y * w * v.z - 2 * z * w * v.y + x * x * v.x
-                + 2 * y * x * v.y + 2 * z * x * v.z - z * z * v.x - y * y * v.x;
-        tempY = 2 * x * y * v.x + y * y * v.y + 2 * z * y * v.z + 2 * w * z
-                * v.x - z * z * v.y + w * w * v.y - 2 * x * w * v.z - x * x
-                * v.y;
-        v.z = 2 * x * z * v.x + 2 * y * z * v.y + z * z * v.z - 2 * w * y * v.x
-                - y * y * v.z + 2 * w * x * v.y - x * x * v.z + w * w * v.z;
-    	v.x = tempX;
-    	v.y = tempY;
+        tempX = w * w * vector.x + 2 * y * w * vector.z - 2 * z * w * vector.y + x * x * vector.x
+                + 2 * y * x * vector.y + 2 * z * x * vector.z - z * z * vector.x - y * y * vector.x;
+        tempY = 2 * x * y * vector.x + y * y * vector.y + 2 * z * y * vector.z + 2 * w * z
+                * vector.x - z * z * vector.y + w * w * vector.y - 2 * x * w * vector.z - x * x
+                * vector.y;
+        vector.z = 2 * x * z * vector.x + 2 * y * z * vector.y + z * z * vector.z - 2 * w * y * vector.x
+                - y * y * vector.z + 2 * w * x * vector.y - x * x * vector.z + w * w * vector.z;
+    	vector.x = tempX;
+    	vector.y = tempY;
     	
-    	return v;
+    	return vector;
     }
     
     /**
@@ -260,7 +268,7 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
      * @return The normalized quaternion.
      */
     public Quaternion normalize() {
-		float invNorm = MercuryMath.invSqrt(norm());
+		var invNorm = MercuryMath.invSqrt(norm());
 		x *= invNorm;
 		y *= invNorm;
 		z *= invNorm;
@@ -268,100 +276,208 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
 		return this;
 	}
     
+    /**
+     * Retrieve the given column of the rotation matrix represented by the <code>Quaternion</code>.
+     * The index must be between 0 and 2 included:
+     * <li>0: the left-axis of the rotation.</li>
+     * <li>1: the up-axis of the rotation.</li>
+     * <li>2: the direction which is facing the rotation.</li>
+     * <p>
+     * 
+     * @param index The index of the column to retrieve (&ge;0, &le;2).
+     * @param store	The vector to store the result.
+     * @return		The rotation column either the store or a new vector instance.
+     */
+    @Override
     public Vector3f getRotationColumn(int index, Vector3f store) {
-    	if(store == null) {
-    		store = new Vector3f();
-    	}
+    	Validator.inRange(index, "The index of the column is out of range!", 0, 2);
+    	var result = (store == null) ? new Vector3f() : store;
     	
-    	float norm = norm();
-    	if(norm != 1.0f) {
-    		norm = MercuryMath.invSqrt(norm);
-    	}
-    	
-        float xx = x * x * norm;
-        float xy = x * y * norm;
-        float xz = x * z * norm;
-        float xw = x * w * norm;
-        float yy = y * y * norm;
-        float yz = y * z * norm;
-        float yw = y * w * norm;
-        float zz = z * z * norm;
-        float zw = z * w * norm;
-
+    	var norm = norm();
+    	/*
+    	 * Check first if our norm is equal to one or zero to avoid useless division.
+    	 */
+        var s = (norm == 1f) ? 2f : (norm > 0f) ? 2f / norm : 0;
+        /*
+         * Compute xs, ys and zs first to save save 6 multiplications, since xs/ys/zs
+         * will be used 2-4 times each.
+         */
+        var xs = x * s;
+        var ys = y * s;
+        var zs = z * s;
+        var xx = x * xs;
+        var xy = x * ys;
+        var xz = x * zs;
+        var xw = w * xs;
+        var yy = y * ys;
+        var yz = y * zs;
+        var yw = w * ys;
+        var zz = z * zs;
+        var zw = w * zs;
+        
+        /*
+         * Using s = 2/norm (instead of 1/norm) saves 9 multiplications by 2 here.
+         */
         switch (index) {
             case 0:
-                store.x = 1 - 2 * (yy + zz);
-                store.y = 2 * (xy + zw);
-                store.z = 2 * (xz - yw);
+            	result.x = 1.0F - (yy + zz);
+            	result.y = (xy + zw);
+                result.z = (xz - yw);
                 break;
             case 1:
-                store.x = 2 * (xy - zw);
-                store.y = 1 - 2 * (xx + zz);
-                store.z = 2 * (yz + xw);
+            	result.x = (xy - zw);
+                result.y = 1.0F - (xx + zz);
+                result.z = (yz + xw);
                 break;
             case 2:
-                store.x = 2 * (xz + yw);
-                store.y = 2 * (yz - xw);
-                store.z = 1 - 2 * (xx + yy);
+            	result.x = (xz + yw);
+                result.y = (yz - xw);
+                result.z = 1.0F - (xx + yy);
                 break;
         }
-        
-        return store;
+        return result;
     }
     
     /**
-     * Converts the <code>Quaternion</code> to a rotation <code>Matrix4f</code>, 
-     * stored into the provided matrix.
-     * <p>
-     * Note that the 4th row and columns are leaved untouched and that this operation
-     * preserve the scale of the <code>Matrix4f</code>.
+	 * Sets the <code>Quaternion</code> components to match the provided rotation angles.
+	 * 
+	 * @param xAngle The angle around the X axis in radians.
+	 * @param yAngle The angle around the Y axis in radians.
+	 * @param zAngle The angle around the Z axis in radians.
+	 * @return		 The updated quaternion for chaining purposes.
+	 */
+    public Quaternion fromAngles(float xAngle, float yAngle, float zAngle) {
+        float angle;
+        float sinY, sinZ, sinX, cosY, cosZ, cosX;
+        
+        angle = zAngle * 0.5f;
+        sinZ = (float) Math.sin(angle);
+        cosZ = (float) Math.cos(angle);
+        angle = yAngle * 0.5f;
+        sinY = (float) Math.sin(angle);
+        cosY = (float) Math.cos(angle);
+        angle = xAngle * 0.5f;
+        sinX = (float) Math.sin(angle);
+        cosX = (float) Math.cos(angle);
+
+        /*
+         * Use some variables to reduce the amount of multiplications.
+         */
+        float cosYXcosZ = cosY * cosZ;
+        float sinYXsinZ = sinY * sinZ;
+        float cosYXsinZ = cosY * sinZ;
+        float sinYXcosZ = sinY * cosZ;
+
+        w = (cosYXcosZ * cosX - sinYXsinZ * sinX);
+        x = (cosYXcosZ * sinX + sinYXsinZ * cosX);
+        y = (sinYXcosZ * cosX + cosYXsinZ * sinX);
+        z = (cosYXsinZ * cosX - sinYXcosZ * sinX);
+
+        normalize();
+        return this;
+    }
+    
+    /**
+     * Converts the <code>Quaternion</code> to a rotation {@link Matrix4f}, stored into the provided matrix.
      * 
      * @param result The matrix to store the result.
-     * @return		 The rotation matrix with scaling preserved.
+     * @return		 A rotation matrix either the store or a new matrix instance.
+     * 
+     * @see #toRotationMatrix(Matrix3f)
      */
-    public Matrix4f toRotationMatrix(Matrix4f result) {
-       
-    	// Saving the original scale before applying the rotation, to be restored
-    	// at the end.
-    	Vector3f originalScale = MercuryMath.getVector3f();
-    	originalScale.set(0, 0, 0);
-        result.getScale(originalScale);
-        result.setScale(1, 1, 1);
-        
-        float norm = norm();
-        // Check first if the norm is equal to one to avoid the division,
-        // don't know if it's really necessary?
-        float s = (norm == 1f) ? 2f : (norm > 0f) ? 2f / norm : 0;
+    @Override
+    public Matrix4f toRotationMatrix(Matrix4f store) {
+    	var result = (store == null) ? new Matrix4f() : store;
+    	
+    	var norm = norm();
+    	/*
+    	 * Check first if our norm is equal to one or zero to avoid useless division.
+    	 */
+        var s = (norm == 1f) ? 2f : (norm > 0f) ? 2f / norm : 0;
+        /*
+         * Compute xs, ys and zs first to save save 6 multiplications, since xs/ys/zs
+         * will be used 2-4 times each.
+         */
+        var xs = x * s;
+        var ys = y * s;
+        var zs = z * s;
+        var xx = x * xs;
+        var xy = x * ys;
+        var xz = x * zs;
+        var xw = w * xs;
+        var yy = y * ys;
+        var yz = y * zs;
+        var yw = w * ys;
+        var zz = z * zs;
+        var zw = w * zs;
 
-        // Compute xs/ys/zs first to save 6 multiplications, since xs/ys/zs
-        // will be used 2-4 times each.
-        float xs = x * s;
-        float ys = y * s;
-        float zs = z * s;
-        float xx = x * xs;
-        float xy = x * ys;
-        float xz = x * zs;
-        float xw = w * xs;
-        float yy = y * ys;
-        float yz = y * zs;
-        float yw = w * ys;
-        float zz = z * zs;
-        float zw = w * zs;
-
-        // Using s = 2/norm (instead of 1/norm) saves 9 multiplications by 2 here.
+        /*
+         * Using s = 2/norm (instead of 1/norm) saves 9 multiplications by 2 here.
+         */
         result.m00 = 1 - (yy + zz);
         result.m01 = (xy - zw);
         result.m02 = (xz + yw);
+        
         result.m10 = (xy + zw);
         result.m11 = 1 - (xx + zz);
         result.m12 = (yz - xw);
+        
         result.m20 = (xz - yw);
         result.m21 = (yz + xw);
         result.m22 = 1 - (xx + yy);
 
-        // Finally restore the scale of the matrix.
-        result.setScale(originalScale);
-
+        return result;
+    }
+    
+    /**
+     * Converts the <code>Quaternion</code> to a rotation {@link Matrix3f}, stored into the provided matrix.
+     * 
+     * @param result The matrix to store the result.
+     * @return		 A rotation matrix either the store or a new matrix instance.
+     * 
+     * @see #toRotationMatrix(Matrix4f)
+     */
+    @Override
+    public Matrix3f toRotationMatrix(Matrix3f store) {
+    	var result = (store == null) ? new Matrix3f() : store;
+    	
+    	var norm = norm();
+    	/*
+    	 * Check first if our norm is equal to one or zero to avoid useless division.
+    	 */
+        var s = (norm == 1f) ? 2f : (norm > 0f) ? 2f / norm : 0;
+        /*
+         * Compute xs, ys and zs first to save save 6 multiplications, since xs/ys/zs
+         * will be used 2-4 times each.
+         */
+        var xs = x * s;
+        var ys = y * s;
+        var zs = z * s;
+        var xx = x * xs;
+        var xy = x * ys;
+        var xz = x * zs;
+        var xw = w * xs;
+        var yy = y * ys;
+        var yz = y * zs;
+        var yw = w * ys;
+        var zz = z * zs;
+        var zw = w * zs;
+        
+        /*
+         * Using s = 2/norm (instead of 1/norm) saves 9 multiplications by 2 here.
+         */
+        result.m00 = 1.0F - (yy + zz);
+        result.m01 = (xy - zw);
+        result.m02 = (xz + yw);
+        
+        result.m10 = (xy + zw);
+        result.m11 = 1.0F - (xx + zz);
+        result.m12 = (yz - xw);
+        
+        result.m20 = (xz - yw);
+        result.m21 = (yz + xw);
+        result.m22 = 1.0F - (xx + yy);
+        
         return result;
     }
     
@@ -442,35 +558,6 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
 	public float w() {
 		return w;
 	}
-
-    public Quaternion fromAngles(float xAngle, float yAngle, float zAngle) {
-        float angle;
-        float sinY, sinZ, sinX, cosY, cosZ, cosX;
-        
-        angle = zAngle * 0.5f;
-        sinZ = (float) Math.sin(angle);
-        cosZ = (float) Math.cos(angle);
-        angle = yAngle * 0.5f;
-        sinY = (float) Math.sin(angle);
-        cosY = (float) Math.cos(angle);
-        angle = xAngle * 0.5f;
-        sinX = (float) Math.sin(angle);
-        cosX = (float) Math.cos(angle);
-
-        // variables used to reduce multiplication calls.
-        float cosYXcosZ = cosY * cosZ;
-        float sinYXsinZ = sinY * sinZ;
-        float cosYXsinZ = cosY * sinZ;
-        float sinYXcosZ = sinY * cosZ;
-
-        w = (cosYXcosZ * cosX - sinYXsinZ * sinX);
-        x = (cosYXcosZ * sinX + sinYXsinZ * cosX);
-        y = (sinYXcosZ * cosX + cosYXsinZ * sinX);
-        z = (cosYXsinZ * cosX - sinYXcosZ * sinX);
-
-        normalize();
-        return this;
-    }
     
     /**
 	 * Sets all the components of the <code>Quaternion</code> to the {@link #identity()},
@@ -559,77 +646,5 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
 		}
 		
 		return Float.compare(w, other.w) == 0;
-	}
-
-	public Quaternion fromAxes(Vector3f xAxis, Vector3f yAxis, Vector3f zAxis) {
-		return fromRotationMatrix(xAxis.x, yAxis.x, zAxis.x, xAxis.y, yAxis.y,
-                zAxis.y, xAxis.z, yAxis.z, zAxis.z);
-	}
-
-	public Quaternion fromRotationMatrix(float m00, float m01, float m02,
-            float m10, float m11, float m12, float m20, float m21, float m22) {
-        // first normalize the forward (F), up (U) and side (S) vectors of the rotation matrix
-        // so that the scale does not affect the rotation
-        float lengthSquared = m00 * m00 + m10 * m10 + m20 * m20;
-        if (lengthSquared != 1f && lengthSquared != 0f) {
-            lengthSquared = 1.0f / MercuryMath.sqrt(lengthSquared);
-            m00 *= lengthSquared;
-            m10 *= lengthSquared;
-            m20 *= lengthSquared;
-        }
-        lengthSquared = m01 * m01 + m11 * m11 + m21 * m21;
-        if (lengthSquared != 1f && lengthSquared != 0f) {
-            lengthSquared = 1.0f / MercuryMath.sqrt(lengthSquared);
-            m01 *= lengthSquared;
-            m11 *= lengthSquared;
-            m21 *= lengthSquared;
-        }
-        lengthSquared = m02 * m02 + m12 * m12 + m22 * m22;
-        if (lengthSquared != 1f && lengthSquared != 0f) {
-            lengthSquared = 1.0f / MercuryMath.sqrt(lengthSquared);
-            m02 *= lengthSquared;
-            m12 *= lengthSquared;
-            m22 *= lengthSquared;
-        }
-
-        // Use the Graphics Gems code, from 
-        // ftp://ftp.cis.upenn.edu/pub/graphics/shoemake/quatut.ps.Z
-        // *NOT* the "Matrix and Quaternions FAQ", which has errors!
-
-        // the trace is the sum of the diagonal elements; see
-        // http://mathworld.wolfram.com/MatrixTrace.html
-        float t = m00 + m11 + m22;
-
-        // we protect the division by s by ensuring that s>=1
-        if (t >= 0) { // |w| >= .5
-            float s = MercuryMath.sqrt(t + 1); // |s|>=1 ...
-            w = 0.5f * s;
-            s = 0.5f / s;                // so this division isn't bad
-            x = (m21 - m12) * s;
-            y = (m02 - m20) * s;
-            z = (m10 - m01) * s;
-        } else if ((m00 > m11) && (m00 > m22)) {
-            float s = MercuryMath.sqrt(1.0f + m00 - m11 - m22); // |s|>=1
-            x = s * 0.5f; // |x| >= .5
-            s = 0.5f / s;
-            y = (m10 + m01) * s;
-            z = (m02 + m20) * s;
-            w = (m21 - m12) * s;
-        } else if (m11 > m22) {
-            float s = MercuryMath.sqrt(1.0f + m11 - m00 - m22); // |s|>=1
-            y = s * 0.5f; // |y| >= .5
-            s = 0.5f / s;
-            x = (m10 + m01) * s;
-            z = (m21 + m12) * s;
-            w = (m02 - m20) * s;
-        } else {
-            float s = MercuryMath.sqrt(1.0f + m22 - m00 - m11); // |s|>=1
-            z = s * 0.5f; // |z| >= .5
-            s = 0.5f / s;
-            x = (m02 + m20) * s;
-            y = (m21 + m12) * s;
-            w = (m10 - m01) * s;
-        }
-        return this;
 	}
 }

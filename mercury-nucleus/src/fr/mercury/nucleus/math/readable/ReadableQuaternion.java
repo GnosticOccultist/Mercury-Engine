@@ -1,6 +1,9 @@
 package fr.mercury.nucleus.math.readable;
 
+import fr.mercury.nucleus.math.objects.Matrix3f;
+import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Quaternion;
+import fr.mercury.nucleus.math.objects.Vector3f;
 
 /**
  * <code>ReadableQuaternion</code> is an interface to implement a readable-only
@@ -10,6 +13,40 @@ import fr.mercury.nucleus.math.objects.Quaternion;
  * @author GnosticOccultist
  */
 public interface ReadableQuaternion {
+	
+	/**
+     * Retrieve the given column of the rotation matrix represented by the <code>ReadableQuaternion</code>.
+     * The index must be between 0 and 2 included:
+     * <li>0: the left-axis of the rotation.</li>
+     * <li>1: the up-axis of the rotation.</li>
+     * <li>2: the direction which is facing the rotation.</li>
+     * <p>
+     * 
+     * @param index The index of the column to retrieve (&ge;0, &le;2).
+     * @param store	The vector to store the result.
+     * @return		The rotation column either the store or a new vector instance.
+     */
+	Vector3f getRotationColumn(int index, Vector3f store);
+	
+	/**
+     * Converts the <code>ReadableQuaternion</code> to a rotation {@link Matrix3f}, stored into the provided matrix.
+     * 
+     * @param result The matrix to store the result.
+     * @return		 A rotation matrix either the store or a new matrix instance.
+     * 
+     * @see #toRotationMatrix(Matrix4f)
+     */
+	Matrix4f toRotationMatrix(Matrix4f store);
+	
+	/**
+     * Converts the <code>ReadableQuaternion</code> to a rotation {@link Matrix4f}, stored into the provided matrix.
+     * 
+     * @param result The matrix to store the result.
+     * @return		 A rotation matrix either the store or a new matrix instance.
+     * 
+     * @see #toRotationMatrix(Matrix3f)
+     */
+	Matrix3f toRotationMatrix(Matrix3f store);
 	
 	/**
 	 * Return the X-component of the <code>ReadableQuaternion</code>,
