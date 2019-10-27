@@ -1,15 +1,16 @@
 package fr.mercury.nucleus.renderer;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.objects.Matrix4f;
-import fr.mercury.nucleus.math.objects.Quaternion;
 import fr.mercury.nucleus.math.objects.Vector3f;
-import fr.mercury.nucleus.math.readable.ReadableQuaternion;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
 import fr.mercury.nucleus.renderer.AbstractRenderer.MatrixType;
 import fr.mercury.nucleus.renderer.queue.RenderLayer;
@@ -25,6 +26,11 @@ import fr.mercury.nucleus.scenegraph.AnimaMundi;
  * @author GnosticOccultist
  */
 public final class Camera {
+	
+	/**
+	 * The logger for the camera.
+	 */
+	protected static final Logger logger = FactoryLogger.getLogger("mercury.renderer.camera");
 	
 	/**
 	 * The width of the camera.
@@ -45,13 +51,25 @@ public final class Camera {
 	 */
 	private float zoom = 1f;
 	/**
+	 * The distance from the camera to the 6 planes defining its frustum.
+	 */
+	private float frustumLeft, frustumRight,  frustumBottom, frustumTop, frustumNear, frustumFar;
+	/**
      * The camera's location.
      */
     private final Vector3f location = new Vector3f();
     /**
-     * The orientation of the camera.
+     * The direction of the left-side of the camera.
      */
-    private final Quaternion rotation = new Quaternion();
+    private final Vector3f left = new Vector3f(-1.0F, 0.0F, 0.0F);
+    /**
+     * The direction of the up-side of the camera.
+     */
+    private final Vector3f up = new Vector3f(0.0F, 1.0F, 0.0F);
+    /**
+     * The direction of the camera.
+     */
+    private final Vector3f direction = new Vector3f(0.0F, 0.0F, -1.0F);
     /**
      * The near depth range for the viewport.
      */
@@ -113,6 +131,10 @@ public final class Camera {
 		this.height = height;
 		
 		this.layers.add(RenderLayer.DEFAULT);
+		
+		// Make sure all the rendering data such as matrices is computed before the first rendering pass
+		// and applied to the renderer.
+		this.dirtyFields.addAll(Arrays.asList(CameraDirtyFields.values()));
 	}
 	
 	/**
@@ -139,66 +161,131 @@ public final class Camera {
 		return true;
 	}
 	
+	/**
+	 * Sets the frustum planes values of the <code>Camera</code> using the given perspective values.
+	 * The method will mark the camera as dirty, and the new projection matrix will be computed and applied on the next call
+	 * of {@link #prepare(AbstractRenderer)}.
+	 * 
+	 * @param aspect The aspect ratio of the view, usually the display width divided by the height (&ge;0, &le;1).
+	 * @param near	 The near plane frustum distance from the camera (&ge;0).
+	 * @param far	 The far plane frustum distance from the camera (&ge;0).
+	 * @return 		 The camera with the updated frustum for chaining purposes.
+	 */
+	public Camera setFrustumPerspective(float aspect, float near, float far) {
+		return setFrustumPerspective(fov, aspect, near, far);
+	}
+	
+	/**
+	 * Sets the frustum planes values of the <code>Camera</code> using the given perspective values.
+	 * The method will mark the camera as dirty, and the new projection matrix will be computed and applied on the next call
+	 * of {@link #prepare(AbstractRenderer)}.
+	 * 
+	 * @param fovY	 The field of view of the camera.
+	 * @param aspect The aspect ratio of the view, usually the display width divided by the height (&ge;0, &le;1).
+	 * @param near	 The near plane frustum distance from the camera (&ge;0).
+	 * @param far	 The far plane frustum distance from the camera (&ge;0).
+	 * @return 		 The camera with the updated frustum for chaining purposes.
+	 */
+	public Camera setFrustumPerspective(float fovY, float aspect, float near, float far) {
+		Validator.nonNegative(near, "The near plane value can't be negative!");
+		Validator.nonNegative(far, "The far plane value can't be negative!");
+		if(Float.isNaN(aspect) || Float.isInfinite(aspect)) {
+			logger.warning("Invalid aspect ration for Camera " + this + " provided with setFrustumPerspective()!");
+			return this;
+		}
+		
+		this.fov = fovY;
+		var h = MercuryMath.tan(fov * (Math.PI / 180.0f) * .5f) * near;
+		var w = h * aspect;
+		frustumLeft = -w;
+		frustumRight = w;
+		frustumBottom = -h;
+		frustumTop = h;
+		frustumNear = near;
+		frustumFar = far;
+        
+		this.dirtyFields.add(CameraDirtyFields.PROJECTION_MATRIX);
+        
+		return this;
+	}
+	
+	/**
+	 * Update the view {@link Matrix4f} of the <code>Camera</code>.
+	 */
 	public void updateViewMatrix() {
-		viewMatrix.view(location, rotation);
+		viewMatrix.view(location, left, up, direction);
 		
 		dirtyFields.add(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
 	}
 	
-	public void setProjectionMatrix(float fovY, float aspect, float near, float far) {
-		this.fov = fovY;
-		setProjectionMatrix(aspect, near, far);
+	/**
+	 * Update the projection {@link Matrix4f} of the <code>Camera</code> according to its {@link GraphicalProjectionMode}.
+	 */
+	protected void updateProjectionMatrix() {
+		switch (projectionMode) {
+			case ORTHOGRAPHIC:
+				projectionMatrix.orthographic(frustumNear, frustumFar, frustumLeft, frustumRight, frustumTop, frustumBottom);
+				break;
+			case PERSPECTIVE:
+				projectionMatrix.perspective(frustumNear, frustumFar, frustumLeft, frustumRight, frustumTop, frustumBottom);
+				break;
+			default:
+				throw new IllegalStateException("Unknown projection mode for camera " + projectionMode);
+		}
+		
+		dirtyFields.add(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
 	}
 	
-	public void setProjectionMatrix(float aspect, float near, float far) {
-
-		float h = MercuryMath.tan(fov * (Math.PI / 180.0f) * .5f) * near;
-	    float w = h * aspect;
-	    
-	    if(projectionMode == GraphicalProjectionMode.ORTHOGRAPHIC) {
-	    	projectionMatrix.projection(projectionMode, near, far, zoom * (-width / 2), 
-	    			zoom * (width / 2), zoom * (-height / 2), zoom * (height / 2));
-	    } else {
-	    	projectionMatrix.projection(projectionMode, near, far, -w, w, h, -h);
-	    }
-	   
-	    dirtyFields.add(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
-	}
-	
+	/**
+	 * Orientates the <code>Camera</code> towards the provided world position vector using the difference
+	 * between it and the camera location as the new facing direction and the world up vector to compute the
+	 * left and up-axis of the camera. 
+	 * 
+	 * @param x				The X world coordinate to look at.
+	 * @param y				The Y world coordinate to look at.
+	 * @param z				The Z world coordinate to look at.
+	 * @param worldUpVector A normalized vector describing the up direction of the world (default&rarr;[0, 1, 0]).
+	 */
 	public void lookAt(ReadableVector3f position, ReadableVector3f worldUpVector) {
 		lookAt(position.x(), position.y(), position.z(), worldUpVector);
 	}
 	
+	/**
+	 * Orientates the <code>Camera</code> towards the provided world position using the difference
+	 * between it and the camera location as the new facing direction and the world up vector to compute the
+	 * left and up-axis of the camera. 
+	 * 
+	 * @param x				The X world coordinate to look at.
+	 * @param y				The Y world coordinate to look at.
+	 * @param z				The Z world coordinate to look at.
+	 * @param worldUpVector A normalized vector describing the up direction of the world (default&rarr;[0, 1, 0]).
+	 */
 	public void lookAt(float x, float y, float z, ReadableVector3f worldUpVector) {
-		
-		Vector3f newDirection = MercuryMath.getVector3f();
+		var newDirection = MercuryMath.getVector3f();
 		newDirection.set(x, y, z).sub(location).normalize();
 		
 		// Check to see if we haven't really updated camera -- no need to call sets.
-		if(newDirection.equals(getDirection(null))) {
+		if(newDirection.equals(direction)) {
 			return;
 		}
+		direction.set(newDirection);
 		
-		Vector3f newUp = MercuryMath.getVector3f();
-		Vector3f newLeft = MercuryMath.getVector3f();
-		
-		newUp.set(worldUpVector).normalize();
-		if(newUp.equals(Vector3f.ZERO)) {
-			newUp.set(Vector3f.UNIT_Y);
+		up.set(worldUpVector).normalize();
+		// Here, we default to the Y-axis as the up vector of the camera orientation.
+		if(up.equals(Vector3f.ZERO)) {
+			up.set(Vector3f.UNIT_Y);
 		}
 		
-		newLeft.set(newUp).cross(newDirection).normalize();
-		if(newLeft.equals(Vector3f.ZERO)) {
-			if(newDirection.x != 0) {
-				newLeft.set(newDirection.y, -newDirection.x, 0f);
+		left.set(up).cross(direction).normalize();
+		if(left.equals(Vector3f.ZERO)) {
+			if(direction.x() != 0.0F) {
+				left.set(direction.y(), -direction.x(), 0.0F);
 			} else {
-				newLeft.set(0f, newDirection.z, -newDirection.y);
+				left.set(0.0F, direction.z(), -direction.y());
 			}
 	    }
 		
-		newUp.set(newDirection).cross(newLeft).normalize();
-		this.rotation.fromAxes(newLeft, newUp, newDirection);
-		this.rotation.normalize();
+		up.set(direction).cross(left).normalize();
 		
 		// We need to recompute the view matrix since we modified the 
 		// rotation of the camera.
@@ -220,7 +307,7 @@ public final class Camera {
 		}
 		
 		if(dirtyFields.contains(CameraDirtyFields.PROJECTION_MATRIX)) {
-			setProjectionMatrix((float) width / height, 1f, 1000f);
+			updateProjectionMatrix();
 			renderer.setMatrix(MatrixType.PROJECTION, getProjectionMatrix());
 		}
 		
@@ -231,7 +318,7 @@ public final class Camera {
 		
 		if(dirtyFields.contains(CameraDirtyFields.VIEW_PROJECTION_MATRIX)) {
 			// Recompute the view-projection matrix after.
-			viewProjectionMatrix.set(projectionMatrix).mult(viewMatrix, viewProjectionMatrix);
+			viewProjectionMatrix.set(viewMatrix).mult(projectionMatrix, viewProjectionMatrix);
 			renderer.setMatrix(MatrixType.VIEW_PROJECTION, getViewProjectionMatrix());
 		}
 	}
@@ -337,32 +424,28 @@ public final class Camera {
 	}
 	
 	/**
-	 * Return the readable-only rotation of the camera.
-	 * 
-	 * @return The rotation of the camera.
-	 */
-	public ReadableQuaternion getRotation() {
-		return rotation;
-	}
-	
-	/**
-	 * Sets the rotation of the <code>Camera</code> to the provided quaternion.
-	 * 
-	 * @param rotation The rotation quaternion of the camera (not null).
-	 */
-	public void setRotation(ReadableQuaternion rotation) {
-		Validator.nonNull(rotation, "The rotation quaternion can't be null!");
-		this.rotation.set(rotation);
-	}
-	
-	/**
 	 * Return the readable-only left-axis vector of this <code>Camera</code>.
 	 * 
 	 * @param store The store for the result.
 	 * @return		The left-axis vector of the camera (readable-only).
 	 */
 	public ReadableVector3f getLeft(Vector3f store) {
-		return rotation.getRotationColumn(0, store);
+		return left;
+	}
+	
+	/**
+	 * Sets the left-axis vector of the <code>Camera</code> to the provided one.
+	 * The method will mark the camera as dirty, and the new view matrix will be computed and applied on the next call
+	 * of {@link #prepare(AbstractRenderer)}.
+	 * 
+	 * @param left The desired left-axis vector (not null).
+	 * @return	   The updated camera for chaining purposes.
+	 */
+	public Camera setLeft(ReadableVector3f left) {
+		this.left.set(left);
+		dirtyFields.add(CameraDirtyFields.VIEW_MATRIX);
+		
+		return this;
 	}
 	
 	/**
@@ -372,7 +455,22 @@ public final class Camera {
 	 * @return		The up-axis vector of the camera (readable-only).
 	 */
 	public ReadableVector3f getUp(Vector3f store) {
-		return rotation.getRotationColumn(1, store);
+		return up;
+	}
+	
+	/**
+	 * Sets the up-axis vector of the <code>Camera</code> to the provided one.
+	 * The method will mark the camera as dirty, and the new view matrix will be computed and applied on the next call
+	 * of {@link #prepare(AbstractRenderer)}.
+	 * 
+	 * @param up The desired up-axis vector (not null).
+	 * @return	 The updated camera for chaining purposes.
+	 */
+	public Camera setUp(ReadableVector3f up) {
+		this.up.set(up);
+		dirtyFields.add(CameraDirtyFields.VIEW_MATRIX);
+		
+		return this;
 	}
 	
 	/**
@@ -382,7 +480,22 @@ public final class Camera {
 	 * @return		The direction vector of the camera (readable-only).
 	 */
 	public ReadableVector3f getDirection(Vector3f store) {
-		return rotation.getRotationColumn(2, store);
+		return direction;
+	}
+	
+	/**
+	 * Sets the direction vector that the <code>Camera</code> is facing to the provided one.
+	 * The method will mark the camera as dirty, and the new view matrix will be computed and applied on the next call
+	 * of {@link #prepare(AbstractRenderer)}.
+	 * 
+	 * @param direction The desired direction vector (not null).
+	 * @return	   		The updated camera for chaining purposes.
+	 */
+	public Camera setDirection(ReadableVector3f direction) {
+		this.direction.set(direction);
+		dirtyFields.add(CameraDirtyFields.VIEW_MATRIX);
+		
+		return this;
 	}
 	
 	/**
@@ -510,6 +623,12 @@ public final class Camera {
 	 */
 	public boolean checkLayer(RenderLayer layer) {
 		return layers.contains(layer);
+	}
+	
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "[width= " + width + ", height= " + height + ", location= " + location + 
+				", layers=" + Arrays.toString(layers.toArray(new RenderLayer[layers.size()])) + "]";
 	}
 	
 	/**
