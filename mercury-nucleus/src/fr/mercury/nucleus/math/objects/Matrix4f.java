@@ -144,6 +144,27 @@ public final class Matrix4f implements Reusable {
         setTranslation(-location.x, -location.y, -location.z);
         return this;
     }
+	
+	public Matrix4f view(Vector3f location, Vector3f left, Vector3f up, Vector3f direction) {
+		identity();
+        m00 = -left.x();
+        m10 = -left.y();
+        m20 = -left.z();
+
+        m01 = up.x();
+        m11 = up.y();
+        m21 = up.z();
+
+        m02 = -direction.x();
+        m12 = -direction.y();
+        m22 = -direction.z();
+
+        m30 = left.dot(location);
+        m31 = -up.dot(location);
+        m32 = direction.dot(location);
+        
+        return this;
+	}
 
 	/**
 	 * Build a projection <code>Matrix4f</code> matching the given {@link GraphicalProjectionMode} and using 
@@ -184,15 +205,15 @@ public final class Matrix4f implements Reusable {
 	 */
 	public void perspective(float near, float far, float left, float right, float top, float bottom) {
 		identity();
+		
 		m00 = (2.0f * near) / (right - left);
 		m11 = (2.0f * near) / (top - bottom);
-		m32 = -1.0f;
-		m33 = -0.0f;
-		
-		m02 = (right + left) / (right - left);
-		m12 = (top + bottom) / (top - bottom);
+		m20 = (right + left) / (right - left);
+		m21 = (top + bottom) / (top - bottom);
 		m22 = -(far + near) / (far - near);
-		m23 = -(2.0f * far * near) / (far - near);
+		m23 = -1.0F;
+		m32 = -(2.0F * far * near) / (far - near);
+		m33 = -0.0F;
 	}
 	
 	/**
@@ -210,28 +231,13 @@ public final class Matrix4f implements Reusable {
 	 */
 	public void orthographic(float near, float far, float left, float right, float top, float bottom) {
 		identity();
-
-        float rm00 = 2.0f / (right - left);
-        float rm11 = 2.0f / (top - bottom);
-        float rm30 = (right + left) / (left - right);
-        float rm31 = (top + bottom) / (bottom - top);
 		
-        m30 = m00 * rm30 + m10 * rm31 + m30;
-        m31 = m01 * rm30 + m11 * rm31 + m31;
-        m32 = m02 * rm30 + m12 * rm31 + m32;
-        m33 = m03 * rm30 + m13 * rm31 + m33;
-        m00 = m00 * rm00;
-        m01 = m01 * rm00;
-        m02 = m02 * rm00;
-        m03 = m03 * rm00;
-        m10 = m10 * rm11;
-        m11 = m11 * rm11;
-        m12 = m12 * rm11;
-        m13 = m13 * rm11;
-        m20 = -m20;
-        m21 = -m21;
-        m22 = -m22;
-        m23 = -m23;
+        m00 = 2.0f / (right - left);
+        m11 = 2.0f / (top - bottom);
+        m22 = -2.0f / (far - near);
+        m30 = -((right + left) / (right - left));
+        m31 = -((top + bottom) / (top - bottom));
+        m32 = -((far + near) / (far - near));
 	}
 
 	/**

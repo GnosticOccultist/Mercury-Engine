@@ -105,4 +105,6 @@ public interface ReadableMatrix3f {
 		}
 		return false;
 	}
+
+	ReadableMatrix3f multiplyDiagonalPost(ReadableVector3f scale, Matrix3f matrix3f);
 }

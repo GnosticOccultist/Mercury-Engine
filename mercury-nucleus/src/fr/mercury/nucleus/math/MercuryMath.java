@@ -4,6 +4,7 @@ import java.util.Random;
 
 import fr.alchemy.utilities.LocalVars;
 import fr.mercury.nucleus.math.objects.Color;
+import fr.mercury.nucleus.math.objects.Matrix3f;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Quaternion;
 import fr.mercury.nucleus.math.objects.Vector2f;
@@ -26,6 +27,10 @@ public final class MercuryMath {
 	 */
 	public static final Random RAND = new Random(System.currentTimeMillis());
 	/**
+	 * The 'close to zero' value to use in differences checking.
+	 */
+	public static final double EPSILON = 0.0001D;
+	/**
 	 * The local vars from the main thread.
 	 */
 	public static final LocalVars LOCAL_VARS = LocalVars.get();
@@ -35,6 +40,7 @@ public final class MercuryMath {
 		LOCAL_VARS.register(Vector3f.class);
 		LOCAL_VARS.register(Vector4f.class);
 		LOCAL_VARS.register(Quaternion.class);
+		LOCAL_VARS.register(Matrix3f.class);
 		LOCAL_VARS.register(Matrix4f.class);
 		LOCAL_VARS.register(Color.class);
 	}
@@ -80,6 +86,17 @@ public final class MercuryMath {
 	 */
 	public static Quaternion getQuaternion() {
 		return LOCAL_VARS.acquireNext(Quaternion.class, Quaternion::new);
+	}
+	
+	/**
+	 * Return an instance of {@link Matrix3f} using the <code>MercuryMath</code>
+	 * {@link LocalVars}.
+	 * If no instance is currently available, it will instantiates a new one.
+	 * 
+	 * @return A free and available matrix instance, or a newly created one.
+	 */
+	public static Matrix3f getMatrix3f() {
+		return LOCAL_VARS.acquireNext(Matrix3f.class, Matrix3f::new);
 	}
 	
 	/**

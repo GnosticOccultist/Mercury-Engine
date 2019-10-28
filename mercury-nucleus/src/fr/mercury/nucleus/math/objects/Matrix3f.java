@@ -5,6 +5,7 @@ import fr.alchemy.utilities.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.readable.ReadableMatrix3f;
 import fr.mercury.nucleus.math.readable.ReadableQuaternion;
+import fr.mercury.nucleus.math.readable.ReadableVector3f;
 
 public class Matrix3f implements ReadableMatrix3f, Reusable, Comparable<Matrix3f> {
 
@@ -47,12 +48,12 @@ public class Matrix3f implements ReadableMatrix3f, Reusable, Comparable<Matrix3f
     /**
 	 * Sets the components values of the <code>Matrix3f</code> to the ones from the provided {@link Quaternion}.
 	 * 
-	 * @param quat The quaternion to copy from (not null).
-	 * @return 		The matrix with its new components values, used for chaining methods.
+	 * @param quaternion The quaternion to copy from (not null).
+	 * @return 	   		 The matrix with its new components values, used for chaining methods.
 	 */
-    public Matrix3f set(ReadableQuaternion quat) {
-    	Validator.nonNull(quat, "The quaternion to copy from can't be null!");
-    	return quat.toRotationMatrix(this);
+    public Matrix3f set(ReadableQuaternion quaternion) {
+    	Validator.nonNull(quaternion, "The quaternion to copy from can't be null!");
+    	return quaternion.toRotationMatrix(this);
     }
     
     /**
@@ -117,6 +118,97 @@ public class Matrix3f implements ReadableMatrix3f, Reusable, Comparable<Matrix3f
     	var temp22 = m20 * matrix.m02() + m21 * matrix.m12() + m22 * matrix.m22();
         
     	return result.set(temp00, temp01, temp02, temp10, temp11, temp12, temp20, temp21, temp22);
+    }
+    
+    public Matrix3f multiplyDiagonalPost(ReadableVector3f vector, Matrix3f store) {
+    	var result = (store == null) ? new Matrix3f() : store;
+
+        result.set( 
+                vector.x() * m00, vector.y() * m01, vector.z() * m02,
+                vector.x() * m10, vector.y() * m11, vector.z() * m12,
+                vector.x() * m20, vector.y() * m21, vector.z() * m22);
+        return result;
+    }
+    
+    public Vector3f applyPost(ReadableVector3f vec, Vector3f store) {
+    	var result = (store == null) ? new Vector3f() : store;
+    	
+    	result.setX(m00 * vec.x() + m01 * vec.y() + m02 * vec.z());
+        result.setY(m10 * vec.x() + m11 * vec.y() + m12 * vec.z());
+        result.setZ(m20 * vec.x() + m21 * vec.y() + m22 * vec.z());
+    	return result;
+    }
+    
+    public Matrix3f rotateX(float angle) {
+    	if(angle == 0.0F) {
+    		return this;
+    	}
+    	
+    	float m01 = this.m01, m02 = this.m02, 
+    	m11 = this.m11, m12 = this.m12, 
+    	m21 = this.m21, m22 = this.m22;
+
+    	var cosAngle = (float) Math.cos(angle);
+    	var sinAngle = (float) Math.sin(angle);
+
+    	this.m01 = m01 * cosAngle + m02 * sinAngle;
+    	this.m02 = m02 * cosAngle - m01 * sinAngle;
+
+    	this.m11 = m11 * cosAngle + m12 * sinAngle;
+    	this.m12 = m12 * cosAngle - m11 * sinAngle;
+
+    	this.m21 = m21 * cosAngle + m22 * sinAngle;
+    	this.m22 = m22 * cosAngle - m21 * sinAngle;
+
+    	return this;
+    }
+    
+    public Matrix3f rotateY(float angle) {
+    	if(angle == 0.0F) {
+    		return this;
+    	}
+    	
+    	float m00 = this.m00, m02 = this.m02,
+    	m10 = this.m10, m12 = this.m12,
+    	m20 = this.m20, m22 = this.m22;
+
+    	var cosAngle = (float) Math.cos(angle);
+    	var sinAngle = (float) Math.sin(angle);
+        
+    	this.m00 = m00 * cosAngle - m02 * sinAngle;
+    	this.m02 = m00 * sinAngle + m02 * cosAngle;
+        
+    	this.m10 = m10 * cosAngle - m12 * sinAngle;
+    	this.m12 = m10 * sinAngle + m12 * cosAngle;
+        
+    	this.m20 = m20 * cosAngle - m22 * sinAngle;
+    	this.m22 = m20 * sinAngle + m22 * cosAngle;
+
+    	return this;
+    }
+    
+    public Matrix3f rotateZ(float angle) {
+    	if(angle == 0.0F) {
+    		return this;
+    	}
+    	
+    	float m00 = this.m00, m01 = this.m01,
+    	m10 = this.m10, m11 = this.m11,
+    	m20 = this.m20, m21 = this.m21;
+
+    	var cosAngle = (float) Math.cos(angle);
+    	var sinAngle = (float) Math.sin(angle);
+
+    	this.m00 = m00 * cosAngle + m01 * sinAngle;
+    	this.m01 = m01 * cosAngle - m00 * sinAngle;
+
+    	this.m10 = m10 * cosAngle + m11 * sinAngle;
+    	this.m11 = m11 * cosAngle - m10 * sinAngle;
+
+    	this.m20 = m20 * cosAngle + m21 * sinAngle;
+    	this.m21 = m21 * cosAngle - m20 * sinAngle;
+
+        return this;
     }
     
     /**
