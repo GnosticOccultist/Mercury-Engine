@@ -1,5 +1,7 @@
 package fr.mercury.nucleus.math.readable;
 
+import java.nio.FloatBuffer;
+
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Transform;
 
@@ -20,11 +22,11 @@ public interface ReadableTransform {
 	ReadableVector3f getTranslation();
 
 	/**
-	 * Return the rotation {@link ReadableQuaternion} of the <code>ReadableTransform</code>
+	 * Return the rotation {@link ReadableMatrix3f} of the <code>ReadableTransform</code>
 	 * 
-	 * @return The readable-only rotation quaternion.
+	 * @return The readable-only rotation matrix.
 	 */
-	ReadableQuaternion getRotation();
+	ReadableMatrix3f getRotation();
 
 	/**
 	 * Return the scaling {@link ReadableVector3f} of the <code>ReadableTransform</code>
@@ -44,6 +46,16 @@ public interface ReadableTransform {
 	Matrix4f asModelMatrix(Matrix4f store);
 	
 	/**
+	 * Return the float buffer of the <code>ReadableTransform</code>, usable by
+	 * the <code>OpenGL</code> context.
+	 * 
+	 * @param The float buffer to store the transform.
+	 * 
+	 * @return The float buffer containing the transform.
+	 */
+	FloatBuffer asModelBuffer(FloatBuffer store);
+	
+	/**
 	 * Return whether all 3 components (translation, rotation and scale) of the <code>ReadableTransform</code> 
 	 * are equal to an identity matrix, meaning this transform is an identity-transform.
 	 * 
@@ -52,6 +64,14 @@ public interface ReadableTransform {
 	default boolean isIdentity() {
 		return getTranslation().isZero() && getRotation().isIdentity() && getScale().isIdentity();
 	}
+	
+	/**
+	 * Return whether the matrix of the <code>ReadableTransform</code> is only representing
+	 * a rotation or combines a scale as well.
+	 * 
+	 * @return Whether the transform's matrix represent only a rotation.
+	 */
+	boolean isRotationMatrix();
 	
 	/**
 	 * Return whether all the scale component of the <code>ReadableTransform</code> is a uniform vector, 

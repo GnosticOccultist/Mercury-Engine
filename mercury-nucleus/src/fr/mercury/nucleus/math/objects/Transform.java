@@ -1,8 +1,11 @@
 package fr.mercury.nucleus.math.objects;
 
+import java.nio.FloatBuffer;
+
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
+import fr.mercury.nucleus.math.readable.ReadableMatrix3f;
 import fr.mercury.nucleus.math.readable.ReadableQuaternion;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
@@ -30,7 +33,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	/**
 	 * The rotation of the object.
 	 */
-	private final Quaternion rotation;
+	private final Matrix3f rotation;
 	/**
 	 * The scale of the object.
 	 */
@@ -39,16 +42,37 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 * The matrix containing the model transform.
 	 */
 	private final Matrix4f transformMatrix;
+	/**
+	 * Whether the transform is an identity one.
+	 */
+	private boolean identity;
+	/**
+	 * Whether the matrix used is only rotation or combines a scaling as well.
+	 */
+	private boolean rotationMatrix;
+	/**
+	 * Whether the transform is uniformly scaled.
+	 */
+	private boolean uniformScale;
 	
 	/**
 	 * Instantiates a new <code>Transform</code> with identity values.
 	 * <p>
 	 * The translation: {0,0,0}.
-	 * The rotation: {0,0,0,1}.
+	 * <br>
+	 * The rotation: <br>{1,0,0}<br>{0,1,0}<br>{0,0,1}
+	 * <br>
 	 * The scale: {1,1,1}.
 	 */
 	public Transform() {
-		this(new Vector3f(), new Quaternion(), new Vector3f(1, 1, 1));
+		this.translation = new Vector3f();
+		this.rotation = new Matrix3f();
+		this.scale = new Vector3f(1, 1, 1);
+		this.transformMatrix = new Matrix4f();
+		
+		this.identity = true;
+		this.rotationMatrix = true;
+		this.uniformScale = true;
 	}
 	
 	/**
@@ -59,7 +83,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 * The scale: {1,1,1}.
 	 */
 	public Transform(Vector3f translation) {
-		this(translation, new Quaternion(), new Vector3f(1, 1, 1));
+		this(translation, new Matrix3f(), new Vector3f(1, 1, 1));
 	}
 	
 	/**
@@ -68,7 +92,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 * <p>
 	 * The scale: {1,1,1}.
 	 */
-	public Transform(Vector3f translation, Quaternion rotation) {
+	public Transform(Vector3f translation, Matrix3f rotation) {
 		this(translation, rotation, new Vector3f(1, 1, 1));
 	}
 	
@@ -76,28 +100,29 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 * Instantiates a new <code>Transform</code> with the provided 
 	 * translation vector, rotation quaternion and scaling vector.
 	 */
-	public Transform(Vector3f translation, Quaternion rotation, Vector3f scale) {
+	public Transform(Vector3f translation, Matrix3f rotation, Vector3f scale) {
 		this.translation = new Vector3f(translation);
-		this.rotation = new Quaternion(rotation);
+		this.rotation = new Matrix3f(rotation);
 		this.scale = new Vector3f(scale);
 		this.transformMatrix = new Matrix4f();
+		
+		update(false);
 	}
 	
 	/**
-	 * Set the components values of the provided transform to this 
-	 * <code>Transform</code> components.
-	 * <p>
-	 * The provided transform cannot be null.
+	 * Sets the components values of the provided transform to this <code>Transform</code> 
+	 * components.
 	 * 
-	 * @param other The other transform to copy from.
+	 * @param other The other transform to copy from (not null).
 	 * @return		The transform with copied components.
 	 */
-	public Transform set(Transform other) {
-		Validator.nonNull(other);
-		
-		this.translation.set(other.translation);
-		this.rotation.set(other.rotation);
-		this.scale.set(other.scale);
+	public Transform set(ReadableTransform other) {
+		this.translation.set(other.getTranslation());
+		this.rotation.set(other.getRotation());
+		this.scale.set(other.getScale());
+		this.identity = other.isIdentity();
+		this.rotationMatrix = other.isRotationMatrix();
+		this.uniformScale = other.isUniformScale();
 		return this;
 	}
 	
@@ -112,20 +137,19 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	}
 	
 	/**
-	 * Set the translation vector of the <code>Transform</code>
-	 * to the provided vector.
+	 * Set the translation vector of the <code>Transform</code> to the provided vector.
 	 * 
-	 * @param translation The translation vector.
+	 * @param translation The translation vector (not null).
 	 * @return			  The transform with the new translation vector.
 	 */
-	public Transform setTranslation(Vector3f translation) {
+	public Transform setTranslation(ReadableVector3f translation) {
 		this.translation.set(translation);
+		this.identity = identity && translation.equals(Vector3f.ZERO);
 		return this;
 	}
 	
 	/**
-	 * Set the translation vector of the <code>Transform</code>
-	 * to the provided components.
+	 * Set the translation vector of the <code>Transform</code> to the provided components.
 	 *
 	 * @param x The X-component to copy from.
 	 * @param y The Y-component to copy from.
@@ -135,25 +159,25 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 */
 	public Transform setTranslation(float x, float y, float z) {
 		this.translation.set(x, y, z);
+		this.identity = identity && x == 0.0F && y == 0.0F && z == 0.0F;
 		return this;
 	}
 	
 	/**
-	 * Translate the translation vector of the <code>Transform</code> by
-	 * the provided vector.
+	 * Translate the translation vector of the <code>Transform</code> by the provided vector.
 	 * 
-	 * @param translation The translation vector to addition.
+	 * @param translation The translation vector to addition (not null).
 	 *
 	 * @return 			  The updated transform. 
 	 */
-	public Transform translate(Vector3f translation) {
+	public Transform translate(ReadableVector3f translation) {
 		this.translation.add(translation);
+		this.identity = identity && translation.equals(Vector3f.ZERO);
 		return this;
 	}
 	
 	/**
-	 * Translate the translation vector of the <code>Transform</code> by
-	 * the provided components.
+	 * Translate the translation vector of the <code>Transform</code> by the provided components.
 	 * 
 	 * @param x The X-component to increase.
 	 * @param y The Y-component to increase.
@@ -163,75 +187,60 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 */
 	public Transform translate(float x, float y, float z) {
 		this.translation.add(x, y, z);
+		this.identity = identity && x == 0.0F && y == 0.0F && z == 0.0F;
 		return this;
 	}
 	
 	/**
-	 * Return the rotation quaternion of the <code>Transform</code>.
+	 * Return the rotation matrix of the <code>Transform</code>.
 	 * 
 	 * @return The rotation quaternion.
 	 */
 	@Override
-	public ReadableQuaternion getRotation() {
+	public ReadableMatrix3f getRotation() {
 		return rotation;
 	}
 	
 	/**
-	 * Set the rotation quaternion of the <code>Transform</code>
-	 * to the provided quaternion.
+	 * Sets the matrix of the <code>Transform</code> to the provided one. If the given matrix isn't purely rotational 
+	 * it will provide the scale of the transform {@link #setScale(float)} or its variants will throw an error.
 	 * 
-	 * @param rotation The rotation quaternion.
-	 * @return		   The transform with the new rotation quaternion.
+	 * @param rotation The rotation matrix if orthonormal, otherwise the rotation and the scale (not null).
+	 * @return		   The updated transform for chaining purposes.
 	 */
-	public Transform setRotation(Quaternion rotation) {
+	public Transform setRotation(ReadableMatrix3f rotation) {
 		this.rotation.set(rotation);
+		
+		update(false);
 		return this;
 	}
 	
 	/**
-	 * Set the rotation quaternion of the <code>Transform</code>
-	 * to the provided components. The w component is set to 1.
-	 *
-	 * @param x The X-component to copy from.
-	 * @param y The Y-component to copy from.
-	 * @param z The Z-component to copy from.
+	 * Sets the matrix of the <code>Transform</code> to the provided quaternion value. The scale can therefore be defined
+	 * using {@link #setScale(float)} or its variants.
 	 * 
-	 * @return  The transform with the new rotation quaternion.
+	 * @param rotation The rotation matrix if orthonormal, otherwise the rotation and the scale (not null).
+	 * @return		   The updated transform for chaining purposes.
 	 */
-	public Transform setRotation(float x, float y, float z) {
-		this.rotation.set(x, y, z, 1);
+	public Transform setRotation(ReadableQuaternion rotation) {
+		this.rotation.set(rotation);
+		
+		update(true);
 		return this;
 	}
 	
 	/**
-	 * Rotate the rotation quaternion of the <code>Transform</code> by
-	 * the provided quaternion.
-	 * <p>
-	 * The provided quaternion cannot be null.
+	 * Rotates the matrix of the <code>Transform</code> to the provided components for each axis.
 	 * 
-	 * @param rotation The rotation quaternion to addition.
-	 *
-	 * @return 		   The updated transform. 
-	 */
-	public Transform rotate(Quaternion rotation) {
-		this.rotation.mul(rotation);
-		return this;
-	}
-	
-	/**
-	 * Rotate the rotation quaternion of the <code>Transform</code> by
-	 * the provided components. The w component is leaved untouched.
-	 * 
-	 * @param x The X-component to increase.
-	 * @param y The Y-component to increase.
-	 * @param z The Z-component to increase.
-	 *
-	 * @return  The updated transform. 
+	 * @param x The X-axis angle of rotation in radians.
+	 * @param y The Y-axis angle of rotation in radians.
+	 * @param z The Z-axis angle of rotation in radians.
+	 * @return	The updated transform for chaining purposes.
 	 */
 	public Transform rotate(float x, float y, float z) {
-		Quaternion quat = MercuryMath.getQuaternion();
-		quat.fromAngles(x, y, z);
-		rotate(quat);
+		this.rotation.rotateX(x).rotateY(y).rotateZ(z);
+		
+		update(false);
 		return this;
 	}
 	
@@ -246,48 +255,93 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	}
 	
 	/**
-	 * Set the scale vector of the <code>Transform</code>
-	 * to the provided vector.
+	 * Set the scale vector of the <code>Transform</code> to the provided vector.
 	 * 
-	 * @param scale The scale vector.
-	 * @return		The transform with the new scaling vector.
+	 * @param scale The scale vector (not null, &gt;0).
+	 * @return		The transform with the new scaling vector, for chaining purposes.
 	 */
-	public Transform setScale(Vector3f scale) {
+	public Transform setScale(ReadableVector3f scale) {
+		if(!rotationMatrix) {
+            throw new IllegalStateException("The scale as already been set by the 3x3 rotation matrix, "
+            		+ "please use an orthonormal or a quaternion to set a pure rotation!");
+        }
+
+        if(scale.x() <= 0.0F && scale.y() <= 0.0F && scale.z() <= 0.0F) {
+        	throw new IllegalArgumentException("The scale can't be negative or null !");
+        }
+        
 		this.scale.set(scale);
+		this.identity = identity && scale.x() == 1.0 && scale.y() == 1.0 && scale.z() == 1.0;
+		this.uniformScale = scale.x() == scale.y() && scale.y() == scale.z();
 		return this;
 	}
 	
 	/**
-	 * Set the scale vector of the <code>Transform</code>
-	 * to the provided components.
+	 * Set the scale vector of the <code>Transform</code> to the provided components.
 	 *
-	 * @param x The X-component to copy from.
-	 * @param y The Y-component to copy from.
-	 * @param z The Z-component to copy from.
+	 * @param x The X-component to copy from (&gt;0).
+	 * @param y The Y-component to copy from (&gt;0).
+	 * @param z The Z-component to copy from (&gt;0).
 	 * 
-	 * @return  The transform with the new scaling vector.
+	 * @return  The transform with the new scaling vector, for chaining purposes.
 	 */
 	public Transform setScale(float x, float y, float z) {
+		if(!rotationMatrix) {
+            throw new IllegalStateException("The scale as already been set by the 3x3 rotation matrix, "
+            		+ "please use an orthonormal or a quaternion to set a pure rotation!");
+        }
+
+        if(x <= 0.0F && y <= 0.0F && z <= 0.0F) {
+        	throw new IllegalArgumentException("The scale can't be negative or null !");
+        }
+        
 		this.scale.set(x, y, z);
+		this.identity = false;
+		this.uniformScale = x == y && y == z;
 		return this;
 	}
 	
 	/**
-	 * Scale the scaling vector of the <code>Transform</code> by
-	 * the provided vector.
+	 * Set the scale vector of the <code>Transform</code> to the provided components.
+	 *
+	 * @param scale The desired scale of the transform (&gt;0).
 	 * 
-	 * @param scale The scaling vector to addition.
+	 * @return  	The transform with the new scaling vector, for chaining purposes.
+	 */
+	public Transform setScale(float scale) {
+		if(!rotationMatrix) {
+            throw new IllegalStateException("The scale as already been set by the 3x3 rotation matrix, "
+            		+ "please use an orthonormal or a quaternion to set a pure rotation!");
+        }
+
+        if(scale <= 0.0F) {
+        	throw new IllegalArgumentException("The scale can't be negative or null !");
+        }
+        
+		this.scale.set(scale, scale, scale);
+		this.identity = identity && scale == 1.0F;
+		this.uniformScale = true;
+		return this;
+	}
+	
+	/**
+	 * Scale the scaling vector of the <code>Transform</code> by the provided vector.
+	 * 
+	 * @param scale The scaling vector to addition (not null).
 	 *
 	 * @return 		The updated transform. 
 	 */
 	public Transform scale(Vector3f scale) {
 		this.scale.add(scale);
+		this.identity = identity && scale.x() == 1.0F && scale.y() == 1.0F 
+				&& scale.z() == 1.0F;
+		this.uniformScale = uniformScale && scale.x() == scale.y() 
+				&& scale.y() == scale.z();
 		return this;
 	}
 	
 	/**
-	 * Scale the scaling vector of the <code>Transform</code> by
-	 * the provided components.
+	 * Scale the scaling vector of the <code>Transform</code> by the provided components.
 	 * 
 	 * @param x The X-component to increase.
 	 * @param y The Y-component to increase.
@@ -297,6 +351,8 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 */
 	public Transform scale(float x, float y, float z) {
 		this.scale.add(x, y, z);
+		this.identity = identity && x == 1.0F && y == 1.0F && z == 1.0F;
+		this.uniformScale = uniformScale && x == y && y == z;
 		return this;
 	}
 	
@@ -310,51 +366,139 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 * @return The transformation matrix.
 	 */
 	public Matrix4f asModelMatrix(Matrix4f store) {
+		var result = (store == null) ? transformMatrix : store;
 		if(isIdentity()) {
-			transformMatrix.set(Matrix4f.IDENTITY_MATRIX);
-			return transformMatrix;
+			result.set(Matrix4f.IDENTITY_MATRIX);
+			return result;
 		}
 		
-		if(store == null) {
-			store = transformMatrix;
+		result.m30 = 0.0F;
+		result.m31 = 0.0F;
+		result.m32 = 0.0F;
+		
+		if(rotationMatrix) {
+			result.m00 = scale.x() * rotation.m00;
+			result.m10 = scale.x() * rotation.m10;
+			result.m20 = scale.x() * rotation.m20;
+			result.m01 = scale.y() * rotation.m01;
+			result.m11 = scale.y() * rotation.m11;
+			result.m21 = scale.y() * rotation.m21;
+			result.m02 = scale.z() * rotation.m02;
+			result.m12 = scale.z() * rotation.m12;
+			result.m22 = scale.z() * rotation.m22;
+		} else {
+			result.m00 = rotation.m00;
+			result.m10 = rotation.m10;
+			result.m20 = rotation.m20;
+			result.m01 = rotation.m01;
+			result.m11 = rotation.m11;
+			result.m21 = rotation.m21;
+			result.m02 = rotation.m02;
+			result.m12 = rotation.m12;
+			result.m22 = rotation.m22;
 		}
 		
-		store.setRotation(rotation);
-		store.setTranslation(translation);
+		result.m03 = translation.x();
+		result.m13 = translation.y();
+		result.m23 = translation.z();
+		result.m33 = 1.0F;
 		
-		Matrix4f scaleMatrix = MercuryMath.getMatrix4f();
-		scaleMatrix.identity();
-		scaleMatrix.scale(scale);
-		store.mult(scaleMatrix, store);
-		
-		transformMatrix.set(store);
-		
-		return store;
+		return result;
 	}
 	
-	/**
-	 * Computes the world <code>Transform</code> with this local <code>Transform</code>,
-	 * using the provided parent's <code>Transform</code>.
-	 * <p>
-	 * The provided transform cannot be null.
-	 * 
-	 * @param parent The parent transform to use to compute the world one.
-	 * @return		 The computed world transform of this local transform.
-	 */
-    public Transform worldTransform(Transform parent) {
-    	Validator.nonNull(parent, "The parent's transform cannot be null!");
+	@Override
+	public FloatBuffer asModelBuffer(FloatBuffer store) {
+		Validator.nonNull(store, "The float buffer can't be null!");
+		
+		store.put(3, 0.0F);
+		store.put(7, 0.0F);
+		store.put(11, 0.0F);
+		
+		if(rotationMatrix) {
+			store.put(0, scale.x() * rotation.m00);
+            store.put(1, scale.x() * rotation.m10);
+            store.put(2, scale.x() * rotation.m20);
+            store.put(4, scale.y() * rotation.m01);
+            store.put(5, scale.y() * rotation.m11);
+            store.put(6, scale.y() * rotation.m21);
+            store.put(8, scale.z() * rotation.m02);
+            store.put(9, scale.z() * rotation.m12);
+            store.put(10, scale.z() * rotation.m22);
+        } else {
+            store.put(0, rotation.m00);
+            store.put(1, rotation.m10);
+            store.put(2, rotation.m20);
+            store.put(4, rotation.m01);
+            store.put(5, rotation.m11);
+            store.put(6, rotation.m21);
+            store.put(8, rotation.m02);
+            store.put(9, rotation.m12);
+            store.put(10, rotation.m22);
+        }
+		
+		store.put(12, translation.x());
+        store.put(13, translation.y());
+        store.put(14, translation.z());
+        store.put(15, 1.0F);
+        
+        return store;
+	}
+	
+	public Transform worldTransform(ReadableTransform parent, Transform store) { 
+		Validator.nonNull(parent, "The parent's transform cannot be null!");
+		var result = (store == null) ? new Transform() : store;
+		
+		if(isIdentity()) {
+    		return result.set(parent);
+    	}
     	
-        // Multiply the local scale with the parent one.
-        scale.mul(parent.scale);
-        // Multiply the parent rotation with the local one.
-        parent.rotation.mul(rotation, rotation);
-        // Multiply the local translation with the parent one.
-        translation.mul(parent.scale);
-        // Multiply parent rotation with local translation, and finally add it the parent translation.
-        parent.rotation.mul(translation).add(parent.translation);
-
-        return this;
-    }
+    	if(parent.isIdentity()) {
+    		return result.set(this);
+    	}
+    	
+    	if(rotationMatrix && parent.isRotationMatrix() && uniformScale) {
+    		result.rotationMatrix = true;
+            var newRotation = result.rotation;
+            newRotation.set(rotation).mul(parent.getRotation());
+            
+            var newTranslation = result.translation.set(parent.getTranslation());
+            rotation.applyPost(newTranslation, newTranslation);
+            // uniform scale, so just use X.
+            newTranslation.mul(scale.x());
+            newTranslation.add(translation);
+            
+            if (parent.isUniformScale()) {
+                result.setScale(scale.x() * parent.getScale().x());
+            } else {
+                var scale = result.scale.set(parent.getScale());
+                scale.mul(scale.x());
+            }
+            
+            update(true);
+            return result;
+    	}
+    	
+    	// In all remaining cases, the matrix cannot be written as R*S*X+T.
+    	var matrixA = isRotationMatrix()
+    			? rotation.multiplyDiagonalPost(scale, MercuryMath.getMatrix3f())
+    			: rotation;
+    			
+    	var	matrixB = parent.isRotationMatrix()
+    			? parent.getRotation().multiplyDiagonalPost(parent.getScale(), MercuryMath.getMatrix3f())
+    			: parent.getRotation();
+    			
+    	var	newMatrix = result.rotation;
+    	newMatrix.set(matrixA).mul(matrixB);
+    	
+        var newTranslate = result.translation;
+        matrixA.applyPost(parent.getTranslation(), newTranslate).add(getTranslation());
+        
+        // Prevent scale bleeding since we don't set it.
+        result.scale.set(1.0F, 1.0F, 1.0F);
+        
+        result.update(false);
+        return result;
+	}
 	
 	/**
 	 * Set the <code>Transform</code> to its identity values.
@@ -367,8 +511,56 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	 */
 	public void identity() {
 		translation.set(0, 0, 0);
-		rotation.set(0, 0, 0, 1);
+		rotation.identity();
 		scale.set(1, 1, 1);
+		this.identity = true;
+		this.rotationMatrix = true;
+		this.uniformScale = true;
+	}
+	
+	
+	/**
+	 * Return whether the <code>Transform</code> is an identity transform.
+	 * 
+	 * @return Whether the transform is an identity one.
+	 */
+	@Override
+	public boolean isIdentity() {
+		return identity;
+	}
+	
+	/**
+	 * Return whether the matrix of the <code>Transform</code> is only representing
+	 * a rotation or combines a scale as well.
+	 * 
+	 * @return Whether the transform's matrix represent only a rotation.
+	 */
+	@Override
+	public boolean isRotationMatrix() {
+		return rotationMatrix;
+	}
+	
+	/**
+	 * Update the <code>Transform</code> state defined by the boolean variables. The method should be called 
+	 * every time the transform internal state has changed and can't be easily determined.
+	 * 
+	 * @param rotationMatrixGuaranteed Whether the transform matrix is guaranteed to be rotation-only, 
+	 * meaning it's orthonormal. This is used to avoid unnecessary and tedius checking in depth checking.
+	 * 
+	 * @see #isIdentity()
+	 * @see #isRotationMatrix()
+	 * @see #isUniformScale()
+	 */
+	private void update(boolean rotationMatrixGuaranteed) {
+		this.identity = translation.equals(Vector3f.ZERO) && 
+				rotation.isIdentity() && scale.equals(Vector3f.ONE);
+		if(identity) {
+            rotationMatrix = true;
+            uniformScale = true;
+        } else {
+        	rotationMatrix = rotationMatrixGuaranteed ? true : rotation.isOrthonormal();
+        	uniformScale = rotationMatrix && scale.x() == scale.y() && scale.y() == scale.z();
+        }
 	}
 	
 	/**
