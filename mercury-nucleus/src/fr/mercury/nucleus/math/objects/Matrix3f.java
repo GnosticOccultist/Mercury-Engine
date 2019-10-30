@@ -120,6 +120,34 @@ public class Matrix3f implements ReadableMatrix3f, Reusable, Comparable<Matrix3f
     	return result.set(temp00, temp01, temp02, temp10, temp11, temp12, temp20, temp21, temp22);
     }
     
+    /**
+     * Sets the <code>Matrix3f</code> to the provided rotation components in the X, Y and Z axis.
+     * 
+     * @param x The X axis angle to apply in radians (aka yaw).
+     * @param y The Y axis angle to apply in radians (aka roll).
+     * @param z The Z axis angle to apply in radians (aka pitch).
+     * @return	The updated matrix with the given euler angles, for chaining purposes.
+     */
+    public Matrix3f fromAngles(double x, double y, double z) {
+        var cy = (float) Math.cos(x);
+        var sy = (float) Math.sin(x);
+        var ch = (float) Math.cos(y);
+        var sh = (float) Math.sin(y);
+        var cp = (float) Math.cos(z);
+        var sp = (float) Math.sin(z);
+
+        m00 = ch * cp;
+        m01 = sh * sy - ch * sp * cy;
+        m02 = ch * sp * sy + sh * cy;
+        m10 = sp;
+        m11 = cp * cy;
+        m12 = -cp * sy;
+        m20 = -sh * cp;
+        m21 = sh * sp * cy + ch * sy;
+        m22 = -sh * sp * sy + ch * cy;
+        return this;
+    }
+    
     public Matrix3f multiplyDiagonalPost(ReadableVector3f vector, Matrix3f store) {
     	var result = (store == null) ? new Matrix3f() : store;
 

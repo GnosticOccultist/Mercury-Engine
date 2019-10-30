@@ -230,6 +230,21 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	}
 	
 	/**
+	 * Sets the matrix components of the <code>Transform</code> to the provided euler angles in radians. 
+	 * 
+	 * @param x The X axis angle to apply in radians (aka yaw).
+     * @param y The Y axis angle to apply in radians (aka roll).
+     * @param z The Z axis angle to apply in radians (aka pitch).
+	 * @return  The updated transform for chaining purposes.
+	 */
+	public Transform setRotation(float x, float y, float z) {
+		this.rotation.fromAngles(x, y, z);
+		
+		update(false);
+		return this;
+	}
+	
+	/**
 	 * Rotates the matrix of the <code>Transform</code> to the provided components for each axis.
 	 * 
 	 * @param x The X-axis angle of rotation in radians.

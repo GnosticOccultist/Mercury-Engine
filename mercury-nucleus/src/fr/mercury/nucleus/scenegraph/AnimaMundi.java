@@ -9,10 +9,14 @@ import fr.alchemy.utilities.array.Array;
 import fr.alchemy.utilities.array.ReadOnlyArray;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.math.objects.Matrix3f;
 import fr.mercury.nucleus.math.objects.Quaternion;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.math.objects.Vector3f;
+import fr.mercury.nucleus.math.readable.ReadableMatrix3f;
+import fr.mercury.nucleus.math.readable.ReadableQuaternion;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
+import fr.mercury.nucleus.math.readable.ReadableVector3f;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
 import fr.mercury.nucleus.renderer.queue.RenderLayer;
@@ -145,8 +149,7 @@ public abstract class AnimaMundi {
 		logger.debug("Update world transform for " + name);
         if(parent != null) {
         	assert !parent.isDirty(DirtyType.TRANSFORM);
-        	worldTransform.set(localTransform);
-            worldTransform.worldTransform(parent.worldTransform);
+        	parent.worldTransform.worldTransform(localTransform, worldTransform);
         } else {
             worldTransform.set(localTransform);
         }
@@ -231,7 +234,7 @@ public abstract class AnimaMundi {
 	 * @param translation The translation vector to set.
 	 * @return			  The changed anima-mundi.
 	 */
-	public AnimaMundi setTranslation(Vector3f translation) {
+	public AnimaMundi setTranslation(ReadableVector3f translation) {
 		localTransform.setTranslation(translation);
 		dirty(DirtyType.TRANSFORM);
 		
@@ -265,7 +268,7 @@ public abstract class AnimaMundi {
 	 * @param translation The translation vector.
 	 * @return			  The changed anima-mundi.
 	 */
-	public AnimaMundi translate(Vector3f translate) {
+	public AnimaMundi translate(ReadableVector3f translate) {
 		localTransform.translate(translate);
 		dirty(DirtyType.TRANSFORM);
 		
@@ -299,7 +302,24 @@ public abstract class AnimaMundi {
 	 * @param translation The rotation quaternion to set.
 	 * @return			  The changed anima-mundi.
 	 */
-	public AnimaMundi setRotation(Quaternion rotation) {
+	public AnimaMundi setRotation(ReadableQuaternion rotation) {
+		localTransform.setRotation(rotation);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
+	 * Sets the rotation of this <code>AnimaMundi</code> to the provided {@link Matrix3f} in
+	 * the local coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * <p>
+	 * The provided matrix cannot be null.
+	 * 
+	 * @param translation The rotation matrix to set.
+	 * @return			  The changed anima-mundi.
+	 */
+	public AnimaMundi setRotation(ReadableMatrix3f rotation) {
 		localTransform.setRotation(rotation);
 		dirty(DirtyType.TRANSFORM);
 		
@@ -333,8 +353,8 @@ public abstract class AnimaMundi {
 	 * @param rotation The rotation quaternion.
 	 * @return		   The changed anima-mundi.
 	 */
-	public AnimaMundi rotate(Quaternion rotation) {
-		localTransform.rotate(rotation);
+	public AnimaMundi rotate(ReadableQuaternion rotation) {
+		localTransform.rotate(rotation.x(), rotation.y(), rotation.z());
 		dirty(DirtyType.TRANSFORM);
 		
 		return this;

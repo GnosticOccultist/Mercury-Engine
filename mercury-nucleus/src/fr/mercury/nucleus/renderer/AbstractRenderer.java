@@ -149,7 +149,7 @@ public abstract class AbstractRenderer {
 		Validator.nonNull(color, "The clear color can't be null!");
 		if(!clearColor.equals(color)) {
 			clearColor.set(color);
-			GL11C.glClearColor(clearColor.r, clearColor.g, clearColor.b, color.a);
+			GL11C.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
 		}
 	}
 	
@@ -264,7 +264,9 @@ public abstract class AbstractRenderer {
 				var projection = matrixMap.get(MatrixType.PROJECTION);
 				var view = matrixMap.get(MatrixType.VIEW);
 				
-				buffer.set(projection.mult(view, buffer));
+				buffer.set(projection);
+				buffer.mult(view, buffer);
+				break;
 			default:
 				throw new UnsupportedOperationException("The provided type of matrix: " + type + " can't be computed!");
 		}
