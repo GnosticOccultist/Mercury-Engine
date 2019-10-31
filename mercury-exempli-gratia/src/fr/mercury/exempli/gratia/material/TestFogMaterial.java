@@ -9,6 +9,7 @@ import fr.mercury.nucleus.scenegraph.environment.Fog;
 import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
+import fr.mercury.nucleus.texture.TextureState.WrapMode;
 
 /**
  * <code>TestMercuryMaterial</code> showcase the usage of {@link Material} to render a fog effect on a {@link PhysicaMundi}.
@@ -40,17 +41,18 @@ public class TestFogMaterial extends MercuryApplication {
 	protected void initialize() {
 		// Load the 2D texture for the cube and upload it directly to the GPU.
 		Texture2D texture = assetManager.loadTexture2D("/textures/octostone.png")
-				.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR);
+				.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
+				.setWrapMode(WrapMode.CLAMP_EDGES, WrapMode.CLAMP_EDGES);
 		texture.upload();
 		
 		// Load and prepare both cubes in the scene.
 		cube1 = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube1.setName("cube1");
-		cube1.setTranslation(3, 0, 0).setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
+		cube1.setTranslation(0, 0, 4F).setRotation(0f, 0, 0f).setScale(1f, 1f, 1f);
 		
 		cube2 = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube2.setName("cube2");
-		cube2.setTranslation(3, 0, -5).setRotation(0.3f, 0, 0.3f).setScale(1f, 1f, 1f);
+		cube2.setTranslation(0, 0, 2.5F).setRotation(0f, 0, 0f).setScale(1f, 1f, 1f);
 		
 		// Select the second material which is "Unlit" to render the cube using
 		// a texture and a fog.

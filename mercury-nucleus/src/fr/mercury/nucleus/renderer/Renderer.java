@@ -1,6 +1,5 @@
 package fr.mercury.nucleus.renderer;
 
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
 
 import fr.mercury.nucleus.renderer.logic.DefaultRenderLogic;
@@ -58,6 +57,9 @@ public class Renderer extends AbstractRenderer {
 		}
 	};
 	
+	/**
+	 * The render logic used by the renderer.
+	 */
 	private final RenderLogic defaultLogic;
 	
 	public Renderer(Camera camera) {
@@ -72,7 +74,7 @@ public class Renderer extends AbstractRenderer {
 	 */
 	@OpenGLCall
 	public void clearBuffers() {
-		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
+		GL11C.glClear(GL11C.GL_COLOR_BUFFER_BIT | GL11C.GL_DEPTH_BUFFER_BIT | GL11C.GL_STENCIL_BUFFER_BIT);
 	}
 	
 	@OpenGLCall
@@ -136,7 +138,7 @@ public class Renderer extends AbstractRenderer {
 	public void resize(int width, int height) {
 		if(camera != null && camera.resize(width, height)) {
 			GL11C.glViewport(0, 0, camera.getWidth(), camera.getHeight());
-			GL11C.glEnable(GL11.GL_SCISSOR_TEST);
+			GL11C.glEnable(GL11C.GL_SCISSOR_TEST);
 			GL11C.glScissor(0, 0, width, height);
 		}
 	}

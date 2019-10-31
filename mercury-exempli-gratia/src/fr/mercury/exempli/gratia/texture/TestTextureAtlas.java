@@ -51,7 +51,7 @@ public class TestTextureAtlas extends MercuryApplication {
 		// Load and prepare the cube in the scene.
 		cube = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube.setName("cube");
-		cube.setTranslation(0.0f, 0.0f, 0.0f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
+		cube.setTranslation(0.0f, 0.0f, 4.5f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		// Select the fourth material which is "Unlit_atlas" to render the cube using
 		// a texture atlas.
@@ -74,7 +74,8 @@ public class TestTextureAtlas extends MercuryApplication {
 	@OpenGLCall
 	protected void update(float tpf) {
 		// Rotate slowly the cube.
-		cube.rotate(0.01f, 0.01f, 0.0f);
+		cube.rotate(0.01f, 0.01f, 0.01f);
+		cube.translate(0, 0, 0.01f);
 	}
 	
 	/**
