@@ -2,6 +2,7 @@ package fr.mercury.nucleus.application.module;
 
 import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.utils.OpenGLCall;
+import fr.mercury.nucleus.utils.Timer;
 
 /**
  * <code>ApplicationModule</code> represents an addon which rely only on the existence of an {@link Application}. It contains
@@ -23,10 +24,10 @@ public interface ApplicationModule {
 	 * Update the <code>ApplicationModule</code> during every loop-cycle if the module is both
 	 * linked to an application and enabled.
 	 * 
-	 * @param tpf The time per frame in seconds.
+	 * @param timer The timer used by the application (not null).
 	 */
 	@OpenGLCall
-	void update(float tpf);
+	void update(Timer timer);
 	
 	/**
 	 * Cleanup the <code>ApplicationModule</code> and de-initialized it.

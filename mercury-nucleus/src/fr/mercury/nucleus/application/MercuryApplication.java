@@ -167,18 +167,16 @@ public abstract class MercuryApplication implements Application {
 		
 		inputProcessor.update();
 		
-		float tpf = timer.getTimePerFrame() * timer.getSpeed();
-		
 		// Initialize modules which haven't already.
 		modules.stream().filter(module -> !module.isInitialized()).forEach(module -> module.initialize(this));
 		// Update application's modules.
-		modules.stream().filter(ApplicationModule::isEnabled).forEach(module -> module.update(tpf));
+		modules.stream().filter(ApplicationModule::isEnabled).forEach(module -> module.update(timer));
 		
 		// Update the implementation.
-		update(tpf);
+		update(timer);
 		
 		// Update the geometric information of the scene and its hierarchy.
-		scene.updateGeometricState();
+		scene.updateGeometricState(timer);
 		
 		// Perform rendering of the scene.
 		renderer.renderScene(scene);
@@ -191,12 +189,12 @@ public abstract class MercuryApplication implements Application {
 	 * <p>
 	 * Update the implementation of <code>MercuryApplication</code>.
 	 * 
-	 * @param tpf The time per frame.
+	 * @param timer The timer used by the application (not null).
 	 * 
 	 * @see #internalUpdate()
 	 */
 	@OpenGLCall
-	protected void update(float tpf) {}
+	protected void update(Timer timer) {}
 
 	/**
 	 * <b>Don't call manually</b>

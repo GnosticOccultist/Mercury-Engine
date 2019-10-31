@@ -17,6 +17,7 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.utils.OpenGLCall;
+import fr.mercury.nucleus.utils.Timer;
 
 /**
  * <code>TaskExecutorModule</code> is an implementation of {@link AbstractApplicationModule} which allows
@@ -98,7 +99,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 
 	@Override
 	@OpenGLCall
-	public void update(float tpf) {
+	public void update(Timer timer) {
 		// Run the graphics tasks in the rendering thread.
 		graphicsExecutor.execute();
 	}

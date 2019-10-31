@@ -26,6 +26,7 @@ import fr.mercury.nucleus.scenegraph.visitor.AbstractVisitor;
 import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
 import fr.mercury.nucleus.scenegraph.visitor.Visitor;
+import fr.mercury.nucleus.utils.Timer;
 
 /**
  * <code>AnimaMundi</code> is an abstraction layer for the <code>Tree-Data-Structure</code> representing 
@@ -56,6 +57,17 @@ public abstract class AnimaMundi {
 	 * An implementation of a visitor to update the transform of a hierarchy of anima-mundi.
 	 */
 	protected static final AbstractVisitor TRANSFORM_UPDATER = new AbstractVisitor() {
+		
+		@Override
+		public void onVisit(AnimaMundi anima) {
+			anima.updateWorldTransform();
+		}
+	};
+	
+	/**
+	 * An implementation of a visitor to update the render states of a hierarchy of anima-mundi.
+	 */
+	protected static final AbstractVisitor RENDER_STATE_UPDATER = new AbstractVisitor() {
 		
 		@Override
 		public void onVisit(AnimaMundi anima) {
@@ -100,7 +112,7 @@ public abstract class AnimaMundi {
 	 * The accumulated dirty marks by the anima-mundi. At instantiation
 	 * it will contain {@link DirtyType#TRANSFORM}.
 	 */
-	protected final EnumSet<DirtyType> dirtyMarks = EnumSet.of(DirtyType.TRANSFORM);
+	protected final EnumSet<DirtyType> dirtyMarks = EnumSet.of(DirtyType.TRANSFORM, DirtyType.RENDER_STATE);
 	/**
 	 * The queue distance computed by the {@link RenderBucket}.
 	 */
@@ -131,12 +143,34 @@ public abstract class AnimaMundi {
 	 * <p>
 	 * If the implementation calling this method is a {@link NucleusMundi}, it will
 	 * also update the geometric state of its children.
+	 * 
+	 * @param timer The timer used by the application (not null).
 	 */
-	public void updateGeometricState() {
-		if(isDirty(DirtyType.TRANSFORM)) {
-			visit(TRANSFORM_UPDATER, VisitType.PRE_ORDER);
+	public void updateGeometricState(Timer timer) {
+		
+		if(dirtyMarks.isEmpty()) {
+			updateChildren(timer);
+		} else {
+			if(isDirty(DirtyType.TRANSFORM)) {
+				visit(TRANSFORM_UPDATER, VisitType.PRE_ORDER);
+			}
+			
+			if(isDirty(DirtyType.RENDER_STATE)) {
+				visit(RENDER_STATE_UPDATER, VisitType.PRE_ORDER);
+			}
+			
+			updateChildren(timer);
 		}
+			
 	}
+	
+	/**
+	 * Updates the children of the <code>AnimaMundi</code>. The method should be implemented for implementation
+	 * such as {@link NucleusMundi} to cycle through its children and update their state.
+	 * 
+	 * @param timer The timer used by the application (not null).
+	 */
+	protected void updateChildren(Timer timer) {}
 	
 	/**
 	 * Update the world {@link Transform} by combining the local transform
@@ -148,7 +182,10 @@ public abstract class AnimaMundi {
 	protected void updateWorldTransform() {
 		logger.debug("Update world transform for " + name);
         if(parent != null) {
-        	assert !parent.isDirty(DirtyType.TRANSFORM);
+        	if(parent.isDirty(DirtyType.TRANSFORM)) {
+        		throw new IllegalStateException("Invalid update of the world transform for " + 
+        				toString() + ", parent " + parent.toString() + " is dirty!");
+        	}
         	parent.worldTransform.worldTransform(localTransform, worldTransform);
         } else {
             worldTransform.set(localTransform);
@@ -186,6 +223,9 @@ public abstract class AnimaMundi {
                 	parent.dirty(type);
                 }
                 break;
+			case RENDER_STATE:
+				propagateDown(type);
+				break;
 		}
 	}
 	

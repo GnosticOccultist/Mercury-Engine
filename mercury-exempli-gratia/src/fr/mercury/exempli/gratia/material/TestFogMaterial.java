@@ -10,6 +10,7 @@ import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
 import fr.mercury.nucleus.texture.TextureState.WrapMode;
+import fr.mercury.nucleus.utils.Timer;
 
 /**
  * <code>TestMercuryMaterial</code> showcase the usage of {@link Material} to render a fog effect on a {@link PhysicaMundi}.
@@ -74,8 +75,8 @@ public class TestFogMaterial extends MercuryApplication {
 	}
 	
 	@Override
-	protected void update(float tpf) {
-		super.update(tpf);
+	protected void update(Timer timer) {
+		super.update(timer);
 		
 		// Rotate and translate the first cube away from the camera.
 		cube1.rotate(0.01f, 0.01f, 0.0f);

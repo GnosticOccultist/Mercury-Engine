@@ -12,5 +12,9 @@ public enum DirtyType {
 	/**
 	 * Flag to notify the {@link AnimaMundi} about a dirty transform.
 	 */
-	TRANSFORM;
+	TRANSFORM,
+	/**
+	 * Flag to notify the {@link AnimaMundi} about some dirty render states.
+	 */
+	RENDER_STATE;
 }

@@ -10,6 +10,7 @@ import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
 import fr.mercury.nucleus.texture.TextureState.WrapMode;
 import fr.mercury.nucleus.utils.OpenGLCall;
+import fr.mercury.nucleus.utils.Timer;
 
 /**
  * <code>TestTextureAtlas</code> showcase the usage of {@link TextureAtlas} to save on <code>OpenGL</code> texture units
@@ -72,7 +73,7 @@ public class TestTextureAtlas extends MercuryApplication {
 	
 	@Override
 	@OpenGLCall
-	protected void update(float tpf) {
+	protected void update(Timer timer) {
 		// Rotate slowly the cube.
 		cube.rotate(0.01f, 0.01f, 0.01f);
 		cube.translate(0, 0, 0.01f);
