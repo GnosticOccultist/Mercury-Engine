@@ -1,5 +1,6 @@
 package fr.mercury.nucleus.scenegraph;
 
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -17,6 +18,8 @@ import fr.mercury.nucleus.math.readable.ReadableMatrix3f;
 import fr.mercury.nucleus.math.readable.ReadableQuaternion;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
+import fr.mercury.nucleus.renderer.logic.state.RenderState;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Type;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
 import fr.mercury.nucleus.renderer.queue.RenderLayer;
@@ -114,6 +117,10 @@ public abstract class AnimaMundi {
 	 */
 	protected final EnumSet<DirtyType> dirtyMarks = EnumSet.of(DirtyType.TRANSFORM, DirtyType.RENDER_STATE);
 	/**
+	 * The render states to be applied locally to the anima-mundi.
+	 */
+	protected final EnumMap<RenderState.Type, RenderState> renderStates = new EnumMap<>(Type.class);
+	/**
 	 * The queue distance computed by the {@link RenderBucket}.
 	 */
 	public transient double queueDistance = Double.NEGATIVE_INFINITY;
@@ -192,6 +199,10 @@ public abstract class AnimaMundi {
         }
         
         dirtyMarks.remove(DirtyType.TRANSFORM);
+	}
+	
+	protected void collectRenderStates() {
+		
 	}
 	
 	/**
@@ -749,6 +760,29 @@ public abstract class AnimaMundi {
 	 */
 	public ReadOnlyArray<EnvironmentElement> getLocalEnvironmentElements() {
 		return envElements.readOnly();
+	}
+	
+	/**
+	 * Return the local {@link RenderState} corresponding to the provided {@link Type} locally present
+	 * on the <code>AnimaMundi</code>.
+	 * 
+	 * @param type The type of render state to retrieve.
+	 * @return	   The local render state of the anima-mundi.
+	 */
+	public RenderState getLocalRenderState(RenderState.Type type) {
+		return renderStates.get(type);
+	}
+	
+	/**
+	 * Set the {@link RenderState} to use locally for the <code>AnimaMundi</code>, and return the 
+	 * previously applied one if any.
+	 * 
+	 * @param state The render state to apply locally.
+	 * @return		The previously render state applied to the anima-mundi, or null if none.
+	 */
+	public RenderState setRenderState(RenderState state) {
+		var previous = renderStates.put(state.type(), state);
+		return previous;
 	}
 	
 	/**

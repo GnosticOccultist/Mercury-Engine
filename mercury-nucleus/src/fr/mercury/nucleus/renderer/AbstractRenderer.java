@@ -4,6 +4,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
 
 import fr.alchemy.utilities.Validator;
@@ -12,6 +13,8 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
+import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
+import fr.mercury.nucleus.renderer.logic.state.RenderState;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
@@ -30,6 +33,7 @@ public abstract class AbstractRenderer {
 	 * The logger for the Mercury Renderer.
 	 */
 	protected static final Logger logger = FactoryLogger.getLogger("mercury.renderer");
+	
 	/**
 	 * The table containing the various render buckets organized by their types.
 	 */
@@ -162,6 +166,45 @@ public abstract class AbstractRenderer {
 	@OpenGLCall
 	protected void setDepthRange(double nearDepthRange, double farDepthRange) {
 		GL11C.glDepthRange(nearDepthRange, farDepthRange);
+	}
+	
+	@OpenGLCall
+	protected void applyRenderState(RenderState state) {
+		switch (state.type()) {
+			case FACE_CULLING:
+				var cull = (FaceCullingState) state;
+				if(cull.isEnabled()) {
+					GL11.glEnable(GL11.GL_CULL_FACE);
+					switch (cull.face()) {
+						case BACK:
+							GL11.glCullFace(GL11.GL_BACK);
+							break;
+						case FRONT:
+							GL11.glCullFace(GL11.GL_FRONT);
+							break;
+						case FRONT_AND_BACK:
+							GL11.glCullFace(GL11.GL_FRONT_AND_BACK);
+							break;
+						default:
+							break;
+					}
+				} else {
+					GL11.glDisable(GL11.GL_CULL_FACE);
+				}
+				switch (cull.windingOrder()) {
+					case CLOCKWISE:
+						GL11.glFrontFace(GL11.GL_CW);
+						break;
+					case COUNTER_CLOCKWISE:
+						GL11.glFrontFace(GL11.GL_CCW);
+						break;
+					default:
+						break;
+				}
+				break;
+			default:
+				break;
+		}
 	}
 	
 	/**
