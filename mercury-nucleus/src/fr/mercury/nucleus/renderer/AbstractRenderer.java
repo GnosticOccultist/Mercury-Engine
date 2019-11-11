@@ -52,11 +52,15 @@ public abstract class AbstractRenderer {
 	 */
 	protected Camera camera;
 	
+	/**
+	 * Instantiates a new <code>AbstractRenderer</code> with the provided {@link Camera}.
+	 * 
+	 * @param camera The camera to use for rendering (not null).
+	 */
 	protected AbstractRenderer(Camera camera) {
 		Validator.nonNull(camera, "The camera can't be null!");
 		
 		this.camera = camera;
-		registerBucket(BucketType.OPAQUE);
 	}
 	
 	/**
@@ -168,8 +172,15 @@ public abstract class AbstractRenderer {
 		GL11C.glDepthRange(nearDepthRange, farDepthRange);
 	}
 	
+	/**
+	 * Apply the provided <code>RenderState</code> to the <code>OpenGL</code> context.
+	 * 
+	 * @param state The render state to apply (not null).
+	 */
 	@OpenGLCall
 	protected void applyRenderState(RenderState state) {
+		Validator.nonNull(state, "The render state can't be null!");
+		
 		switch (state.type()) {
 			case FACE_CULLING:
 				var cull = (FaceCullingState) state;

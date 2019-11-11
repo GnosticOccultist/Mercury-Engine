@@ -74,7 +74,7 @@ public abstract class AnimaMundi {
 		
 		@Override
 		public void onVisit(AnimaMundi anima) {
-			anima.updateWorldTransform();
+			
 		}
 	};
 	

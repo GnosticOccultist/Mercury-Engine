@@ -33,8 +33,8 @@ public class TestRenderState extends MercuryApplication {
 	protected void initialize() {
 		// Load the 2D texture for the cube and upload it directly to the GPU.
 		var texture = assetManager.loadTexture2D("/textures/octostone.png")
-				.setFilter(MinFilter.BILINEAR, MagFilter.NEAREST)
-				.setWrapMode(WrapMode.CLAMP_EDGES, WrapMode.CLAMP_EDGES);
+				.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
+				.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
 		texture.upload();
 		
 		// Load and prepare the cube in the scene.
