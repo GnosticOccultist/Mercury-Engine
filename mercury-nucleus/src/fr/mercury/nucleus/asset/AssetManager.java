@@ -45,7 +45,7 @@ public class AssetManager {
 	 */
 	public AssetManager() {
 		registerLoader(GLSLLoader.class, FileExtensions.SHADER_FILE_EXTENSIONS);
-		registerLoader(SimpleOBJLoader.class, new String[] { FileExtensions.OBJ_MODEL_FORMAT });
+		registerLoader(OBJLoader.class, new String[] { FileExtensions.OBJ_MODEL_FORMAT });
 		registerLoader(ImageReader.class, FileExtensions.TEXTURE_FILE_EXTENSION);
 		registerLoader(MaterialLoader.class, new String[] { FileExtensions.JSON_FORMAT });
 	}
