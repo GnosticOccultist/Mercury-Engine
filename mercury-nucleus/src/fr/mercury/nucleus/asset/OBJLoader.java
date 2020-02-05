@@ -1,19 +1,25 @@
 package fr.mercury.nucleus.asset;
 
 import java.io.IOException;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.lwjgl.system.MemoryUtil;
+
+import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Vector2f;
 import fr.mercury.nucleus.math.objects.Vector3f;
+import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
 import fr.mercury.nucleus.scenegraph.Mesh;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 
 public class OBJLoader implements AssetLoader<PhysicaMundi> {
-
+	
 	/**
 	 * The logger of the mercury assets.
 	 */
@@ -94,7 +100,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 									+ String.valueOf(tokens.length - 1) + " are defined in the obj file!");
 						}
 						var indices = new IndexGroup[3];
-						for(int i = 0; i < tokens.length; i++) {
+						for(int i = 0; i < tokens.length - 1; i++) {
 							indices[i] = new IndexGroup(tokens[i + 1]);
 	                    }
 						store.addFace(indices);
@@ -119,6 +125,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		private final List<Vector3f> vertices = new ArrayList<>();
 		private final List<Vector2f> textureCoords = new ArrayList<>();
 		private final List<Vector3f> normals = new ArrayList<>();
+		private final List<Integer> indices = new ArrayList<>();
 		private final List<Face> faces = new ArrayList<>();
 		
 		private String name;
@@ -151,13 +158,47 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 			this.vertices.clear();
 			this.textureCoords.clear();
 			this.normals.clear();
+			this.indices.clear();
 			this.faces.clear();
 		}
 		
 		public Mesh toMercuryMesh() {
 			var mesh = new Mesh();
 			
-			// TODO: Upload data to the mesh.
+			FloatBuffer posBuffer = MemoryUtil.memAllocFloat(size() * 3);
+			FloatBuffer texBuffer = MemoryUtil.memAllocFloat(size() * 2);
+			FloatBuffer normBuffer = MemoryUtil.memAllocFloat(size() * 3);
+			
+			for(Vector3f vertex : vertices) {
+				posBuffer.put(vertex.x).put(vertex.y).put(vertex.z);
+			}
+			
+			for (Face face : faces) {
+				IndexGroup[] groups = face.getFaceVertexIndices();
+				for(IndexGroup group : groups) {
+					this.indices.add(group.vIndex);
+					
+					if(group.vtIndex > IndexGroup.NO_VALUE) {
+						Vector2f texCoords = textureCoords.get(group.vtIndex - 1);
+						texBuffer.put(texCoords.x).put(1F - texCoords.y);
+					}
+					
+					if(group.vnIndex > IndexGroup.NO_VALUE) {
+						Vector3f normal = normals.get(group.vnIndex - 1);
+						normBuffer.put(normal.x).put(normal.y).put(normal.z);
+					}
+				}
+			}
+			
+			int[] index = new int[indices.size()];
+			for(int i = 0; i < indices.size(); i++) {
+				index[i] = indices.get(i);
+			}
+			
+			mesh.setupBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW, posBuffer);
+			mesh.setupBuffer(VertexBufferType.TEX_COORD, Usage.STATIC_DRAW, texBuffer);
+			mesh.setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, index);
+			mesh.setupBuffer(VertexBufferType.NORMAL, Usage.STATIC_DRAW, normBuffer);
 			
 			return mesh;
 		}
@@ -175,19 +216,37 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		}
 	}
 	
+	/**
+	 * <code>Face</code> is composed of {@link IndexGroup}, for example 3 in a triangle shape. This class is used to correctly
+	 * get the indices used when rendering a {@link Mesh}.
+	 * 
+	 * @author GnosticOccultist
+	 */
 	protected static class Face {
 
 		/**
-		 * List of idxGroup groups for a face triangle (3 vertices per face).
+		 * The array of indices groups for the face.
 		 */
-		private IndexGroup[] idxGroups;
+		private IndexGroup[] indicesGroups;
 		
+		/**
+		 * Instantiates a new <code>Face</code> with the provided {@link IndexGroup}, the number depending on
+		 * the type of the face. For a triangle shape needs to define 3 indices groups.
+		 * 
+		 * @param groups The indices groups composing the face (not null, not empty).
+		 */
 		public Face(IndexGroup[] groups) {
-			this.idxGroups = groups;
+			Validator.nonEmpty(groups, "The indices groups can't be null!");
+			this.indicesGroups = groups;
 		}
 
+		/**
+		 * Return the array of {@link IndexGroup} composing the <code>Face</code>.
+		 * 
+		 * @return The array of indices groups composing the face (not null, not empty).
+		 */
 		public IndexGroup[] getFaceVertexIndices() {
-			return idxGroups;
+			return indicesGroups;
 		}
 	}
 
@@ -214,7 +273,8 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		public IndexGroup(String group) {
 			var tokens = group.split("/");
 			this.vIndex = tokens.length < 1 ? NO_VALUE : Integer.parseInt(tokens[0]);
-			this.vtIndex = tokens.length < 2 ? NO_VALUE : Integer.parseInt(tokens[1]);
+			// Here we check that the texture coordinate index exist, as an OBJ file may define normals without them.
+			this.vtIndex = tokens.length < 2 ? NO_VALUE : tokens[1].isEmpty() ? NO_VALUE : Integer.parseInt(tokens[1]);
 			this.vnIndex = tokens.length < 3 ? NO_VALUE : Integer.parseInt(tokens[2]);
 		}
 	}
