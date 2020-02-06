@@ -1,11 +1,8 @@
 package fr.mercury.nucleus.asset;
 
 import java.io.IOException;
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.file.FileUtils;
@@ -16,6 +13,7 @@ import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
 import fr.mercury.nucleus.scenegraph.Mesh;
+import fr.mercury.nucleus.scenegraph.Mesh.Mode;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 
 public class OBJLoader implements AssetLoader<PhysicaMundi> {
@@ -100,7 +98,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 									+ String.valueOf(tokens.length - 1) + " are defined in the obj file!");
 						}
 						var indices = new IndexGroup[3];
-						for(int i = 0; i < tokens.length - 1; i++) {
+						for(int i = 0; i < 3; i++) {
 							indices[i] = new IndexGroup(tokens[i + 1]);
 	                    }
 						store.addFace(indices);
@@ -165,27 +163,34 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		public Mesh toMercuryMesh() {
 			var mesh = new Mesh();
 			
-			FloatBuffer posBuffer = MemoryUtil.memAllocFloat(size() * 3);
-			FloatBuffer texBuffer = MemoryUtil.memAllocFloat(size() * 2);
-			FloatBuffer normBuffer = MemoryUtil.memAllocFloat(size() * 3);
+			float[] posBuffer = new float[vertices.size() * 3];
+			float[] texBuffer = new float[vertices.size() * 2];
+			float[] normBuffer = new float[vertices.size() * 3];
 			
-			for(Vector3f vertex : vertices) {
-				posBuffer.put(vertex.x).put(vertex.y).put(vertex.z);
+			for(int i = 0; i < vertices.size(); i++) {
+				Vector3f vertex = vertices.get(i);
+				posBuffer[i * 3] = vertex.x;
+				posBuffer[i * 3 + 1] = vertex.y;
+		        posBuffer[i * 3 + 2] = vertex.z;
 			}
 			
 			for (Face face : faces) {
 				IndexGroup[] groups = face.getFaceVertexIndices();
 				for(IndexGroup group : groups) {
-					this.indices.add(group.vIndex);
+					int vIndex = group.vIndex - 1;
+					this.indices.add(vIndex);
 					
 					if(group.vtIndex > IndexGroup.NO_VALUE) {
 						Vector2f texCoords = textureCoords.get(group.vtIndex - 1);
-						texBuffer.put(texCoords.x).put(1F - texCoords.y);
+						texBuffer[vIndex * 2] = texCoords.x;
+						texBuffer[vIndex * 2 + 1] = 1F - texCoords.y;
 					}
 					
 					if(group.vnIndex > IndexGroup.NO_VALUE) {
 						Vector3f normal = normals.get(group.vnIndex - 1);
-						normBuffer.put(normal.x).put(normal.y).put(normal.z);
+						normBuffer[vIndex * 3] = normal.x;
+						normBuffer[vIndex * 3 + 1] = normal.y;
+						normBuffer[vIndex * 3 + 2] = normal.z;
 					}
 				}
 			}
@@ -197,8 +202,12 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 			
 			mesh.setupBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW, posBuffer);
 			mesh.setupBuffer(VertexBufferType.TEX_COORD, Usage.STATIC_DRAW, texBuffer);
-			mesh.setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, index);
 			mesh.setupBuffer(VertexBufferType.NORMAL, Usage.STATIC_DRAW, normBuffer);
+			
+			mesh.setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, index);
+			
+			mesh.setMode(Mode.TRIANGLES);
+			mesh.upload();
 			
 			return mesh;
 		}
