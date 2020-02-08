@@ -44,6 +44,17 @@ public class NucleusMundi extends AnimaMundi {
 	}
 	
 	/**
+	 * Attach all the provided <code>AnimaMundi</code> to the <code>NucleusMundi</code>.
+	 * 
+	 * @param children The anima-mundis to attach (each element not null).
+	 */
+	public void attachAll(AnimaMundi... children) {
+		for(AnimaMundi child : children) {
+			attach(child);
+		}
+	}
+	
+	/**
 	 * Attach an <code>AnimaMundi</code> to the <code>NucleusMundi</code>.
 	 * 
 	 * @param child The anima-mundi to attach (not null).
@@ -58,6 +69,17 @@ public class NucleusMundi extends AnimaMundi {
 			
 			child.setParent(this);
 			children.add(child);
+		}
+	}
+	
+	/**
+	 * Detach all the provided <code>AnimaMundi</code> from the <code>NucleusMundi</code>.
+	 * 
+	 * @param children The anima-mundis to detach (each element not null).
+	 */
+	public void detachAll(AnimaMundi... children) {
+		for(AnimaMundi child : children) {
+			attach(child);
 		}
 	}
 	
