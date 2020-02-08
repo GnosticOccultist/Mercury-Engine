@@ -1,6 +1,8 @@
 package fr.mercury.nucleus.asset;
 
 import java.io.IOException;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +17,7 @@ import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
 import fr.mercury.nucleus.scenegraph.Mesh;
 import fr.mercury.nucleus.scenegraph.Mesh.Mode;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
+import fr.mercury.nucleus.utils.data.BufferUtils;
 
 public class OBJLoader implements AssetLoader<PhysicaMundi> {
 	
@@ -43,10 +46,16 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 	 */
 	private static final String OBJECT_NAME = "o";
 	
+	/**
+	 * The store used for storing the loaded data.
+	 */
+	private final MeshStore store = new MeshStore();
+	
 	@Override
 	public PhysicaMundi load(String path) {
 		try {
-			var store = new MeshStore();
+			// Clear the store for the new loaded OBJ file.
+			store.clear();
 			
 			var reader = FileUtils.readBuffered(path);
 			
@@ -118,100 +127,161 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		}
 	}
 	
+	/**
+	 * <code>MeshStore</code> is a utility class for storing the vertex data of a geometry loaded from
+	 * an OBJ file.
+	 * 
+	 * @author GnosticOccultist
+	 */
 	protected static class MeshStore {
 		
+		/**
+		 * The list of vertices data loaded from a file.
+		 */
 		private final List<Vector3f> vertices = new ArrayList<>();
+		/**
+		 * The list of texture coordinates data loaded from a file.
+		 */
 		private final List<Vector2f> textureCoords = new ArrayList<>();
+		/**
+		 * The list of normals data loaded from a file.
+		 */
 		private final List<Vector3f> normals = new ArrayList<>();
-		private final List<Integer> indices = new ArrayList<>();
+		/**
+		 * The list of faces data loaded from a file.
+		 */
 		private final List<Face> faces = new ArrayList<>();
 		
+		/**
+		 * The name of the loaded geometry.
+		 */
 		private String name;
 		
+		/**
+		 * Add a new vertex data as a {@link Vector3f} to the <code>MeshStore</code>.
+		 * 
+		 * @param vertex The vertex data loaded from a file.
+		 * @return		 The mesh store for chaining purposes.
+		 */
 		public MeshStore addVertex(Vector3f vertex) {
 			this.vertices.add(vertex);
 			return this;
 		}
 		
-		public MeshStore addTextureCoord(Vector2f textureCoord) {
-			this.textureCoords.add(textureCoord);
+		/**
+		 * Add a new texture coordinates data as a {@link Vector2f} to the <code>MeshStore</code>.
+		 * 
+		 * @param textureCoords The texture coordinates data loaded from a file.
+		 * @return		 		The mesh store for chaining purposes.
+		 */
+		public MeshStore addTextureCoord(Vector2f textureCoords) {
+			this.textureCoords.add(textureCoords);
 			return this;
 		}
 		
+		/**
+		 * Add a new normal data as a {@link Vector3f} to the <code>MeshStore</code>.
+		 * 
+		 * @param normal The normal data loaded from a file.
+		 * @return		 The mesh store for chaining purposes.
+		 */
 		public MeshStore addNormal(Vector3f normal) {
 			this.normals.add(normal);
 			return this;
 		}
 		
+		/**
+		 * Add a new {@link Face} composing by the given {@link IndexGroup} to the <code>MeshStore</code>.
+		 * 
+		 * @param groups The index groups loaded from a file.
+		 * @return		 The mesh store for chaining purposes.
+		 */
 		public MeshStore addFace(IndexGroup[] groups) {
 			this.faces.add(new Face(groups));
 			return this;
 		}
 		
+		/**
+		 * The count of elements stored in the <code>MeshStore</code>.
+		 * 
+		 * @return The count of elements stored (&ge;0).
+		 */
 		public int size() {
 			return faces.size() * 3;
 		}
 		
-		public void reset() {
+		/**
+		 * Clears the <code>MeshStore</code> in order to be used for loading a new geometry 
+		 * from an OBJ file.
+		 */
+		public void clear() {
+			this.name = null;
 			this.vertices.clear();
 			this.textureCoords.clear();
 			this.normals.clear();
-			this.indices.clear();
 			this.faces.clear();
 		}
 		
+		/**
+		 * Converts the <code>MeshStore</code> to a {@link Mesh} matching each loaded vertices data
+		 * from the OBJ file. 
+		 * 
+		 * @return A new mesh matching the data stored (not null).
+		 */
 		public Mesh toMercuryMesh() {
 			var mesh = new Mesh();
 			
-			float[] posBuffer = new float[vertices.size() * 3];
-			float[] texBuffer = new float[vertices.size() * 2];
-			float[] normBuffer = new float[vertices.size() * 3];
+			FloatBuffer positionBuffer = BufferUtils.createFloatBuffer(vertices.size() * 3);
+			FloatBuffer texCoordBuffer = BufferUtils.createFloatBuffer(vertices.size() * 2);
+			FloatBuffer normalsBuffer = BufferUtils.createFloatBuffer(vertices.size() * 3);
+			IntBuffer indicesBuffer = BufferUtils.createIntBuffer(size());
 			
 			for(int i = 0; i < vertices.size(); i++) {
 				Vector3f vertex = vertices.get(i);
-				posBuffer[i * 3] = vertex.x;
-				posBuffer[i * 3 + 1] = vertex.y;
-		        posBuffer[i * 3 + 2] = vertex.z;
+				BufferUtils.populate(positionBuffer, vertex, i);
 			}
 			
+			int index = 0;
 			for (Face face : faces) {
 				IndexGroup[] groups = face.getFaceVertexIndices();
 				for(IndexGroup group : groups) {
 					int vIndex = group.vIndex - 1;
-					this.indices.add(vIndex);
+					indicesBuffer.put(index, vIndex);
 					
 					if(group.vtIndex > IndexGroup.NO_VALUE) {
 						Vector2f texCoords = textureCoords.get(group.vtIndex - 1);
-						texBuffer[vIndex * 2] = texCoords.x;
-						texBuffer[vIndex * 2 + 1] = 1F - texCoords.y;
+						// OpenGL needs the Y-axis to go down, so Y = 1 - V.
+						texCoords.set(texCoords.x, 1F - texCoords.y);
+						BufferUtils.populate(texCoordBuffer, texCoords, vIndex);
 					}
 					
 					if(group.vnIndex > IndexGroup.NO_VALUE) {
 						Vector3f normal = normals.get(group.vnIndex - 1);
-						normBuffer[vIndex * 3] = normal.x;
-						normBuffer[vIndex * 3 + 1] = normal.y;
-						normBuffer[vIndex * 3 + 2] = normal.z;
+						BufferUtils.populate(normalsBuffer, normal, vIndex);
 					}
+					index++;
 				}
 			}
 			
-			int[] index = new int[indices.size()];
-			for(int i = 0; i < indices.size(); i++) {
-				index[i] = indices.get(i);
-			}
+			mesh.setupBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW, positionBuffer);
+			mesh.setupBuffer(VertexBufferType.TEX_COORD, Usage.STATIC_DRAW, texCoordBuffer);
+			mesh.setupBuffer(VertexBufferType.NORMAL, Usage.STATIC_DRAW, normalsBuffer);
 			
-			mesh.setupBuffer(VertexBufferType.POSITION, Usage.STATIC_DRAW, posBuffer);
-			mesh.setupBuffer(VertexBufferType.TEX_COORD, Usage.STATIC_DRAW, texBuffer);
-			mesh.setupBuffer(VertexBufferType.NORMAL, Usage.STATIC_DRAW, normBuffer);
-			
-			mesh.setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, index);
+			mesh.setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, indicesBuffer);
 			
 			mesh.setMode(Mode.TRIANGLES);
+			// Upload to the mesh to be ready for rendering.
 			mesh.upload();
 			
 			return mesh;
 		}
 		
+		/**
+		 * Converts the <code>MeshStore</code> to a {@link PhysicaMundi} matching each loaded
+		 * vertices data and the name from the OBJ file.
+		 * 
+		 * @return A new physica-mundi matching the data stored (not null).
+		 */
 		public PhysicaMundi toMercuryPhysica() {
 			if(name == null || name.isEmpty()) {
 				this.name = "obj_mesh";
@@ -220,6 +290,11 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 			return new PhysicaMundi(name, toMercuryMesh());
 		}
 		
+		/**
+		 * Sets the name of the {@link PhysicaMundi} which will be created from the OBJ file.
+		 * 
+		 * @param name The desired name of the physica-mundi.
+		 */
 		void setName(String name) {
 			this.name = name;
 		}
@@ -259,6 +334,11 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		}
 	}
 
+	/**
+	 * <code>IndexGroup</code> is a utility class for storing the index of data of a {@link Face} vertex in an OBJ file.
+	 * 
+	 * @author GnosticOccultist
+	 */
 	protected static class IndexGroup {
 
 		/**

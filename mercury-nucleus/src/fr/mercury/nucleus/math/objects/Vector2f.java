@@ -2,6 +2,7 @@ package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.pool.Reusable;
+import fr.mercury.nucleus.math.readable.ReadableVector2f;
 
 /**
  * <code>Vector2f</code> is a mathematical utility class representing a vector with
@@ -16,7 +17,7 @@ import fr.alchemy.utilities.pool.Reusable;
  * 
  * @author GnosticOccultist
  */
-public final class Vector2f implements Comparable<Vector2f>, Reusable {
+public final class Vector2f implements  ReadableVector2f, Comparable<Vector2f>, Reusable {
 	
 	/**
 	 * The X-component of the vector.
@@ -258,6 +259,51 @@ public final class Vector2f implements Comparable<Vector2f>, Reusable {
             y *= length;
         }
         return this;
+	}
+	
+	/**
+     * Calculates the squared distance between the <code>Vector2f</code> and 
+     * the provided one.
+     *
+     * @param other The vector to determine the distance squared from.
+     * @return 		The distance squared between the two vectors.
+     */
+    public float distanceSquared(ReadableVector2f other) {
+        double dx = x - other.x();
+        double dy = y - other.y();
+        return (float) (dx * dx + dy * dy);
+    }
+    
+    /**
+     * Calculates the distance between the <code>Vector2f</code> and 
+     * the provided one.
+     *
+     * @param other The vector to determine the distance from.
+     * @return 		The distance between the two vectors.
+     */
+    @Override
+    public double distance(ReadableVector2f other) {
+        return Math.sqrt(distanceSquared(other));
+    }
+	
+	/**
+	 * Return the X-component of the <code>Vector2f</code>, as a single-precision float.
+	 * 
+	 * @return The X-coordinate value of the vector.
+	 */
+	@Override
+	public float x() {
+		return x;
+	}
+	
+	/**
+	 * Return the Y-component of the <code>Vector2f</code>, as a single-precision float.
+	 * 
+	 * @return The Y-coordinate value of the vector.
+	 */
+	@Override
+	public float y() {
+		return y;
 	}
 	
 	/**

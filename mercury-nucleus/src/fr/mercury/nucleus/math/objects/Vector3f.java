@@ -362,8 +362,7 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
     }
     
 	/**
-	 * Return the X-component of the <code>ReadableVector3f</code>,
-	 * as a single-precision float.
+	 * Return the X-component of the <code>Vector3f</code>, as a single-precision float.
 	 * 
 	 * @return The X-coordinate value of the vector.
 	 */
@@ -384,8 +383,7 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 	}
     
     /**
-	 * Return the Y-component of the <code>ReadableVector3f</code>,
-	 * as a single-precision float.
+	 * Return the Y-component of the <code>Vector3f</code>, as a single-precision float.
 	 * 
 	 * @return The Y-coordinate value of the vector.
 	 */
@@ -406,8 +404,7 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 	}
 
     /**
-	 * Return the Z-component of the <code>ReadableVector3f</code>,
-	 * as a single-precision float.
+	 * Return the Z-component of the <code>Vector3f</code>, as a single-precision float.
 	 * 
 	 * @return The Z-coordinate value of the vector.
 	 */
