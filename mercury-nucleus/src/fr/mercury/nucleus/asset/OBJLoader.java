@@ -42,9 +42,17 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 	 */
 	private static final String FACE_TYPE = "f";
 	/**
-	 * The face type definer inside an .obj file.
+	 * The object name definer inside an .obj file.
 	 */
 	private static final String OBJECT_NAME = "o";
+	/**
+	 * The group name definer inside an .obj file.
+	 */
+	private static final String GROUP_NAME = "g";
+	/**
+	 * The smoothing groip definer inside an .obj file.
+	 */
+	private static final String SMOOTHING_GROUP_TYPE = "s";
 	
 	/**
 	 * The store used for storing the loaded data.
@@ -56,10 +64,13 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		try {
 			// Clear the store for the new loaded OBJ file.
 			store.clear();
+			// Set the name of the geometry to the filename by default.
+			store.setName(FileUtils.getFileName(path));
 			
 			var reader = FileUtils.readBuffered(path);
 			
 			String line = null;
+			long currentSmoothGroup = -1;
 			while ((line = reader.readLine()) != null) {
 				line = line.trim();
 				
@@ -101,6 +112,27 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 								Float.valueOf(tokens[2]), Float.valueOf(tokens[3]));
 						store.addNormal(normal);
 						break;
+					case GROUP_NAME:
+						if(tokens.length < 2) {
+							logger.warning("An object name can't be empty!");
+						}
+						
+						// Find all group names and set them to the store.
+						final String[] currentGroupNames = new String[tokens.length - 1];
+	                    store.setCurrentGroupNames(currentGroupNames);
+	                    System.arraycopy(tokens, 1, currentGroupNames, 0, tokens.length - 1);
+						break;
+					case SMOOTHING_GROUP_TYPE:
+						if(tokens.length != 2) {
+							logger.warning("A smoothing group should only define an index, but found " 
+									+ String.valueOf(tokens.length - 1) + " arguments.");
+						}
+						if("off".equalsIgnoreCase(tokens[1])) {
+							currentSmoothGroup = 0;
+						} else {
+							currentSmoothGroup = Long.parseLong(tokens[1]);
+						}
+						break;
 					case FACE_TYPE:
 						if(tokens.length < 4) {
 							logger.warning("A face must have at least 3 vertices, but " 
@@ -108,7 +140,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 						}
 						var indices = new IndexGroup[3];
 						for(int i = 0; i < 3; i++) {
-							indices[i] = new IndexGroup(tokens[i + 1]);
+							indices[i] = new IndexGroup(tokens[i + 1], currentSmoothGroup);
 	                    }
 						store.addFace(indices);
 						break;
@@ -120,7 +152,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 						break;
 				}
 			}
-			return new PhysicaMundi(store.toMercuryMesh());
+			return store.toMercuryPhysica();
 		} catch (IOException ex) {
 			logger.error("Failed to load OBJ resource from path '" + path + "'!", ex);
 			return null;
@@ -156,6 +188,10 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		 * The name of the loaded geometry.
 		 */
 		private String name;
+		/**
+		 * The array of group names of the loaded geometry.
+		 */
+		private String[] groupNames;
 		
 		/**
 		 * Add a new vertex data as a {@link Vector3f} to the <code>MeshStore</code>.
@@ -167,7 +203,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 			this.vertices.add(vertex);
 			return this;
 		}
-		
+
 		/**
 		 * Add a new texture coordinates data as a {@link Vector2f} to the <code>MeshStore</code>.
 		 * 
@@ -216,6 +252,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		 */
 		public void clear() {
 			this.name = null;
+			this.groupNames = null;
 			this.vertices.clear();
 			this.textureCoords.clear();
 			this.normals.clear();
@@ -298,6 +335,15 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		void setName(String name) {
 			this.name = name;
 		}
+		
+		/**
+		 * Sets the group names of the current geometry being read from the OBJ file.
+		 * 
+		 * @param groupNames The array of group names.
+		 */
+		void setCurrentGroupNames(String[] groupNames) {
+			this.groupNames = groupNames;
+		}
 	}
 	
 	/**
@@ -358,13 +404,31 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		 * The normal index for the vertex.
 		 */
 		public int vnIndex;
+		/**
+		 * The smoothing group for the index group.
+		 */
+		private long smoothingGroup;
 
-		public IndexGroup(String group) {
+		public IndexGroup(String group, long smoothingGroup) {
 			var tokens = group.split("/");
 			this.vIndex = tokens.length < 1 ? NO_VALUE : Integer.parseInt(tokens[0]);
 			// Here we check that the texture coordinate index exist, as an OBJ file may define normals without them.
 			this.vtIndex = tokens.length < 2 ? NO_VALUE : tokens[1].isEmpty() ? NO_VALUE : Integer.parseInt(tokens[1]);
 			this.vnIndex = tokens.length < 3 ? NO_VALUE : Integer.parseInt(tokens[2]);
+			this.smoothingGroup = smoothingGroup;
+		}
+		
+		/**
+		 * Return the smoothing group index of the <code>IndexGroup</code>.
+		 * 
+		 * @return The smoothing group index, or 0 if it doesn't use smoothing.
+		 */
+		public long getSmoothingGroup() {
+			// A normal index has been defined, so we don't use smoothing group.
+			if(vnIndex >= 0) {
+				return 0;
+			}
+			return smoothingGroup;
 		}
 	}
 }
