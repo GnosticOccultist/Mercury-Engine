@@ -1,5 +1,6 @@
 package fr.mercury.nucleus.utils.data;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -12,25 +13,22 @@ import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.readable.ReadableVector2f;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
 
+/**
+ * <code>BufferUtils</code> is a utility class to help creating, manipulating or populating the NIO {@link Buffer} class
+ * with the maths objects provided by Mercury-Engine such as {@link ReadableVector2f} or {@link ReadableVector3f}.
+ * 
+ * @author GnosticOccultist
+ */
 public final class BufferUtils {
 	
-	public static FloatBuffer populate(FloatBuffer buffer, ReadableVector3f vector) {
-		Validator.nonNull(buffer, "The buffer to populate can't be null!");
-		Validator.nonNull(vector, "The vector to populate from can't be null!");
-		buffer.put(vector.x()).put(vector.y()).put(vector.z());
-		
-		return buffer;
-	}
-	
-	public static FloatBuffer populate(FloatBuffer buffer, ReadableVector3f vector, int index) {
-		Validator.nonNull(buffer, "The buffer to populate can't be null!");
-		Validator.nonNull(vector, "The vector to populate from can't be null!");
-		Validator.nonNegative(index, "The index can't be negative!");
-		buffer.put(index * 3, vector.x()).put(index * 3 + 1, vector.y()).put(index * 3 + 2, vector.z());
-		
-		return buffer;
-	}
-	
+	/**
+	 * Populates the provided {@link FloatBuffer} with the given {@link ReadableVector2f} at the current 
+	 * position of the buffer.
+	 * 
+	 * @param buffer The buffer to populate with the vector (not null).
+	 * @param vector The vector to populate the buffer with (not null).
+	 * @return		 The populated buffer with the vector (not null).
+	 */
 	public static FloatBuffer populate(FloatBuffer buffer, ReadableVector2f vector) {
 		Validator.nonNull(buffer, "The buffer to populate can't be null!");
 		Validator.nonNull(vector, "The vector to populate from can't be null!");
@@ -39,11 +37,52 @@ public final class BufferUtils {
 		return buffer;
 	}
 	
+	/**
+	 * Populates the provided {@link FloatBuffer} with the given {@link ReadableVector2f} at the given starting index.
+	 * 
+	 * @param buffer The buffer to populate with the vector (not null).
+	 * @param vector The vector to populate the buffer with (not null).
+	 * @param index	 The index at which to start populating the buffer (&ge;0).
+	 * @return		 The populated buffer with the vector (not null).
+	 */
 	public static FloatBuffer populate(FloatBuffer buffer, ReadableVector2f vector, int index) {
 		Validator.nonNull(buffer, "The buffer to populate can't be null!");
 		Validator.nonNull(vector, "The vector to populate from can't be null!");
 		Validator.nonNegative(index, "The index can't be negative!");
 		buffer.put(index * 2, vector.x()).put(index * 2 + 1, vector.y());
+		
+		return buffer;
+	}
+	
+	/**
+	 * Populates the provided {@link FloatBuffer} with the given {@link ReadableVector3f} at the current 
+	 * position of the buffer.
+	 * 
+	 * @param buffer The buffer to populate with the vector (not null).
+	 * @param vector The vector to populate the buffer with (not null).
+	 * @return		 The populated buffer with the vector (not null).
+	 */
+	public static FloatBuffer populate(FloatBuffer buffer, ReadableVector3f vector) {
+		Validator.nonNull(buffer, "The buffer to populate can't be null!");
+		Validator.nonNull(vector, "The vector to populate from can't be null!");
+		buffer.put(vector.x()).put(vector.y()).put(vector.z());
+		
+		return buffer;
+	}
+	
+	/**
+	 * Populates the provided {@link FloatBuffer} with the given {@link ReadableVector3f} at the given starting index.
+	 * 
+	 * @param buffer The buffer to populate with the vector (not null).
+	 * @param vector The vector to populate the buffer with (not null).
+	 * @param index	 The index at which to start populating the buffer (&ge;0).
+	 * @return		 The populated buffer with the vector (not null).
+	 */
+	public static FloatBuffer populate(FloatBuffer buffer, ReadableVector3f vector, int index) {
+		Validator.nonNull(buffer, "The buffer to populate can't be null!");
+		Validator.nonNull(vector, "The vector to populate from can't be null!");
+		Validator.nonNegative(index, "The index can't be negative!");
+		buffer.put(index * 3, vector.x()).put(index * 3 + 1, vector.y()).put(index * 3 + 2, vector.z());
 		
 		return buffer;
 	}

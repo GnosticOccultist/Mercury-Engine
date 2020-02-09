@@ -138,10 +138,20 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 							logger.warning("A face must have at least 3 vertices, but " 
 									+ String.valueOf(tokens.length - 1) + " are defined in the obj file!");
 						}
-						var indices = new IndexGroup[3];
-						for(int i = 0; i < 3; i++) {
+						int size = tokens.length - 1;
+						if(tokens.length == 5) {
+							size = 6;
+						}
+						var indices = new IndexGroup[size];
+						for(int i = 0; i < tokens.length - 1; i++) {
 							indices[i] = new IndexGroup(tokens[i + 1], currentSmoothGroup);
 	                    }
+						// If we have 4 elements per face, build a triangle fan.
+						if(tokens.length == 5) {
+							indices[3] = new IndexGroup(tokens[0 + 1], currentSmoothGroup);
+							indices[4] = new IndexGroup(tokens[2 + 1], currentSmoothGroup);
+							indices[5] = new IndexGroup(tokens[3 + 1], currentSmoothGroup);
+						}
 						store.addFace(indices);
 						break;
 					case OBJECT_NAME:
@@ -192,6 +202,10 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		 * The array of group names of the loaded geometry.
 		 */
 		private String[] groupNames;
+		/**
+		 * The count of elements per face.
+		 */
+		private int elementsPerFace;
 		
 		/**
 		 * Add a new vertex data as a {@link Vector3f} to the <code>MeshStore</code>.
@@ -234,6 +248,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		 */
 		public MeshStore addFace(IndexGroup[] groups) {
 			this.faces.add(new Face(groups));
+			this.elementsPerFace = groups.length;
 			return this;
 		}
 		
@@ -243,7 +258,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 		 * @return The count of elements stored (&ge;0).
 		 */
 		public int size() {
-			return faces.size() * 3;
+			return faces.size() * elementsPerFace;
 		}
 		
 		/**
