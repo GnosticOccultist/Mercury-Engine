@@ -355,10 +355,10 @@ public class MercuryContext implements Runnable {
         // Enable depth testing.
         GL11C.glEnable(GL11C.GL_DEPTH_TEST);
         GL11C.glDepthFunc(GL11C.GL_LEQUAL);
-        GL11C.glEnable(GL11C.GL_CULL_FACE);
-        GL11C.glCullFace(GL11C.GL_BACK);
-        // TODO: This isn't default context value, modify obj file.
-        GL11C.glFrontFace(GL11C.GL_CW);
+//        GL11C.glEnable(GL11C.GL_CULL_FACE);
+//        GL11C.glCullFace(GL11C.GL_BACK);
+//        // TODO: This isn't default context value, modify obj file.
+//        GL11C.glFrontFace(GL11C.GL_CW);
         
         // Finally show the window when finished.
         showWindow();

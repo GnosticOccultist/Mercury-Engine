@@ -4,6 +4,7 @@ import org.lwjgl.opengl.GL11C;
 
 import fr.mercury.nucleus.renderer.logic.DefaultRenderLogic;
 import fr.mercury.nucleus.renderer.logic.RenderLogic;
+import fr.mercury.nucleus.renderer.logic.state.RenderState;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
@@ -62,15 +63,23 @@ public class Renderer extends AbstractRenderer {
 	 */
 	private final RenderLogic defaultLogic;
 	
+	/**
+	 * Instantiates a new <code>Renderer</code> with the provided {@link Camera} and register a 
+	 * {@link RenderBucket} for {@link BucketType#OPAQUE} objects.
+	 * 
+	 * @param camera The camera to use for rendering (not null).
+	 */
 	public Renderer(Camera camera) {
 		super(camera);
 		
 		this.defaultLogic = new DefaultRenderLogic();
+		
+		registerBucket(BucketType.OPAQUE);
 	}
 	
 	/**
 	 * Clears the color and depth buffer. The function should be called before every rendering process
-	 * to clean these buffers before wQWWwriting.
+	 * to clean these buffers before writing.
 	 */
 	@OpenGLCall
 	public void clearBuffers() {
@@ -119,6 +128,13 @@ public class Renderer extends AbstractRenderer {
 		
 		// Upload latest changes to the OpenGL state.
 		shader.upload();
+		
+		for(var type : RenderState.Type.values()) {
+			var state = physica.getLocalRenderState(type);
+			if(state != null) {
+				applyRenderState(state);
+			}
+		}
 		
 		defaultLogic.begin(physica);
 	
