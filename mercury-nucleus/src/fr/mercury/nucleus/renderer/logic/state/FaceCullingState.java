@@ -29,6 +29,12 @@ public final class FaceCullingState extends RenderState {
 	 */
 	private WindingOrder windingOrder = WindingOrder.COUNTER_CLOCKWISE;
 	
+	/**
+	 * Instantiates a new disabled <code>FaceCullingState</code> with the culling face set to {@link Face#BACK}
+	 * and the winding order to {@link WindingOrder#COUNTER_CLOCKWISE}.
+	 * 
+	 * @see #reset()
+	 */
 	public FaceCullingState() {
 		reset();
 	}

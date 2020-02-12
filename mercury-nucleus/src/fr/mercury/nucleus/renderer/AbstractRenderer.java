@@ -16,8 +16,8 @@ import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
 import fr.mercury.nucleus.renderer.logic.state.RenderState;
 import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
-import fr.mercury.nucleus.renderer.logic.state.WireframeState.PolygonMode;
-import fr.mercury.nucleus.renderer.logic.state.WireframeState;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState.PolygonMode;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
@@ -216,8 +216,8 @@ public abstract class AbstractRenderer {
 						break;
 				}
 				break;
-			case WIREFRAME:
-				var wireframe = (WireframeState) state;
+			case POLYGON_MODE:
+				var wireframe = (PolygonModeState) state;
 				if(wireframe.isEnabled()) {
 					PolygonMode fMode = wireframe.polygonMode(Face.FRONT);
 					PolygonMode bMode = wireframe.polygonMode(Face.BACK);

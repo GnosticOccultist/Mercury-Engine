@@ -1,23 +1,62 @@
 package fr.mercury.nucleus.renderer.logic.state;
 
+import fr.mercury.nucleus.scenegraph.AnimaMundi;
+import fr.mercury.nucleus.scenegraph.PhysicaMundi;
+
+/**
+ * <code>RenderState</code> is an abstract class to describe a state which affects the rendering of any {@link PhysicaMundi}.
+ * It is up to the user to choose the state in which a 3D object should be rendered, for example allowing transparency, culling backfaces, or blending pixels.
+ * <p>
+ * The render state logic is supported by the scenegraph, meaning a parent render state will be applied to all of its descendants if not overriden locally
+ * by a child.
+ * 
+ * @see AnimaMundi#setRenderState(RenderState)
+ * 
+ * @author GnosticOccultist
+ */
 public abstract class RenderState {
 	
+	/**
+	 * Enable the <code>RenderState</code>. Do note that some implementations can't be enabled.
+	 */
 	public abstract RenderState enable();
 	
+	/**
+	 * Disable the <code>RenderState</code>. Do note that some implementations can't be disabled.
+	 */
 	public abstract RenderState disable();
 	
-	public abstract Type type();
-	
+	/**
+	 * Resets the <code>RenderState</code> to its default state, generally to the initial drawing context
+	 * of the graphics API used.
+	 */
 	public abstract void reset();
 	
+	/**
+	 * Return the {@link Type} of this <code>RenderState</code>.
+	 * 
+	 * @return The type of render state (not null).
+	 */
+	public abstract Type type();
+	
+	/**
+	 * <code>Type</code> is an enumeration of all {@link RenderState} type supported by the <code>Mercury-Engine</code>.
+	 * 
+	 * @author GnosticOccultist
+	 */
 	public enum Type {
-		
+		/**
+		 * The face culling state to specify which type of face should be culled.
+		 */
 		FACE_CULLING,
-		WIREFRAME;
+		/**
+		 * The polygon mode state to select a polygon rasterization mode.
+		 */
+		POLYGON_MODE;
 	}
 	
 	/**
-	 * <code>Face</code> is an enumeration of all possible faces to be culled by the {@link FaceCullingState}.
+	 * <code>Face</code> is an enumeration of all possible affected faces by culling or rasterization operations.
 	 * 
 	 * @author GnosticOccultist
 	 */
