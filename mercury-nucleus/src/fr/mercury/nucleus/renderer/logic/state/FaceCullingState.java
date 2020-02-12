@@ -29,6 +29,10 @@ public final class FaceCullingState extends RenderState {
 	 */
 	private WindingOrder windingOrder = WindingOrder.COUNTER_CLOCKWISE;
 	
+	public FaceCullingState() {
+		reset();
+	}
+	
 	/**
 	 * Enable the <code>FaceCullingState</code>. When applied as a render state for an {@link AnimaMundi},
 	 * it will enable the culling of the specified {@link Face} using the set {@link WindingOrder}.
@@ -135,26 +139,6 @@ public final class FaceCullingState extends RenderState {
 	@Override
 	public Type type() {
 		return Type.FACE_CULLING;
-	}
-	
-	/**
-	 * <code>Face</code> is an enumeration of all possible faces to be culled by the {@link FaceCullingState}.
-	 * 
-	 * @author GnosticOccultist
-	 */
-	public enum Face {
-		/**
-		 * The front face of a geometry.
-		 */
-		FRONT,
-		/**
-		 * The back face of a geometry.
-		 */
-		BACK,
-		/**
-		 * The front and back faces of a geometry.
-		 */
-		FRONT_AND_BACK;
 	}
 	
 	/**

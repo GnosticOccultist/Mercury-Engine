@@ -17,8 +17,8 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
-import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformField;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformField;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 

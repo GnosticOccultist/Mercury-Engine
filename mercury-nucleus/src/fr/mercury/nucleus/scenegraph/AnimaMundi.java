@@ -2,8 +2,11 @@ package fr.mercury.nucleus.scenegraph;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Stack;
 
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.array.Array;
@@ -51,6 +54,8 @@ import fr.mercury.nucleus.utils.Timer;
  */
 public abstract class AnimaMundi {
 	
+	private static final Map<RenderState.Type, Stack<RenderState>> states = new HashMap<>();
+	
 	/**
 	 * The logger for the scene-graph.
 	 */
@@ -74,7 +79,8 @@ public abstract class AnimaMundi {
 		
 		@Override
 		public void onVisit(AnimaMundi anima) {
-			
+			anima.collectState(states);
+			anima.applyState(states);
 		}
 	};
 	
@@ -199,10 +205,6 @@ public abstract class AnimaMundi {
         }
         
         dirtyMarks.remove(DirtyType.TRANSFORM);
-	}
-	
-	protected void collectRenderStates() {
-		
 	}
 	
 	/**
@@ -783,6 +785,22 @@ public abstract class AnimaMundi {
 	public RenderState setRenderState(RenderState state) {
 		var previous = renderStates.put(state.type(), state);
 		return previous;
+	}
+	
+	protected void collectState(Map<RenderState.Type, Stack<RenderState>> states) {
+		for(var entry : renderStates.entrySet()) {
+			var stack = states.getOrDefault(entry.getKey(), new Stack<RenderState>());
+			stack.push(entry.getValue());
+		}
+	}
+	
+	protected void applyState(Map<RenderState.Type, Stack<RenderState>> states) {
+		for(var entry : states.entrySet()) {
+			var stack = entry.getValue();
+			if(stack != null) {
+				renderStates.put(entry.getKey(), stack.peek());
+			}
+		}
 	}
 	
 	/**

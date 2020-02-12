@@ -15,6 +15,9 @@ import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
 import fr.mercury.nucleus.renderer.logic.state.RenderState;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
+import fr.mercury.nucleus.renderer.logic.state.WireframeState.PolygonMode;
+import fr.mercury.nucleus.renderer.logic.state.WireframeState;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
@@ -211,6 +214,51 @@ public abstract class AbstractRenderer {
 						break;
 					default:
 						break;
+				}
+				break;
+			case WIREFRAME:
+				var wireframe = (WireframeState) state;
+				if(wireframe.isEnabled()) {
+					PolygonMode fMode = wireframe.polygonMode(Face.FRONT);
+					PolygonMode bMode = wireframe.polygonMode(Face.BACK);
+					if(fMode == bMode) {
+						switch (bMode) {
+							case FILL:
+								GL11C.glPolygonMode(GL11C.GL_FRONT_AND_BACK, GL11C.GL_FILL);
+								break;
+							case LINE:
+								GL11C.glPolygonMode(GL11C.GL_FRONT_AND_BACK, GL11C.GL_LINE);
+								break;
+							case POINT:
+								GL11C.glPolygonMode(GL11C.GL_FRONT_AND_BACK, GL11C.GL_POINT);
+								break;
+						}
+					} else if(fMode != bMode) {
+						switch (fMode) {
+							case FILL:
+								GL11C.glPolygonMode(GL11C.GL_FRONT, GL11C.GL_FILL);
+								break;
+							case LINE:
+								GL11C.glPolygonMode(GL11C.GL_FRONT, GL11C.GL_LINE);
+								break;
+							case POINT:
+								GL11C.glPolygonMode(GL11C.GL_FRONT, GL11C.GL_POINT);
+								break;
+						}
+						switch (bMode) {
+							case FILL:
+								GL11C.glPolygonMode(GL11C.GL_BACK, GL11C.GL_FILL);
+								break;
+							case LINE:
+								GL11C.glPolygonMode(GL11C.GL_BACK, GL11C.GL_LINE);
+								break;
+							case POINT:
+								GL11C.glPolygonMode(GL11C.GL_BACK, GL11C.GL_POINT);
+								break;
+						}
+					}
+				} else {
+					GL11C.glPolygonMode(GL11C.GL_FRONT_AND_BACK, GL11C.GL_FILL);
 				}
 				break;
 			default:

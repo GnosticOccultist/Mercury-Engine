@@ -1,9 +1,7 @@
 package fr.mercury.nucleus.input;
 
-import static org.lwjgl.glfw.GLFW.*;
 import static fr.mercury.nucleus.input.Input.Keys.*;
-import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
+import static org.lwjgl.glfw.GLFW.*;
 
 import java.util.ArrayDeque;
 import java.util.Queue;

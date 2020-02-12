@@ -1,6 +1,10 @@
 package fr.mercury.nucleus.input;
 
-import static fr.mercury.nucleus.input.Input.Modifiers.*;
+import static fr.mercury.nucleus.input.Input.Modifiers.ALT_DOWN;
+import static fr.mercury.nucleus.input.Input.Modifiers.CONTROL_DOWN;
+import static fr.mercury.nucleus.input.Input.Modifiers.SHIFT_DOWN;
+import static fr.mercury.nucleus.input.Input.Modifiers.hasModifiers;
+
 import fr.alchemy.utilities.event.EventType;
 
 public class KeyEvent extends InputEvent implements Input {
