@@ -119,7 +119,7 @@ public class Mesh {
 	public void setupBuffer(VertexBufferType type, Usage usage, Buffer data) {
 		var vbo = buffers.get(type);
 		if(vbo == null) {
-			vbo = new VertexBuffer(type, usage);
+			vbo = new VertexBuffer(type, usage, VertexBufferType.getFormatFromBuffer(data));
 			vbo.storeDataBuffer(data);
 			buffers.put(type, vbo);
 		} else {
@@ -250,6 +250,16 @@ public class Mesh {
 	 */
 	public VertexBuffer getBuffer(VertexBufferType type) {
 		return buffers.get(type);
+	}
+	
+	/**
+	 * Return the {@link Format} of the index {@link VertexBuffer} of the <code>Mesh</code>, 
+	 * or null if it has no indices buffer defined.
+	 * 
+	 * @return The vertex buffer corresponding to the specified type.
+	 */
+	public Format getIndicesFormat() {
+		return hasIndices() ? getBuffer(VertexBufferType.INDEX).getFormat() : null;
 	}
 	
 	/**

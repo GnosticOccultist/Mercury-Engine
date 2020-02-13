@@ -174,7 +174,6 @@ public abstract class AnimaMundi {
 			
 			updateChildren(timer);
 		}
-			
 	}
 	
 	/**
@@ -242,8 +241,14 @@ public abstract class AnimaMundi {
 		}
 	}
 	
-	
+	/**
+	 * Propagates the {@link DirtyType} down the scenegraph starting from the <code>AnimaMundi</code>.
+	 * If an implementation of this class handles children, it must propagate the dirty marks to its descendants.
+	 * 
+	 * @param type The dirty type to propagate down the scenegraph (not null).
+	 */
 	protected void propagateDown(DirtyType type) {
+		Validator.nonNull(type, "The dirty type can't be null!");
 		dirtyMarks.add(type);
 	}
 	

@@ -1,8 +1,11 @@
 package fr.mercury.nucleus.asset;
 
 import java.io.IOException;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -286,7 +289,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 			FloatBuffer positionBuffer = BufferUtils.createFloatBuffer(vertices.size() * 3);
 			FloatBuffer texCoordBuffer = BufferUtils.createFloatBuffer(vertices.size() * 2);
 			FloatBuffer normalsBuffer = BufferUtils.createFloatBuffer(vertices.size() * 3);
-			IntBuffer indicesBuffer = BufferUtils.createIntBuffer(size());
+			Buffer buffer = BufferUtils.createIndicesBuffer(size(), vertices.size() - 1);
 			
 			for(int i = 0; i < vertices.size(); i++) {
 				Vector3f vertex = vertices.get(i);
@@ -298,7 +301,14 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 				IndexGroup[] groups = face.getFaceVertexIndices();
 				for(IndexGroup group : groups) {
 					int vIndex = group.vIndex - 1;
-					indicesBuffer.put(index, vIndex);
+					
+					if(buffer instanceof ByteBuffer) {
+						((ByteBuffer) buffer).put(index, (byte) vIndex);
+					} else if(buffer instanceof ShortBuffer) {
+						((ShortBuffer) buffer).put(index, (short) vIndex);
+					} else if(buffer instanceof IntBuffer) {
+						((IntBuffer) buffer).put(index, vIndex);
+					}
 					
 					if(group.vtIndex > IndexGroup.NO_VALUE) {
 						Vector2f texCoords = textureCoords.get(group.vtIndex - 1);
@@ -319,7 +329,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 			mesh.setupBuffer(VertexBufferType.TEX_COORD, Usage.STATIC_DRAW, texCoordBuffer);
 			mesh.setupBuffer(VertexBufferType.NORMAL, Usage.STATIC_DRAW, normalsBuffer);
 			
-			mesh.setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, indicesBuffer);
+			mesh.setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, buffer);
 			
 			mesh.setMode(Mode.TRIANGLES);
 			// Upload to the mesh to be ready for rendering.

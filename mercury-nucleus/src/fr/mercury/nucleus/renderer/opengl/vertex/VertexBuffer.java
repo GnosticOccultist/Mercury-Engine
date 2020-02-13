@@ -58,19 +58,32 @@ public class VertexBuffer extends GLBuffer {
 	private boolean normalized = false;
 	
 	/**
-	 * Instantiates a new <code>VertexBuffer</code> with no contained data,
-	 * but with the provided <code>VertexBufferType</code> and <code>Usage</code>.
+	 * Instantiates a new <code>VertexBuffer</code> with no contained data, but with 
+	 * the provided {@link VertexBufferType} and {@link Usage}.
 	 * 
 	 * @param type  The vertex buffer's type.
 	 * @param usage The usage's type.
 	 */
 	public VertexBuffer(VertexBufferType type, Usage usage) {
+		this(type, usage, type.getPreferredFormat());
+	}
+	
+	/**
+	 * Instantiates a new <code>VertexBuffer</code> with no contained data, but with 
+	 * the provided {@link VertexBufferType}, {@link Usage} and {@link Format} of the data to store.
+	 * 
+	 * @param type   The vertex buffer's type (not null).
+	 * @param usage  The usage's type (not null).
+	 * @param format The format of the data to store (not null).
+	 */
+	public VertexBuffer(VertexBufferType type, Usage usage, Format format) {
 		Validator.nonNull(type, "The vertex buffer's type cannot be null!");
 		Validator.nonNull(usage, "The vertex buffer's usage cannot be null!");
+		Validator.nonNull(format, "The vertex buffer's format cannot be null!");
 		
 		this.vertexBufferType = type;
 		this.usage = usage;
-		this.format = type.getPreferredFormat();
+		this.format = format;
 	}
 	
 	@Override

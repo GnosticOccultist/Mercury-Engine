@@ -1,8 +1,15 @@
 package fr.mercury.nucleus.renderer.opengl.vertex;
 
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
+import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.BufferType;
 
 /**
@@ -136,10 +143,11 @@ public enum VertexBufferType {
 	/**
 	 * Return the OpenGL equivalent format to the specified {@link Format}.
 	 * 
-	 * @param format The format to get the OpenGL equivalent one.
+	 * @param format The format to get the OpenGL equivalent one (not null).
 	 * @return		 The OpenGL equivalent format.
 	 */
 	public static int getOpenGLFormat(Format format) {
+		Validator.nonNull(format, "The format can't be null!");
 		switch (format) {
 			case UNSIGNED_BYTE:
 				return GL11.GL_UNSIGNED_BYTE;
@@ -151,6 +159,27 @@ public enum VertexBufferType {
 				return GL11.GL_UNSIGNED_INT;
 			default:
 				throw new IllegalStateException("Unknown format: " + format);
+		}
+	}
+	
+	/**
+	 * Return a {@link Format} corresponding to the provided {@link Buffer}.
+	 * 
+	 * @param format The buffer to get the format from (not null).
+	 * @return		 The format matching the buffer's type.
+	 */
+	public static Format getFormatFromBuffer(Buffer buffer) {
+		Validator.nonNull(buffer, "The buffer can't be null!");
+		if(buffer instanceof ByteBuffer) {
+			return Format.UNSIGNED_BYTE;
+		} else if(buffer instanceof ShortBuffer) {
+			return Format.UNSIGNED_SHORT;
+		} else if(buffer instanceof IntBuffer) {
+			return Format.UNSIGNED_INT;
+		} else if(buffer instanceof FloatBuffer) {
+			return Format.FLOAT;
+		} else {
+			throw new IllegalStateException("Unknown format for buffer type: " + buffer.getClass());
 		}
 	}
 	

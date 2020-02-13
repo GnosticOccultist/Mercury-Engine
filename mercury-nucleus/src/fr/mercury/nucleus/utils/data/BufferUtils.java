@@ -88,6 +88,28 @@ public final class BufferUtils {
 	}
 	
 	/**
+	 * Creates a new <code>Buffer</code> by allocating a block of <code>size</code> of bytes memory.
+	 * The buffer's byte order is set to {@link ByteOrder#nativeOrder()}.
+	 * <p>
+	 * The type of the buffer depends on the provided max index value, for a value less than 256, then a {@link ByteBuffer} is created,
+	 * if the value is less than 65536 then a {@link ShortBuffer} is created, otherwise an {@link IntBuffer} is created and returned.
+	 * 
+	 * @param size 	   The size in bytes of the allocated buffer (&gt;0).
+	 * @param maxIndex The maximum index value to store in the buffer (&gt;0).
+	 * @return	   	   A new allocated buffer of the given size, the type depending on the max index (not null).
+	 */
+	public static Buffer createIndicesBuffer(int size, int maxIndex) {
+		Validator.positive(size, "The size of the buffer to allocate must be strictly positive!");
+		Validator.positive(maxIndex, "The maximum index of the buffer to allocate must be strictly positive!");
+		if(maxIndex < 256) {
+			return createByteBuffer(size);
+		} else if(maxIndex < 65536) {
+			return createShortBuffer(size);
+		}
+		return createIntBuffer(size);
+	}
+	
+	/**
 	 * Creates a new <code>ByteBuffer</code> by allocating a block of <code>size</code> of bytes memory.
 	 * The buffer's byte order is set to {@link ByteOrder#nativeOrder()}.
 	 * 
