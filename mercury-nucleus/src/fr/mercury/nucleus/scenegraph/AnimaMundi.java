@@ -789,23 +789,43 @@ public abstract class AnimaMundi {
 	 */
 	public RenderState setRenderState(RenderState state) {
 		var previous = renderStates.put(state.type(), state);
+		dirty(DirtyType.RENDER_STATE);
 		return previous;
 	}
 	
+	/**
+	 * Collects the {@link RenderState} defined in the scenegraph to the given table, to be later applied
+	 * to the <code>AnimaMundi</code>.
+	 * 
+	 * @param states The table to contain the render states (not null).
+	 * 
+	 * @see #applyState(Map)
+	 */
 	protected void collectState(Map<RenderState.Type, Stack<RenderState>> states) {
+		Validator.nonNull(states, "The map to store render states can't be null!");
 		for(var entry : renderStates.entrySet()) {
 			var stack = states.getOrDefault(entry.getKey(), new Stack<RenderState>());
 			stack.push(entry.getValue());
 		}
 	}
 	
+	/**
+	 * Applies all previously collected {@link RenderState} in the scenegraph inside the given table
+	 * to the <code>AnimaMundi</code>.
+	 * 
+	 * @param states The table which contains the render states (not null).
+	 * 
+	 * @see #collectState(Map)
+	 */
 	protected void applyState(Map<RenderState.Type, Stack<RenderState>> states) {
+		Validator.nonNull(states, "The map to apply render states can't be null!");
 		for(var entry : states.entrySet()) {
 			var stack = entry.getValue();
 			if(stack != null) {
 				renderStates.put(entry.getKey(), stack.peek());
 			}
 		}
+		dirtyMarks.remove(DirtyType.RENDER_STATE);
 	}
 	
 	/**

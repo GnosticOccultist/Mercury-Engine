@@ -3,8 +3,10 @@ package fr.mercury.exempli.gratia.renderer.logic.state;
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
-import fr.mercury.nucleus.renderer.logic.state.FaceCullingState.Face;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState.WindingOrder;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState.PolygonMode;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.TextureState.MagFilter;
@@ -46,6 +48,9 @@ public class TestRenderState extends MercuryApplication {
 		var cull = new FaceCullingState().setFace(Face.BACK)
 				.setWindingOrder(WindingOrder.CLOCKWISE)
 				.enable();
+		var wire = new PolygonModeState().setPolygonMode(Face.FRONT_AND_BACK, PolygonMode.LINE).enable();
+		
+		cube1.setRenderState(wire);
 		cube1.setRenderState(cull);
 		
 		// Select the second material which is "Unlit" to render the cube using
@@ -60,6 +65,8 @@ public class TestRenderState extends MercuryApplication {
 		camera.lookAt(translation.x(), translation.y(), translation.z(), Vector3f.UNIT_Y);
 		
 		scene.attach(cube1);
+		var state = new FaceCullingState().disable();
+		scene.setRenderState(state);
 	}
 	
 	@Override
