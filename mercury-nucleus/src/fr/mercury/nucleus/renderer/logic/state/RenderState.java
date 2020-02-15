@@ -17,6 +17,11 @@ import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 public abstract class RenderState {
 	
 	/**
+	 * Whether the render state needs to be updated through the graphics API.
+	 */
+	protected boolean needsUpdate = true;
+	
+	/**
 	 * Enable the <code>RenderState</code>. Do note that some implementations can't be enabled.
 	 */
 	public abstract RenderState enable();
@@ -38,6 +43,26 @@ public abstract class RenderState {
 	 * @return The type of render state (not null).
 	 */
 	public abstract Type type();
+	
+	/**
+	 * Return whether the <code>RenderState</code> needs to be updated through the graphics API,
+	 * by modifying its context.
+	 * 
+	 * @return Whether the render state needs to be updated.
+	 */
+	public boolean needsUpdate() {
+		return needsUpdate;
+	}
+	
+	/**
+	 * Sets whether the <code>RenderState</code> needs to be updated through the graphics API,
+	 * in order to apply the requested changes.
+	 * 
+	 * @param update Whether the render state needs to be updated.
+	 */
+	public void setNeedsUpdate(boolean update) {
+		this.needsUpdate = update;
+	}
 	
 	/**
 	 * <code>Type</code> is an enumeration of all {@link RenderState} type supported by the <code>Mercury-Engine</code>.

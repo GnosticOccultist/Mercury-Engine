@@ -46,6 +46,8 @@ public class PolygonModeState extends RenderState {
 	@Override
 	public PolygonModeState enable() {
 		this.enabled = true;
+		
+		setNeedsUpdate(true);
 		return this;
 	}
 
@@ -62,6 +64,8 @@ public class PolygonModeState extends RenderState {
 	@Override
 	public PolygonModeState disable() {
 		this.enabled = false;
+		
+		setNeedsUpdate(true);
 		return this;
 	}
 	
@@ -85,11 +89,18 @@ public class PolygonModeState extends RenderState {
 	public PolygonModeState setPolygonMode(Face face, PolygonMode mode) {
 		Validator.nonNull(face, "The face's type can't be null!");
 		Validator.nonNull(mode, "The polygon mode can't be null!");
-		if(face == Face.FRONT_AND_BACK) {
-			this.polygonModes.put(Face.FRONT, mode);
-			this.polygonModes.put(Face.BACK, mode);
+		boolean needsUpdate = polygonModes.get(face) != mode;
+		
+		// Only update the polygon modes if the requested mode isn't already set for the face.
+		if(needsUpdate) {
+			if(face == Face.FRONT_AND_BACK) {
+				this.polygonModes.put(Face.FRONT, mode);
+				this.polygonModes.put(Face.BACK, mode);
+			}
+			this.polygonModes.put(face, mode);
+			
+			setNeedsUpdate(true);
 		}
-		this.polygonModes.put(face, mode);
 		return this;
 	}
 	
@@ -125,6 +136,8 @@ public class PolygonModeState extends RenderState {
 		this.polygonModes.put(Face.FRONT, PolygonMode.FILL);
 		this.polygonModes.put(Face.BACK, PolygonMode.FILL);
 		this.polygonModes.put(Face.FRONT_AND_BACK, PolygonMode.FILL);
+		
+		setNeedsUpdate(true);
 	}
 	
 	/**

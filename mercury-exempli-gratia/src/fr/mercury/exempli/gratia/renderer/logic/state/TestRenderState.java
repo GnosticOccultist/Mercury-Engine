@@ -1,28 +1,44 @@
 package fr.mercury.exempli.gratia.renderer.logic.state;
 
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.LoggerLevel;
 import fr.mercury.nucleus.application.MercuryApplication;
-import fr.mercury.nucleus.math.objects.Vector3f;
-import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
-import fr.mercury.nucleus.renderer.logic.state.FaceCullingState.WindingOrder;
-import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
 import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
 import fr.mercury.nucleus.renderer.logic.state.PolygonModeState.PolygonMode;
+import fr.mercury.nucleus.renderer.logic.state.RenderState;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
+import fr.mercury.nucleus.texture.Texture2D;
 import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
 import fr.mercury.nucleus.texture.TextureState.WrapMode;
+import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.Timer;
 
+/**
+ * <code>TestRenderState</code> showcase the usage of the {@link RenderState} implementations in a scenegraph to modify the
+ * current state of the graphics API context before rendering occurs.
+ * 
+ * @author GnosticOccultist
+ */
 public class TestRenderState extends MercuryApplication {
 	
 	/**
-	 * The physica-mundi to represent the first cube in the scene.
+	 * The physica-mundi to represent a cube in the scene.
 	 */
-	private PhysicaMundi cube1;
+	private PhysicaMundi cube;
+	/**
+	 * The physica-mundi to represent a teapot in the scene.
+	 */
+	private PhysicaMundi teapot;
+	/**
+	 * The physica-mundi to represent a capricorn in the scene.
+	 */
+	private PhysicaMundi capricorn;
 	
 	/**
-	 * Launch method for the <code>TestMercuryMaterial</code>, no arguments required.
+	 * Launch method for the <code>TestRenderState</code>, no arguments required.
 	 * 
 	 * @param args The arguments to pass to the application.
 	 */
@@ -32,47 +48,63 @@ public class TestRenderState extends MercuryApplication {
 	}
 	
 	@Override
+	@OpenGLCall
 	protected void initialize() {
 		// Load the 2D texture for the cube and upload it directly to the GPU.
-		var texture = assetManager.loadTexture2D("/textures/octostone.png")
+		Texture2D texture = assetManager.loadTexture2D("/textures/octostone.png")
 				.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
 				.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
 		texture.upload();
 		
 		// Load and prepare the cube in the scene.
-		cube1 = assetManager.loadPhysicaMundi("/model/cube.obj");
-		cube1.setName("cube1");
-		cube1.setTranslation(0, 0, 4F).setRotation(0f, 0, 0f).setScale(1f, 1f, 1f);
+		cube = assetManager.loadPhysicaMundi("/model/cube.obj");
+		cube.setName("cube");
+		cube.setTranslation(0.0f, 0.0f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
-		// Apply the render state to render the cube.
-		var cull = new FaceCullingState().setFace(Face.BACK)
-				.setWindingOrder(WindingOrder.CLOCKWISE)
-				.enable();
-		var wire = new PolygonModeState().setPolygonMode(Face.FRONT_AND_BACK, PolygonMode.LINE).enable();
+		// Load and prepare the teapot in the scene.
+		teapot = assetManager.loadPhysicaMundi("/model/teapot.obj");
+		teapot.setName("teapot");
+		teapot.setTranslation(-5.0f, -0.5f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
-		cube1.setRenderState(wire);
-		cube1.setRenderState(cull);
+		// Load and prepare the capricorn in the scene.
+		capricorn = assetManager.loadPhysicaMundi("/model/capricorn.obj");
+		capricorn.setName("capricorn");
+		capricorn.setTranslation(5.0f, -1.0f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(0.05f, 0.05f, 0.05f);
 		
-		// Select the second material which is "Unlit" to render the cube using
-		// a texture.
+		// Select the fourth material which is "Unlit_atlas" to render the cube using
+		// a texture atlas.
 		Material[] materials = assetManager.loadMaterial("/materials/unlit.json");
-		assert materials[1] != null;
-		cube1.setMaterial(materials[1]);
-		cube1.getMaterial().texture = texture;
+		assert materials[3] != null;
+		cube.setMaterial(materials[3]);
+		// Set the texture of the cube to the loaded texture atlas.
+		cube.getMaterial().texture = texture;
 		
-		// Rotate the camera towards the cube.
-		var translation = cube1.getLocalTransform().getTranslation();
-		camera.lookAt(translation.x(), translation.y(), translation.z(), Vector3f.UNIT_Y);
+		teapot.setMaterial(materials[3]);
+		// Set the texture of the teapot to the loaded texture atlas.
+		teapot.getMaterial().texture = texture;
 		
-		scene.attach(cube1);
-		var state = new FaceCullingState().disable();
-		scene.setRenderState(state);
+		capricorn.setMaterial(materials[3]);
+		// Set the texture of the capricorn to the loaded texture atlas.
+		capricorn.getMaterial().texture = texture;
+		
+		// Apply some render states to the scene-root.
+		PolygonModeState polygonState = new PolygonModeState().setPolygonMode(Face.FRONT_AND_BACK, PolygonMode.LINE).enable();
+		scene.setRenderState(polygonState);
+		
+		// Finally, attach the cube, teapot and capricorn to the main scene.
+		scene.attachAll(cube, teapot, capricorn);
+		
+		FactoryLogger.getLogger("mercury.renderer").setActive(LoggerLevel.DEBUG, true);
 	}
 	
 	@Override
+	@OpenGLCall
 	protected void update(Timer timer) {
 		super.update(timer);
 		
-		cube1.rotate(0.01f, 0.01f, 0f);
+		// Rotate slowly the cube, teapot and capricorn.
+		cube.rotate(0, 0.01f, 0);
+		teapot.rotate(0, 0.01f, 0);
+		capricorn.rotate(0, 0.01f, 0);
 	}
 }

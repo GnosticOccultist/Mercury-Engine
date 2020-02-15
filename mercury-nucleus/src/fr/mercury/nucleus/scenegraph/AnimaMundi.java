@@ -806,6 +806,7 @@ public abstract class AnimaMundi {
 		for(var entry : renderStates.entrySet()) {
 			var stack = states.getOrDefault(entry.getKey(), new Stack<RenderState>());
 			stack.push(entry.getValue());
+			states.put(entry.getKey(), stack);
 		}
 	}
 	

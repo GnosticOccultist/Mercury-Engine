@@ -49,6 +49,8 @@ public final class FaceCullingState extends RenderState {
 	@Override
 	public FaceCullingState enable() {
 		this.enabled = true;
+		
+		setNeedsUpdate(true);
 		return this;
 	}
 
@@ -64,6 +66,8 @@ public final class FaceCullingState extends RenderState {
 	@Override
 	public FaceCullingState disable() {
 		this.enabled = false;
+		
+		setNeedsUpdate(true);
 		return this;
 	}
 	
@@ -109,6 +113,8 @@ public final class FaceCullingState extends RenderState {
 	public FaceCullingState setFace(Face face) {
 		Validator.nonNull(face, "The face to cull can't be null!");
 		this.face = face;
+		
+		setNeedsUpdate(true);
 		return this;
 	}
 	
@@ -123,6 +129,8 @@ public final class FaceCullingState extends RenderState {
 	public FaceCullingState setWindingOrder(WindingOrder windingOrder) {
 		Validator.nonNull(windingOrder, "The winding order for face culling can't be null!");
 		this.windingOrder = windingOrder;
+		
+		setNeedsUpdate(true);
 		return this;
 	}
 	
@@ -135,6 +143,8 @@ public final class FaceCullingState extends RenderState {
 		this.enabled = false;
 		this.face = Face.BACK;
 		this.windingOrder = WindingOrder.COUNTER_CLOCKWISE;
+		
+		setNeedsUpdate(true);
 	}
 	
 	/**

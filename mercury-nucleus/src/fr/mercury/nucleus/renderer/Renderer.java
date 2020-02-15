@@ -131,8 +131,11 @@ public class Renderer extends AbstractRenderer {
 		
 		for(var type : RenderState.Type.values()) {
 			var state = physica.getLocalRenderState(type);
-			if(state != null) {
+			if(state != null && state.needsUpdate()) {
+				logger.debug("Changing render state before rendering " + physica);
+				
 				applyRenderState(state);
+				state.setNeedsUpdate(false);
 			}
 		}
 		
