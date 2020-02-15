@@ -16,15 +16,11 @@ import fr.mercury.nucleus.scenegraph.AnimaMundi;
  * @author GnosticOccultist
  */
 public class PolygonModeState extends RenderState {
-
-	/**
-	 * Whether the polygon mode is activated (default&rarr;false).
-	 */
-	private boolean enabled = false;
+	
 	/**
 	 * The polygon modes for each face (default&rarr;FILL).
 	 */
-	private final EnumMap<Face, PolygonMode> polygonModes = new EnumMap<>(Face.class);
+	private EnumMap<Face, PolygonMode> polygonModes = new EnumMap<>(Face.class);
 	
 	/**
 	 * Instantiates a new disabled <code>PolygonModeState</code> with all {@link Face} type set to the 
@@ -45,9 +41,7 @@ public class PolygonModeState extends RenderState {
 	 */
 	@Override
 	public PolygonModeState enable() {
-		this.enabled = true;
-		
-		setNeedsUpdate(true);
+		super.enable();
 		return this;
 	}
 
@@ -63,19 +57,20 @@ public class PolygonModeState extends RenderState {
 	 */
 	@Override
 	public PolygonModeState disable() {
-		this.enabled = false;
-		
-		setNeedsUpdate(true);
+		super.disable();
 		return this;
 	}
 	
 	/**
-	 * Return whether the <code>PolygonModeState</code> is enabled.
+	 * Return the {@link PolygonMode} used by the <code>PolygonModeState</code> for the provided 
+	 * {@link Face} type to determine how each polygons are rasterized.
 	 * 
-	 * @return Whether the polygon mode state is enabled.
+	 * @param  The face type to get the polygon mode (not null).
+	 * @return The polygon mode used for the rasterization of each polygon.
 	 */
-	public boolean isEnabled() {
-		return enabled;
+	public PolygonMode polygonMode(Face face) {
+		Validator.nonNull(face, "The face's type can't be null!");
+		return polygonModes.getOrDefault(face, PolygonMode.FILL);
 	}
 	
 	/**
@@ -105,18 +100,6 @@ public class PolygonModeState extends RenderState {
 	}
 	
 	/**
-	 * Return the {@link PolygonMode} used by the <code>PolygonModeState</code> for the provided 
-	 * {@link Face} type to determine how each polygons are rasterized.
-	 * 
-	 * @param  The face type to get the polygon mode (not null).
-	 * @return The polygon mode used for the rasterization of each polygon.
-	 */
-	public PolygonMode polygonMode(Face face) {
-		Validator.nonNull(face, "The face's type can't be null!");
-		return polygonModes.getOrDefault(face, PolygonMode.FILL);
-	}
-	
-	/**
 	 * Returns {@link Type#POLYGON_MODE}.
 	 * 
 	 * @return The polygon mode state type.
@@ -133,6 +116,11 @@ public class PolygonModeState extends RenderState {
 	@Override
 	public void reset() {
 		this.enabled = false;
+		// Make sure the EnumMap exists cause it may not if the user is chaining constructor and methods.
+		if(polygonModes == null) {
+			this.polygonModes = new EnumMap<>(Face.class);
+		}
+		
 		this.polygonModes.put(Face.FRONT, PolygonMode.FILL);
 		this.polygonModes.put(Face.BACK, PolygonMode.FILL);
 		this.polygonModes.put(Face.FRONT_AND_BACK, PolygonMode.FILL);

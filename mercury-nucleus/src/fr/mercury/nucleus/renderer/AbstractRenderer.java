@@ -13,11 +13,12 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
+import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState.PolygonMode;
 import fr.mercury.nucleus.renderer.logic.state.RenderState;
 import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
-import fr.mercury.nucleus.renderer.logic.state.PolygonModeState.PolygonMode;
-import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
@@ -146,9 +147,9 @@ public abstract class AbstractRenderer {
 	 * Render the provided {@link AnimaMundi}.
 	 * Override this method in your implementation of <code>AbstractRenderer</code>.
 	 * 
-	 * @param anima The anima to render.
+	 * @param physica The physica-mundi to render (not null).
 	 */
-	public abstract void render(PhysicaMundi anima);
+	public abstract void render(PhysicaMundi physica);
 	
 	/**
 	 * Sets the clear values of the <code>AbstractRenderer</code> for the color-buffer.
@@ -260,6 +261,43 @@ public abstract class AbstractRenderer {
 				} else {
 					GL11C.glPolygonMode(GL11C.GL_FRONT_AND_BACK, GL11C.GL_FILL);
 				}
+				break;
+			case DEPTH_BUFFER:
+				var zBuffer = (DepthBufferState) state;
+				if(zBuffer.isEnabled()) {
+					GL11C.glEnable(GL11.GL_DEPTH_TEST);
+					switch (zBuffer.function()) {
+						case NEVER:
+							GL11C.glDepthFunc(GL11C.GL_NEVER);
+							break;
+						case ALWAYS:
+							GL11C.glDepthFunc(GL11C.GL_ALWAYS);
+							break;
+						case EQUAL:
+							GL11C.glDepthFunc(GL11C.GL_EQUAL);
+							break;
+						case NOT_EQUAL:
+							GL11C.glDepthFunc(GL11C.GL_NOTEQUAL);
+							break;
+						case LESS:
+							GL11C.glDepthFunc(GL11C.GL_LESS);
+							break;
+						case LESS_OR_EQUAL:
+							GL11C.glDepthFunc(GL11C.GL_LEQUAL);
+							break;
+						case GREATER:
+							GL11C.glDepthFunc(GL11C.GL_GREATER);
+							break;
+						case GREATER_OR_EQUAL:
+							GL11C.glDepthFunc(GL11C.GL_GEQUAL);
+							break;
+						default:
+							break;
+					}
+				} else {
+					GL11C.glDisable(GL11C.GL_DEPTH_TEST);
+				}
+				GL11C.glDepthMask(zBuffer.isWritable());
 				break;
 			default:
 				break;

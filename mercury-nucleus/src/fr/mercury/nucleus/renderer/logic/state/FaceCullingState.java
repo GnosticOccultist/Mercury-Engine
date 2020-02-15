@@ -16,10 +16,6 @@ import fr.mercury.nucleus.scenegraph.AnimaMundi;
 public final class FaceCullingState extends RenderState {
 
 	/**
-	 * Whether the face culling is activated (default&rarr;false).
-	 */
-	private boolean enabled = false;
-	/**
 	 * The face to cull triangles from (default&rarr;BACK).
 	 */
 	private Face face = Face.BACK;
@@ -48,9 +44,7 @@ public final class FaceCullingState extends RenderState {
 	 */
 	@Override
 	public FaceCullingState enable() {
-		this.enabled = true;
-		
-		setNeedsUpdate(true);
+		super.enable();
 		return this;
 	}
 
@@ -65,19 +59,8 @@ public final class FaceCullingState extends RenderState {
 	 */
 	@Override
 	public FaceCullingState disable() {
-		this.enabled = false;
-		
-		setNeedsUpdate(true);
+		super.disable();
 		return this;
-	}
-	
-	/**
-	 * Return whether the <code>FaceCullingState</code> is enabled.
-	 * 
-	 * @return Whether the face culling state is enabled.
-	 */
-	public boolean isEnabled() {
-		return enabled;
 	}
 	
 	/**

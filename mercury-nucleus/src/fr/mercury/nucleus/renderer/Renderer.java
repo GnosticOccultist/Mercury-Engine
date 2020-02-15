@@ -1,13 +1,17 @@
 package fr.mercury.nucleus.renderer;
 
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
 
+import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.logic.DefaultRenderLogic;
 import fr.mercury.nucleus.renderer.logic.RenderLogic;
 import fr.mercury.nucleus.renderer.logic.state.RenderState;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
+import fr.mercury.nucleus.scenegraph.Material;
+import fr.mercury.nucleus.scenegraph.Mesh;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
@@ -115,6 +119,7 @@ public class Renderer extends AbstractRenderer {
 	@Override
 	@OpenGLCall
 	public void render(PhysicaMundi physica) {
+		Validator.nonNull(physica, "The physica-mundi to render can't be null!");
 		
 		setMatrix(MatrixType.MODEL, physica.getWorldTransform());
 		
@@ -129,21 +134,31 @@ public class Renderer extends AbstractRenderer {
 		// Upload latest changes to the OpenGL state.
 		shader.upload();
 		
-		for(var type : RenderState.Type.values()) {
-			var state = physica.getLocalRenderState(type);
-			if(state != null && state.needsUpdate()) {
-				logger.debug("Changing render state before rendering " + physica);
-				
-				applyRenderState(state);
-				state.setNeedsUpdate(false);
-			}
-		}
+		applyRenderStates(physica);
 		
 		defaultLogic.begin(physica);
 	
 		defaultLogic.render(physica);
 		
 		defaultLogic.end(physica);
+	}
+	
+	/**
+	 * Applies the local {@link RenderState} defined for the given {@link PhysicaMundi} to the <code>OpenGL</code> context.
+	 * 
+	 * @param physica The physica-mundi to render (not null).
+	 */
+	@OpenGLCall
+	private void applyRenderStates(PhysicaMundi physica) {
+		for(var type : RenderState.Type.values()) {
+			var state = physica.getLocalRenderState(type);
+			if(state != null && state.needsUpdate()) {
+				logger.debug("Changing render state " + state + " before rendering " + physica);
+				
+				applyRenderState(state);
+				state.setNeedsUpdate(false);
+			}
+		}
 	}
 
 	/**
@@ -163,10 +178,15 @@ public class Renderer extends AbstractRenderer {
 	}
 	
 	/**
-	 * Cleanup the renderer and its components.
+	 * Cleanup the <code>Renderer</code> by visiting the given {@link AnimaMundi} and its potential children to
+	 * cleanup their {@link Mesh} and {@link Material}.
+	 * 
+	 * @param The anima-mundi to cleanup, usually the root-node of the rendered scene (not null).
 	 */
 	@OpenGLCall
 	public void cleanup(AnimaMundi anima) {
+		Validator.nonNull(anima, "The anima-mundi to cleanup can't be null!");
+		
 		anima.visit(GL_CLEANUP, VisitType.POST_ORDER);
 	}
 }

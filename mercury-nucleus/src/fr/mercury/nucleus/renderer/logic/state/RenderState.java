@@ -19,17 +19,50 @@ public abstract class RenderState {
 	/**
 	 * Whether the render state needs to be updated through the graphics API.
 	 */
-	protected boolean needsUpdate = true;
+	private boolean needsUpdate = true;
+	/**
+	 * Whether the face culling is activated (default&rarr;false).
+	 */
+	protected boolean enabled = false;
+	
+	/**
+	 * Instantiates a new <code>RenderState</code> and resetting it to its default state,
+	 * by calling {@link #reset()}.
+	 * 
+	 * @see #reset()
+	 */
+	public RenderState() {
+		reset();
+	}
 	
 	/**
 	 * Enable the <code>RenderState</code>. Do note that some implementations can't be enabled.
 	 */
-	public abstract RenderState enable();
+	public RenderState enable() {
+		this.enabled = true;
+		
+		setNeedsUpdate(true);
+		return this;
+	}
 	
 	/**
 	 * Disable the <code>RenderState</code>. Do note that some implementations can't be disabled.
 	 */
-	public abstract RenderState disable();
+	public RenderState disable() {
+		this.enabled = false;
+		
+		setNeedsUpdate(true);
+		return this;
+	}
+	
+	/**
+	 * Return whether the <code>RenderState</code> is enabled.
+	 * 
+	 * @return Whether the render state is enabled.
+	 */
+	public boolean isEnabled() {
+		return enabled;
+	}
 	
 	/**
 	 * Resets the <code>RenderState</code> to its default state, generally to the initial drawing context
@@ -77,7 +110,11 @@ public abstract class RenderState {
 		/**
 		 * The polygon mode state to select a polygon rasterization mode.
 		 */
-		POLYGON_MODE;
+		POLYGON_MODE,
+		/**
+		 * The depth buffer state to specify how depth should be handled during rendering.
+		 */
+		DEPTH_BUFFER;
 	}
 	
 	/**
@@ -98,5 +135,10 @@ public abstract class RenderState {
 		 * The front and back faces of a geometry.
 		 */
 		FRONT_AND_BACK;
+	}
+	
+	@Override
+	public String toString() {
+		return "[" + getClass().getSimpleName() + " {enabled= " + enabled + ", needsUpdate= " + needsUpdate + "} ]";
 	}
 }
