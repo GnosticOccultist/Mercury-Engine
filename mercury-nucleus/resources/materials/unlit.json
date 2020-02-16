@@ -22,7 +22,6 @@
 		}
 	},
 	
-	
 	"Unlit_no_fog": {
 		"description": "Simple default material used for rendering animae without any lighting or fog.",
 		"shaders": [ 

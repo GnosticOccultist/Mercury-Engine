@@ -781,10 +781,23 @@ public abstract class AnimaMundi {
 	}
 	
 	/**
+	 * Set the {@link RenderState} to use locally for the <code>AnimaMundi</code>.
+	 * 
+	 * @param states The render states to apply locally to the anima-mundi.
+	 */
+	public void setRenderStates(RenderState... states) {
+		for(RenderState state : states) {
+			renderStates.put(state.type(), state);
+		}
+		
+		dirty(DirtyType.RENDER_STATE);
+	}
+	
+	/**
 	 * Set the {@link RenderState} to use locally for the <code>AnimaMundi</code>, and return the 
 	 * previously applied one if any.
 	 * 
-	 * @param state The render state to apply locally.
+	 * @param state The render state to apply locally to the anima-mundi.
 	 * @return		The previously render state applied to the anima-mundi, or null if none.
 	 */
 	public RenderState setRenderState(RenderState state) {

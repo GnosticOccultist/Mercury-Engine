@@ -114,7 +114,11 @@ public abstract class RenderState {
 		/**
 		 * The depth buffer state to specify how depth should be handled during rendering.
 		 */
-		DEPTH_BUFFER;
+		DEPTH_BUFFER,
+		/**
+		 * The blend state which allow to blend pixel colors during the fragment pass.
+		 */
+		BLEND_STATE;
 	}
 	
 	/**

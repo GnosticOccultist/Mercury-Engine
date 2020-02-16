@@ -13,6 +13,7 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
+import fr.mercury.nucleus.renderer.logic.state.BlendState;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
 import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
@@ -298,6 +299,62 @@ public abstract class AbstractRenderer {
 					GL11C.glDisable(GL11C.GL_DEPTH_TEST);
 				}
 				GL11C.glDepthMask(zBuffer.isWritable());
+				break;
+			case BLEND_STATE:
+				var blend = (BlendState) state;
+				if(blend.isEnabled()) {
+					GL11C.glEnable(GL11.GL_BLEND);
+					
+					int srcFactor = GL11C.GL_ONE;
+					int dstFactor = GL11C.GL_ZERO;
+					switch (blend.srcFactor()) {
+						case ONE:
+							srcFactor = GL11C.GL_ONE;
+							break;
+						case ZERO:
+							srcFactor = GL11C.GL_ZERO;
+							break;
+						case SOURCE_COLOR:
+							srcFactor = GL11C.GL_SRC_COLOR;
+							break;
+						case ONE_MINUS_SOURCE_COLOR:
+							srcFactor = GL11C.GL_ONE_MINUS_SRC_COLOR;
+							break;
+						case SOURCE_ALPHA:
+							srcFactor = GL11C.GL_SRC_ALPHA;
+							break;
+						case ONE_MINUS_SOURCE_ALPHA:
+							srcFactor = GL11C.GL_ONE_MINUS_SRC_ALPHA;
+							break;
+						default:
+							break;
+					}
+					switch (blend.dstFactor()) {
+						case ONE:
+							dstFactor = GL11C.GL_ONE;
+							break;
+						case ZERO:
+							dstFactor = GL11C.GL_ZERO;
+							break;
+						case SOURCE_COLOR:
+							dstFactor = GL11C.GL_SRC_COLOR;
+							break;
+						case ONE_MINUS_SOURCE_COLOR:
+							dstFactor = GL11C.GL_ONE_MINUS_SRC_COLOR;
+							break;
+						case SOURCE_ALPHA:
+							dstFactor = GL11C.GL_SRC_ALPHA;
+							break;
+						case ONE_MINUS_SOURCE_ALPHA:
+							dstFactor = GL11C.GL_ONE_MINUS_SRC_ALPHA;
+							break;
+						default:
+							break;
+					}
+					GL11C.glBlendFunc(srcFactor, dstFactor);
+				} else {
+					GL11C.glDisable(GL11C.GL_BLEND);
+				}
 				break;
 			default:
 				break;
