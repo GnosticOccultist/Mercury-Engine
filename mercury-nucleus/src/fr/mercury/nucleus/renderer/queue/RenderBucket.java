@@ -43,13 +43,7 @@ public class RenderBucket {
 			double d1 = computeDistance(anima1);
 			double d2 = computeDistance(anima2);
 			
-			if(d1 > d2) {
-				return 1;
-			} else if(d1 < d2) {
-				return -1;
-			}
-			
-			return 0;
+			return Double.compare(d1, d2);
 		}
 	};
 	
@@ -284,13 +278,8 @@ public class RenderBucket {
 			double d1 = computeDistance(anima1);
 			double d2 = computeDistance(anima2);
 			
-			if(d1 > d2) {
-				return 1;
-			} else if(d1 < d2) {
-				return -1;
-			}
-			
-			return 0;
+			// Inverse comparing, back to front.
+			return Double.compare(d2, d1);
 		}
 	}
 }

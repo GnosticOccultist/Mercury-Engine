@@ -71,7 +71,7 @@ public class TestRenderState extends MercuryApplication {
 		
 		PhysicaMundi box = assetManager.loadPhysicaMundi("/model/cube.obj");
 		box.setName("box");
-		box.setTranslation(0.0f, 0.0f, 0f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
+		box.setTranslation(0.0f, 0.0f, 7f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		NucleusMundi transparentNucleus = new NucleusMundi("Transparent Group");
 		
