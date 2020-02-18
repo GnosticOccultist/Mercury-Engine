@@ -30,6 +30,11 @@ public final class BucketType {
 	 */
 	public static final BucketType OPAQUE = get("Opaque");
 	/**
+	 * Bucket for transparent or translucent surfaces, which can be seen through. 
+	 * The process is to render object back to front to allow affecting and blending of surfaces behind the transparent ones.
+	 */
+	public static final BucketType TRANSPARENT = get("Transparent");
+	/**
 	 * Use the {@link AnimaMundi}'s parent bucket, or default to {@link #OPAQUE} if it is orphan.
 	 */
 	public static final BucketType LEGACY = get("Legacy");

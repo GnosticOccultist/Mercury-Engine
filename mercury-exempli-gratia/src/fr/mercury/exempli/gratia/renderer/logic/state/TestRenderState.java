@@ -7,10 +7,12 @@ import fr.mercury.nucleus.renderer.logic.state.BlendState;
 import fr.mercury.nucleus.renderer.logic.state.BlendState.BlendFunction;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState.DepthFunction;
+import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
 import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
 import fr.mercury.nucleus.renderer.logic.state.PolygonModeState.PolygonMode;
 import fr.mercury.nucleus.renderer.logic.state.RenderState;
 import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
+import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
@@ -69,7 +71,7 @@ public class TestRenderState extends MercuryApplication {
 		
 		PhysicaMundi box = assetManager.loadPhysicaMundi("/model/cube.obj");
 		box.setName("box");
-		box.setTranslation(0.0f, 4.0f, 3f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
+		box.setTranslation(0.0f, 0.0f, 0f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		NucleusMundi transparentNucleus = new NucleusMundi("Transparent Group");
 		
@@ -123,7 +125,8 @@ public class TestRenderState extends MercuryApplication {
 		transparentNucleus.attachAll(cube, teapot, capricorn);
 		// Finally, attach the cube, teapot and capricorn to the main scene.
 		scene.attachAll(box, transparentNucleus);
-		scene.setRenderStates(new DepthBufferState(), new BlendState());
+		scene.setRenderStates(new DepthBufferState(), new BlendState(), new FaceCullingState().setFace(Face.BACK).enable());
+		transparentNucleus.setBucket(BucketType.TRANSPARENT);
 		
 		FactoryLogger.getLogger("mercury.renderer").setActive(LoggerLevel.DEBUG, true);
 	}

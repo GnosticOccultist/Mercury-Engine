@@ -78,6 +78,7 @@ public class Renderer extends AbstractRenderer {
 		this.defaultLogic = new DefaultRenderLogic();
 		
 		registerBucket(BucketType.OPAQUE);
+		registerBucket(BucketType.TRANSPARENT);
 	}
 	
 	/**
@@ -110,6 +111,7 @@ public class Renderer extends AbstractRenderer {
 		
 		// Render buckets...
 		renderBucket(BucketType.OPAQUE);
+		renderBucket(BucketType.TRANSPARENT);
 		
 		// Flushes all the buckets, even if some rendering wasn't performed.
 		flushBuckets();

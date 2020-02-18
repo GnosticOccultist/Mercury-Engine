@@ -1,5 +1,6 @@
 package fr.mercury.nucleus.renderer;
 
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,6 +85,22 @@ public abstract class AbstractRenderer {
 	}
 	
 	/**
+	 * Register a new {@link RenderBucket} with the specified {@link BucketType} and {@link Comparator} 
+	 * for the <code>AbstractRenderer</code>.
+	 * 
+	 * @param type 		 The bucket type to register (not null).
+	 * @param comparator The comparator to sort the anima-mundi to render (not null).
+	 */
+	public void registerBucket(BucketType type, Comparator<AnimaMundi> comparator) {
+		Validator.nonNull(type, "The bucket type to register can't be null!");
+		if(type.equals(BucketType.LEGACY) || type.equals(BucketType.NONE)) {
+			throw new MercuryException("The bucket '" + type + "' cannot be registered!");
+		}
+		
+		buckets.put(type, new RenderBucket(camera, comparator));
+	}
+	
+	/**
 	 * Submit the specified {@link AnimaMundi} to a {@link RenderBucket} matching 
 	 * the {@link BucketType}. 
 	 * <p>
@@ -132,6 +149,8 @@ public abstract class AbstractRenderer {
 		
 		bucket.sort();
 		bucket.render(this);
+		
+		logger.debug("Rendered bucket of type '" + type + "' which contained " + bucket.size() + " anima-mundi.");
 	}
 	
 	/**
