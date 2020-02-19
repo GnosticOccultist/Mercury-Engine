@@ -87,6 +87,7 @@ public class VertexBuffer extends GLBuffer {
 	}
 	
 	@Override
+	@OpenGLCall
 	public void upload() {
 		create();
 		

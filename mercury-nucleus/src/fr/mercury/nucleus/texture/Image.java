@@ -2,15 +2,14 @@ package fr.mercury.nucleus.texture;
 
 import java.nio.ByteBuffer;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL30;
 
 import fr.alchemy.utilities.Validator;
-import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
+import fr.mercury.nucleus.utils.data.BufferUtils;
 
 /**
  * <code>Image</code> is a wrapper class containing the data of a graphical image. It is define with a {@link Format}, the byte data 
@@ -103,67 +102,35 @@ public class Image {
 		this.height = height;
 		this.format = format;
 		
-		this.data = BufferUtils.createByteBuffer(sizeInPixel() * Float.BYTES);
+		this.data = BufferUtils.createByteBuffer(buffer.capacity());
 		if(buffer != null) {
 			fromByteBuffer(buffer);
 		}
 	}
 	
 	/**
-	 * Copy the data from the provided byte buffer and set it as the
-	 * <code>Image</code> data.
+	 * Transfers the byte data of the provided {@link ByteBuffer} to the <code>Image</code> 
+	 * buffer data.
 	 * 
 	 * @param buffer The buffer to copy from (not null).
 	 * @return		 The image with its updated data.
 	 */
 	public Image fromByteBuffer(ByteBuffer buffer) {
 		Validator.nonNull(buffer, "The buffer to copy from cannot be null!");
-		
-		for (int x = 0; x < width; x++) {
-			for(int y = 0; y < height; y++) {
-				
-				int start = 4 * (y * width + x);
-
-                float r = (buffer.get(start) & 0xff) / 255f;
-                float g = (buffer.get(start + 1) & 0xff) / 255f;
-                float b = (buffer.get(start + 2) & 0xff) / 255f;
-                float a = (buffer.get(start + 3) & 0xff) / 255f;
-                
-                setPixel(x, y, new Color(r, g, b, a));
-			}
-		}
+		this.data.put(buffer);
 		return this;
 	}
 	
 	/**
-	 * Retrieves the <code>Image</code> data and fill the store 
-	 * {@link ByteBuffer} with it.
+	 * Transfers the byte of the <code>Image</code> data to the store {@link ByteBuffer} 
+	 * and return it.
 	 * 
 	 * @param store The store buffer to fill (not null).
-	 * @return		The buffer filled with pixel data.
+	 * @return		The provided buffer filled with image data.
 	 */
 	public ByteBuffer toByteBuffer(ByteBuffer store) {
 		Validator.nonNull(store, "The buffer store cannot be null!");
-		
-		Color color = MercuryMath.getColor();
-		int index = 0;
-
-		for (int x = 0; x < width; x++) {
-			for(int y = 0; y < height; y++) {
-           
-				getPixel(x, y, color);
-
-                int r = (int) (color.r * 255f);
-                int g = (int) (color.g * 255f);
-                int b = (int) (color.b * 255f);
-                int a = (int) (color.a * 255f);
-
-                store.put(index++, (byte) r)
-                	 .put(index++, (byte) g)
-                	 .put(index++, (byte) b)
-                	 .put(index++, (byte) a);
-            }
-        }
+		store.put(data);
 		return store;
 	}
 	

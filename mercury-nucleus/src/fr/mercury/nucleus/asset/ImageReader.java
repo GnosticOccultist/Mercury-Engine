@@ -74,6 +74,8 @@ public class ImageReader implements AssetLoader<Image> {
 			
 			// Create the image and fill its data with the decoded image. 
 			Image image = new Image(w.get(), h.get(), decodedImage);
+			// Rewind the buffer so freeing the data doesn't crash.
+			decodedImage.rewind();
 			
 			// Free the decoded image buffer, since it isn't needed anymore.
 			STBImage.stbi_image_free(decodedImage);

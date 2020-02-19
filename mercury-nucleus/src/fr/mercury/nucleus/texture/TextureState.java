@@ -4,6 +4,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL13;
 
+import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Color;
 
 /**
@@ -53,6 +54,25 @@ public class TextureState implements Comparable<TextureState> {
 	 */
 	protected TextureState() {
 		reset();
+	}
+	
+	/**
+	 * Instantiates a new <code>TextureState</code> by copying the state of the
+	 * provided one.
+	 * 
+	 * @param source The texture state source to copy from (not null).
+	 */
+	protected TextureState(TextureState source) {
+		Validator.nonNull(source, "The source texture state can't be null!");
+		this.sWrap = source.sWrap;
+		this.tWrap = source.tWrap;
+		this.rWrap = source.rWrap;
+		this.magFilter = source.magFilter;
+		this.minFilter = source.minFilter;
+		this.compareMode = source.compareMode;
+		this.borderColor = new Color(borderColor);
+		this.needMipmaps = source.needMipmaps;
+		this.generatedMipMaps = source.generatedMipMaps;
 	}
 	
 	/**

@@ -62,6 +62,7 @@ public class Material {
 	public void setupUniforms(ShaderProgram program) {
 		if(texture != null) {
 			program.register(texture);
+			texture.upload();
 			texture.bindToUnit(0);
 		}
 	}

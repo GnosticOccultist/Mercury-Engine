@@ -7,7 +7,10 @@ import java.util.function.Consumer;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL30C;
+import org.lwjgl.opengl.GL32;
 import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.Validator;
@@ -45,18 +48,46 @@ public abstract class Texture extends GLObject {
 	protected TextureState toApply;
 	
 	/**
-	 * Constructor instantiates a new <code>Texture</code>.
-	 * This constructor is used by its sub-classes or by the 
-	 * <code>TextureBuilder</code>.
+	 * Determines if the provided ID correspond to an OpenGL <code>Texture</code>.
 	 * 
-	 * @param id	The id of the texture.
-	 * @param size  The size of the texture, same for the width and height.
+	 * @param id The ID of the texture to check.
+	 * @return	 Whether the ID correspond to a texture.
+	 */
+	public static boolean valid(int id) {
+		return GL30.glIsTexture(id);
+	}
+	
+	/**
+	 * Unbinds the currently bound <code>Texture</code> from the OpenGL context.
+	 * <p>
+	 * The methods is mainly used for proper cleaning of the OpenGL context or to avoid errors of
+	 * misbindings, because it doesn't need to be called before binding a new texture.
+	 * <p>
+	 * The method has been set static because it can be called from any <code>Texture</code> instance,
+	 * and will only unbind the lastest bind on the <code>OpenGL</code> context matching the provided
+	 * {@link TextureType}.
+	 * 
+	 * @param type The texture type to unbind from the context (not null).
+	 */
+	public static void unbind(TextureType type) {
+		Validator.nonNull(type, "The texture type can't be null!");
+		GL15.glBindBuffer(Texture.getOpenGLType(type), 0);
+	}
+	
+	/**
+	 * Instantiates a new <code>Texture</code> with no {@link Image} data defined.
+	 * Use the {@link #setImage(Image)} to add an image data to the texture.
 	 */
 	protected Texture() {
 		this.currentState = new TextureState();
 		this.toApply = new TextureState();
 	}
 	
+	/**
+	 * Binds the <code>Texture</code> to the OpenGL context, allowing it to be used or updated. 
+	 * <p>
+	 * Note that there is only one bound buffer per OpenGL {@link TextureType}.
+	 */
 	@OpenGLCall
 	protected void bind() {
 		if(getID() == INVALID_ID) {
@@ -66,6 +97,7 @@ public abstract class Texture extends GLObject {
 		GL11.glBindTexture(getOpenGLType(), getID());
 	}
 	
+	@Override
 	@OpenGLCall
 	public void upload() {
 		create();
@@ -90,8 +122,11 @@ public abstract class Texture extends GLObject {
 	}
 	
 	/**
-	 * <code>unbind</code> unbinds this specific <code>Texture</code> from
-	 * the currently binded OpenGL Texture Unit.
+	 * Unbinds the currently bound <code>Texture</code> from the OpenGL context.
+	 * <p>
+	 * This methods is mainly used for proper cleaning of the OpenGL context or to avoid errors of
+	 * misbindings, because it doesn't need to be called before binding a new texture.
+	 * Note that it works even if the currently bound texture isn't the one invoking this method.
 	 */
 	@OpenGLCall
 	public void unbind() {
@@ -111,12 +146,12 @@ public abstract class Texture extends GLObject {
 		// Don't know if it's really useful...
 		GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
 			
-		ByteBuffer buffer = MemoryUtil.memAlloc(image.sizeInPixel() * Float.BYTES);
+		// Prepare image buffer for reading.
+		ByteBuffer buffer = image.getData();
+		buffer.rewind();
 			
-		GL11.glTexImage2D(getOpenGLType(), 0, image.determineInternalFormat(), image.getWidth(), 
-				image.getHeight(), 0, image.determineFormat(), GL11.GL_UNSIGNED_BYTE, image.toByteBuffer(buffer));
-
-		MemoryUtil.memFree(buffer);
+		GL11C.glTexImage2D(getOpenGLType(), 0, image.determineInternalFormat(), image.getWidth(), 
+				image.getHeight(), 0, image.determineFormat(), GL11.GL_UNSIGNED_BYTE, buffer);
 			
 		// FIXME: If the image is used by multiple textures, it can conflict.
 		// Maybe add an atomic counter which decrements for each texture, until it reaches 0?
@@ -162,7 +197,7 @@ public abstract class Texture extends GLObject {
 		}
 		
 		if(!toApply.isGeneratedMipMaps() && toApply.isNeedMipmaps()) {
-			GL30.glGenerateMipmap(getOpenGLType());
+			GL30C.glGenerateMipmap(getOpenGLType());
 			currentState.setGeneratedMipMaps(true);
 			currentState.setNeedMipmaps(true);
 		}
@@ -283,7 +318,7 @@ public abstract class Texture extends GLObject {
     }
 	
 	/**
-	 * Cleanup the object once it isn't needed anymore from the GPUand the OpenGL context.
+	 * Cleanup the object once it isn't needed anymore from the GPU and the OpenGL context.
 	 * It also {@link TextureState#reset() reset} the state of the <code>Texture</code> for later utilization.
 	 */
 	@Override
@@ -302,7 +337,31 @@ public abstract class Texture extends GLObject {
 	 */
 	public void setImage(Image image) {
 		this.image = image;
+		this.image.setNeedUpdate(true);
 	}
+	
+	/**
+	 * Sets the current {@link TextureState} and the one to be applied to the <code>Texture</code>.
+	 * This method should only be used for copying purposes.
+	 * 
+	 * @param current The current texture state (not null).
+	 * @param toApply The texture state to be applied on next upload call (not null).
+	 */
+	protected void setTextureState(TextureState current, TextureState toApply) {
+		this.currentState = new TextureState(current);
+		this.toApply = new TextureState(toApply);
+	}
+	
+	/**
+	 * Creates and return a copy of the <code>Texture</code>'s implementation. Note that the {@link Image} 
+	 * isn't copied an alias is being created.
+	 * <p>
+	 * To be usable in an OpenGL context, you must call {@link #upload()} to upload 
+	 * it to the GPU.
+	 * 
+	 * @return A copy of the texture, not yet uploaded (not null).
+	 */
+	public abstract Texture copy();
 	
 	/**
 	 * Return the {@link TextureType type} of the <code>Texture</code>.
@@ -332,5 +391,29 @@ public abstract class Texture extends GLObject {
 	@OpenGLCall
 	protected Consumer<Integer> deleteAction() {
 		return GL11::glDeleteTextures;
+	}
+	
+	/**
+	 * Return the <code>Texture</code> equivalent texture type as an int corresponding to the provided
+	 * enum value of the {@link TextureType}.
+	 * 
+	 * @return The type of texture (not null).
+	 */
+	public static int getOpenGLType(TextureType type) {
+		Validator.nonNull(type, "The texture type to convert can't be null!");
+		
+		switch(type) {
+			case TEXTURE_2D:
+				return GL11.GL_TEXTURE_2D;
+			case TEXTURE_MULTISAMPLE:
+				return GL32.GL_TEXTURE_2D_MULTISAMPLE;
+			case TEXTURE_3D:
+				return GL11.GL_TEXTURE_2D;
+			case TEXTURE_CUBE_MAP:
+				return GL13.GL_TEXTURE_CUBE_MAP;
+			default:
+				throw new UnsupportedOperationException("Cannot convert the texture type: " 
+						+ type + " to an OpenGL equivalent!");
+		}
 	}
 }

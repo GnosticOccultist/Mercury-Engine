@@ -58,7 +58,7 @@ public abstract class GLBuffer extends GLObject {
 	 * <p>
 	 * The method has been set static because it can be called from any <code>GLBuffer</code> instance,
 	 * and will only unbind the lastest bind on the <code>OpenGL</code> context matching the provided
-	 * {@link Buffer}.
+	 * {@link BufferType}.
 	 * 
 	 * @param type The buffer type to unbind from the context (not null).
 	 */
@@ -126,8 +126,7 @@ public abstract class GLBuffer extends GLObject {
 	 * <p>
 	 * This methods is mainly used for proper cleaning of the OpenGL context or to avoid errors of
 	 * misbindings, because it doesn't need to be called before binding a new buffer.
-	 * Note that it works even if the currently bound buffer isn't the one invoking this method 
-	 * (<i>maybe it should be static, or handled by a manager?</i>).
+	 * Note that it works even if the currently bound buffer isn't the one invoking this method.
 	 */
 	@OpenGLCall
 	public void unbind() {

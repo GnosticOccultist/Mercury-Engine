@@ -110,11 +110,11 @@ public class TestRenderState extends MercuryApplication {
 		
 		teapot.setMaterial(materials[2]);
 		// Set the texture of the teapot to the loaded texture atlas.
-		teapot.getMaterial().texture = texture;
+		teapot.getMaterial().texture = texture.copy();
 		
 		capricorn.setMaterial(materials[2]);
 		// Set the texture of the capricorn to the loaded texture atlas.
-		capricorn.getMaterial().texture = texture;
+		capricorn.getMaterial().texture = texture.copy();
 		
 		// Apply some render states to the scene-root.
 		PolygonModeState polygonState = new PolygonModeState().setPolygonMode(Face.FRONT_AND_BACK, PolygonMode.LINE).enable();
