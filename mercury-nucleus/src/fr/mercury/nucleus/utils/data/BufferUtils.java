@@ -10,6 +10,8 @@ import java.nio.ShortBuffer;
 import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.math.objects.Vector2f;
+import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.math.readable.ReadableVector2f;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
 
@@ -20,6 +22,11 @@ import fr.mercury.nucleus.math.readable.ReadableVector3f;
  * @author GnosticOccultist
  */
 public final class BufferUtils {
+	
+	/**
+	 * Private constructor to inhibit instantiation of <code>BufferUtils</code>.
+	 */
+	private BufferUtils() {}
 	
 	/**
 	 * Populates the provided {@link FloatBuffer} with the given {@link ReadableVector2f} at the current 
@@ -55,6 +62,25 @@ public final class BufferUtils {
 	}
 	
 	/**
+	 * Reads the vector in the given {@link FloatBuffer} at the specified starting index and return the
+	 * provided {@link Vector2f} filled with the data.
+	 * 
+	 * @param buffer The float buffer to read from (not null).
+	 * @param store  The vector to potentially store the result in.
+	 * @param index  The starting index to read from (&ge;0).
+	 * @return		 The store vector or a new instance one filled with the data (not null).
+	 */
+	public static Vector2f read(FloatBuffer buffer, Vector2f store, int index) {
+		Validator.nonNull(buffer, "The buffer to read from can't be null!");
+		Validator.nonNegative(index, "The index to start reading can't be negative");
+		Vector2f result = store == null ? new Vector2f() : store;
+		
+		result.x = buffer.get(index + 0);
+		result.y = buffer.get(index + 1);
+		return result;
+	}
+	
+	/**
 	 * Populates the provided {@link FloatBuffer} with the given {@link ReadableVector3f} at the current 
 	 * position of the buffer.
 	 * 
@@ -85,6 +111,26 @@ public final class BufferUtils {
 		buffer.put(index * 3, vector.x()).put(index * 3 + 1, vector.y()).put(index * 3 + 2, vector.z());
 		
 		return buffer;
+	}
+	
+	/**
+	 * Reads the vector in the given {@link FloatBuffer} at the specified starting index and return the
+	 * provided {@link Vector3f} filled with the data.
+	 * 
+	 * @param buffer The float buffer to read from (not null).
+	 * @param store  The vector to potentially store the result in.
+	 * @param index  The starting index to read from (&ge;0).
+	 * @return		 The store vector or a new instance one filled with the data (not null).
+	 */
+	public static Vector3f read(FloatBuffer buffer, Vector3f store, int index) {
+		Validator.nonNull(buffer, "The buffer to read from can't be null!");
+		Validator.nonNegative(index, "The index to start reading can't be negative");
+		Vector3f result = store == null ? new Vector3f() : store;
+		
+		result.x = buffer.get(index + 0);
+		result.y = buffer.get(index + 1);
+		result.z = buffer.get(index + 2);
+		return result;
 	}
 	
 	/**
