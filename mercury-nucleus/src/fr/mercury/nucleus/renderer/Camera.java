@@ -195,7 +195,7 @@ public final class Camera {
 		}
 		
 		this.fov = fovY;
-		var h = MercuryMath.tan(fov * (Math.PI / 180.0f) * .5f) * near;
+		var h = MercuryMath.tan((float) (fov * (Math.PI / 180.0f) * .5f)) * near;
 		var w = h * aspect;
 		frustumLeft = -w;
 		frustumRight = w;

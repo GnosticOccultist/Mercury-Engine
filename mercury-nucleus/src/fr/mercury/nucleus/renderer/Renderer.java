@@ -163,11 +163,11 @@ public class Renderer extends AbstractRenderer {
 	}
 
 	/**
-	 * Resize the {@link Camera} viewport dimensions to the provided width and height, and update 
-	 * the <code>OpenGL</code> scissor test to discard any fragment outside the dimension of the rectangle.
+	 * Resize the {@link Camera} viewport dimensions to the provided width and height of the framebuffer, 
+	 * and update the <code>OpenGL</code> scissor test to discard any fragment outside the dimension of the rectangle.
 	 * 
-	 * @param width	 The new width of the window.
-	 * @param height The new height of the window.
+	 * @param width	 The new width in pixel coordinates (&gt;0).
+	 * @param height The new height in pixel coordinates (&gt;0).
 	 */
 	@OpenGLCall
 	public void resize(int width, int height) {

@@ -95,7 +95,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 	}
 
 	/**
-	 * Return the window width.
+	 * Return the window width in screen coordinates.
 	 * 
 	 * @return The window width.
 	 */
@@ -104,7 +104,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 	}
 	
 	/**
-	 * Set the with of the window.
+	 * Set the with of the window in screen coordinates.
 	 * 
 	 * @param width The width of the window (default: 1280).
 	 */
@@ -113,7 +113,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 	}
 
 	/**
-	 * Return the window height.
+	 * Return the window height in screen coordinates.
 	 * 
 	 * @return The window height.
 	 */
@@ -122,7 +122,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 	}
 	
 	/**
-	 * Set the height of the window.
+	 * Set the height of the window in screen coordinates.
 	 * 
 	 * @param height The height of the window (default: 768).
 	 */
@@ -131,10 +131,10 @@ public final class MercurySettings extends HashMap<String, Object> {
 	}
 	
 	/**
-	 * Set the resolution of the window.
+	 * Set the resolution of the window in screen coordinates.
 	 * 
-	 * @param width  The width of the window (default: 1280).
-	 * @param height The height of the window (default: 768).
+	 * @param width  The width of the window in screen coordinates (default: 1280).
+	 * @param height The height of the window in screen coordinates (default: 768).
 	 */
 	public void setResolution(int width, int height) {
 		setWidth(width);

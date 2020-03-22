@@ -13,9 +13,11 @@ import static org.lwjgl.glfw.GLFW.glfwDefaultWindowHints;
 import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
 import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
 import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
+import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
@@ -30,6 +32,7 @@ import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
+import java.nio.IntBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -38,6 +41,7 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL13;
+import org.lwjgl.system.MemoryStack;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
@@ -316,8 +320,25 @@ public class MercuryContext implements Runnable {
 		
 		// Setup window size callback to update framebuffers resolutions, view or projection matrix.
 		glfwSetWindowSizeCallback(window, (window, width, height) -> {
+			/*
+			 * As this is the window size, we don't delegate to the application as OpenGL uses pixel coordinates
+			 * (for example in glViewport) rather than screen coordinates as this callback does.
+			 */
 			settings.setResolution(width, height);
-			application.resize(width, height);
+		});
+		glfwSetFramebufferSizeCallback(window, (window, width, height) -> {
+			try (MemoryStack stack = MemoryStack.stackPush()) {
+				/*
+				 * The window size might also be changed, but sometimes window callback won't trigger.
+				 * Probably a LWJGL3 bug or graphics driver related, anyway make sure the new resolution is set.
+				 */
+				IntBuffer windowWidth = stack.mallocInt(1);
+	            IntBuffer windowHeight = stack.mallocInt(1);
+	            glfwGetWindowSize(window, windowWidth, windowHeight);
+	            
+	            settings.setResolution(windowWidth.get(), windowHeight.get());
+				application.resize(width, height);
+			}
 		});
 		
 		// Setup window focus callback to stop updating or rendering when minimized.

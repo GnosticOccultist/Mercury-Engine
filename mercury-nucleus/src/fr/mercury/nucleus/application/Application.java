@@ -38,10 +38,10 @@ public interface Application {
 	
 	/**
 	 * Notify the <code>Application</code> about a resizing <code>MercuryContext</code>.
-	 * The new width and height are passed as arguments.
+	 * The new width and height of the framebuffer are passed as arguments in pixel coordinates.
 	 * 
-	 * @param width  The new width.
-	 * @param height The new height.
+	 * @param width  The new width in pixel coordinates (&gt;0).
+	 * @param height The new height in pixel coordinates (&gt;0).
 	 */
 	void resize(int width, int height);
 	

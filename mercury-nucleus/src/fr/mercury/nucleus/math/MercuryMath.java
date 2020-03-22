@@ -127,7 +127,7 @@ public final class MercuryMath {
 	 * It uses the {@link Math#sqrt(double)} function.
 	 * 
 	 * @param value The value to get the square root from.
-	 * @return		The square root of the value.
+	 * @return		The square root of the value, or {@link Float#NaN}.
 	 */
 	public static float sqrt(float value) {
 		return (float) Math.sqrt(value);
@@ -150,10 +150,10 @@ public final class MercuryMath {
 	 * <p>
 	 * It uses the {@link Math#tan(double)} function.
 	 * 
-	 * @param value The value in radians.
+	 * @param value The angle in radians.
 	 * @return		The tangent of the value.
 	 */
-	public static float tan(double value) {
+	public static float tan(float value) {
 		return (float) Math.tan(value);
 	}
 }
