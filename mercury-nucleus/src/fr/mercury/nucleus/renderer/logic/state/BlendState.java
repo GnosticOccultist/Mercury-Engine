@@ -11,7 +11,7 @@ import fr.mercury.nucleus.scenegraph.Material;
  * 
  * @author GnosticOccultist
  */
-public class BlendState extends RenderState {
+public final class BlendState extends RenderState {
 
 	/**
 	 * The blend function used for the source weighting factor of the blending.

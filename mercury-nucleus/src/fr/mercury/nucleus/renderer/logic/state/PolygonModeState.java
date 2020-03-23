@@ -15,7 +15,7 @@ import fr.mercury.nucleus.scenegraph.AnimaMundi;
  * 
  * @author GnosticOccultist
  */
-public class PolygonModeState extends RenderState {
+public final class PolygonModeState extends RenderState {
 	
 	/**
 	 * The polygon modes for each face (default&rarr;FILL).

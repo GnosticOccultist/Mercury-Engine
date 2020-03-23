@@ -3,7 +3,7 @@ package fr.mercury.nucleus.renderer.logic.state;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
 
-public class DepthBufferState extends RenderState {
+public final class DepthBufferState extends RenderState {
 	
 	/**
 	 * Whether the depth buffer is writable.

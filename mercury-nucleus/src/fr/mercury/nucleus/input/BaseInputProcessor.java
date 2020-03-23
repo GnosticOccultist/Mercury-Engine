@@ -54,5 +54,8 @@ public class BaseInputProcessor implements InputProcessor {
 	public void destroy() {
 		mouseInput.destroy();
 		mouseInput.setProcessor(null);
+		
+		keyInput.destroy();
+		keyInput.setProcessor(null);
 	}
 }
