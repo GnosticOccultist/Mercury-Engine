@@ -172,7 +172,7 @@ public class Renderer extends AbstractRenderer {
 	@OpenGLCall
 	public void resize(int width, int height) {
 		if(camera != null && camera.resize(width, height)) {
-			GL11C.glViewport(0, 0, camera.getWidth(), camera.getHeight());
+			GL11C.glViewport(0, 0, width, height);
 			GL11C.glEnable(GL11C.GL_SCISSOR_TEST);
 			GL11C.glScissor(0, 0, width, height);
 		}

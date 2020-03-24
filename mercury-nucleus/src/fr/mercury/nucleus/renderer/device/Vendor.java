@@ -46,7 +46,7 @@ public enum Vendor {
 	 * Return the corresponding {@link Vendor} to the given OpenGL equivalent.
 	 * 
 	 * @param vendor The OpenGL vendor to convert (not null, not empty).
-	 * @return		 The enumeration equivalent of the OpenGL vendor (not null), or 
+	 * @return       The enumeration equivalent of the OpenGL vendor (not null), or 
 	 * 				 {@link #GENERIC_UNKNOWN_VENDOR} if no similarity.
 	 */
 	public static Vendor fromGLVendor(String vendor) {
