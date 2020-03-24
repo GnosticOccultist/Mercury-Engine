@@ -41,12 +41,17 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL30C;
+import org.lwjgl.opengl.GLCapabilities;
 import org.lwjgl.system.MemoryStack;
 
+import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.input.GLFWKeyInput;
 import fr.mercury.nucleus.input.GLFWMouseInput;
+import fr.mercury.nucleus.renderer.device.PhysicalDevice;
+import fr.mercury.nucleus.renderer.device.Vendor;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.NanoTimer;
 import fr.mercury.nucleus.utils.Timer;
@@ -114,6 +119,10 @@ public class MercuryContext implements Runnable {
 	 * The mouse input handler.
 	 */
 	private GLFWKeyInput keyInput;
+	/**
+	 * The physical device used for rendering.
+	 */
+	private PhysicalDevice physicalDevice;
 
 	/**
 	 * Instantiates and return the <code>MercuryContext</code> bound to the provided application
@@ -186,6 +195,10 @@ public class MercuryContext implements Runnable {
 		}
 		
 		cleanup();
+		/*
+		 * Wait until all GL commands are executed.
+		 */
+		GL11C.glFinish();
 	}
 	
 	/**
@@ -364,7 +377,16 @@ public class MercuryContext implements Runnable {
 		// Make the OpenGL context current.
         glfwMakeContextCurrent(window);
         
-        GL.createCapabilities();
+        GLCapabilities capabilities = GL.createCapabilities();
+        
+        /*
+		 * Once we have set the current OpenGL context we can access 
+		 * informations about our device.
+		 */
+		physicalDevice = createPhysicalDevice(capabilities);
+		
+		logger.info("Using physical device: \n" + physicalDevice);
+		physicalDevice.check(settings);
         
         if(settings.getInteger("Samples") != 0) {
         	GL11.glEnable(GL13.GL_MULTISAMPLE);
@@ -379,6 +401,28 @@ public class MercuryContext implements Runnable {
         
         // Finally show the window when finished.
         showWindow();
+	}
+	
+	/**
+	 * Creates a new {@link PhysicalDevice} for the current <code>MercuryContext</code>.
+	 * 
+	 * @param capabilites The OpenGL context capabilities (not null).
+	 * @return 			  A new physical instance containing device and renderer infos (not null).
+	 */
+	private PhysicalDevice createPhysicalDevice(GLCapabilities capabilites) {
+		Validator.nonNull(capabilites, "The capabilities of the OpenGL context can't be null!");
+		
+		Vendor vendor = Vendor.fromGLVendor(GL11C.glGetString(GL11C.GL_VENDOR));
+		String device = GL11C.glGetString(GL11C.GL_RENDERER);
+		String version = GL11C.glGetString(GL11C.GL_VERSION);
+		
+		int count = GL11C.glGetInteger(GL30C.GL_NUM_EXTENSIONS);
+		String[] extensions = new String[count];
+		for(int i = 0; i < count; i++) {
+			extensions[i] = GL30C.glGetStringi(GL11C.GL_EXTENSIONS, i);
+		}
+		
+		return new PhysicalDevice(vendor, device, version, extensions, capabilites);
 	}
 	
 	private void cleanup() {

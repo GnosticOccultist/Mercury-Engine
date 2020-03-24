@@ -28,6 +28,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 		DEFAULT.put("FrameRate", -1);
 		DEFAULT.put("ShowFPS", true);
 		DEFAULT.put("Samples", 0);
+		DEFAULT.put("RequiredExtensions", new String[0]);
 	}
 	
 	/**
@@ -185,6 +186,27 @@ public final class MercurySettings extends HashMap<String, Object> {
 	 */
 	public void setSamples(int samples) {
 		addInteger("Samples", samples);
+	}
+	
+	/**
+	 * Return the array of required extensions in order for the {@link Application} to render correctly.
+	 * The required extensions will be checked during the creation of the {@link MercuryContext}.
+	 * 
+	 * @return The array of required graphics API extensions (default&rarr;empty array).
+	 */
+	public String[] getRequiredExtensions() {
+		String[] extensions = (String[]) get("RequiredExtensions");
+		return extensions;
+	}
+	
+	/**
+	 * Set the array of required extensions in order for the {@link Application} to render correctly.
+	 * The required extensions will be checked during the creation of the {@link MercuryContext}.
+	 * 
+	 * @param requiredExtensions The array of required graphics API extensions (default&rarr;empty array).
+	 */
+	public void setRequiredExtensions(String... requiredExtensions) {
+		put("RequiredExtensions", requiredExtensions);
 	}
 	
 	/**
