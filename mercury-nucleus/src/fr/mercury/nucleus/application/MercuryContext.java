@@ -1,7 +1,9 @@
 package fr.mercury.nucleus.application;
 
+import static org.lwjgl.glfw.GLFW.GLFW_CLIENT_API;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_API;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
@@ -17,6 +19,7 @@ import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
@@ -35,7 +38,6 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 import java.nio.IntBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
@@ -54,6 +56,7 @@ import fr.mercury.nucleus.renderer.device.PhysicalDevice;
 import fr.mercury.nucleus.renderer.device.Vendor;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.NanoTimer;
+import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.Timer;
 
 /**
@@ -71,9 +74,13 @@ public class MercuryContext implements Runnable {
 	 */
 	private static final Logger logger = FactoryLogger.getLogger("mercury.app");
 	/**
-	 * A reference of the rendering thread.
+	 * The name of the rendering thread or main thread.
 	 */
 	protected static final String GL_THREAD_NAME = "OpenGL Render Thread";
+	/**
+	 * A reference of the rendering thread or main thread.
+	 */
+	protected static Thread GL_THREAD_REFERENCE;
 	
 	/**
 	 * The application which manages the context.
@@ -173,8 +180,9 @@ public class MercuryContext implements Runnable {
 	@Override
 	public void run() {
 		
-		// Set the correct name for the thread.
+		// Set the correct name for the thread and keep a reference for checking purposes.
 		Thread.currentThread().setName(GL_THREAD_NAME);
+		GL_THREAD_REFERENCE = Thread.currentThread();
 		
 		if(application == null) {
 			throw new IllegalArgumentException("The bounded application cannot be null !");
@@ -286,15 +294,18 @@ public class MercuryContext implements Runnable {
 		
 		// Setup an error callback. The default implementation
         // will print the error message in System.err.
-        GLFWErrorCallback.createPrint(System.err).set();
+        glfwSetErrorCallback((error, description) -> 
+        		logger.error("An GLFW error has occured '" + error + "': " + description));
 		
 		if(!glfwInit()) {
 			throw new IllegalStateException("Unable to initialize GLFW context!");
 		}
 		
-		// Optional, the current window hints are already the default
+		// Optional, the current window hints are already the default.
 		glfwDefaultWindowHints();
 		
+		// Choose the OpenGL API for the client.
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 		// The window will stay hidden after creation.
 		glfwWindowHint(GLFW_VISIBLE, GL_FALSE); 		    
 		// Whether the window is going to be resizable or not based on the configs.
@@ -367,10 +378,9 @@ public class MercuryContext implements Runnable {
 			}
 		});
 		
-		// Center the window
+		// Center the window.
 		if(!settings.isFullscreen()) {
-			glfwSetWindowPos(window,  
-					(videoMode.width() - settings.getWidth()) / 2, 
+			moveWindow((videoMode.width() - settings.getWidth()) / 2, 
 					(videoMode.height() - settings.getHeight()) / 2);
 		}
 		
@@ -457,6 +467,23 @@ public class MercuryContext implements Runnable {
 	}
 	
 	/**
+	 * Sets the position of the <code>MercuryContext</code> window's upper left corner area 
+	 * to the given screen coordinates.
+	 * <p>
+	 * The method can only be called if the window isn't in fullscreen mode and in the main {@link Thread}.
+	 * 
+	 * @param x The X coordinate of the upper-left corner area in screen coordinates (&ge;0).
+	 * @param y The Y coordinate of the upper-left corner area in screen coordinates (&ge;0).
+	 */
+	@OpenGLCall
+	public void moveWindow(int x, int y) {
+		Validator.nonNegative(x, "The X coordinate of the window can't be negative!");
+		Validator.nonNegative(y, "The Y coordinate of the window can't be negative!");
+		checkGLThread();
+		glfwSetWindowPos(window, x, y);
+	}
+	
+	/**
 	 * Return the <code>MercuryContext</code> window handle.
 	 * 
 	 * @return The window handle of the current context.
@@ -466,14 +493,23 @@ public class MercuryContext implements Runnable {
 	}
 	
 	/**
-	 * Check that the currently used thread is the one used by the <code>OpenGL</code> context for rendering.
+	 * Check that the currently used {@link Thread} is the one used by the <code>OpenGL</code> context for rendering.
 	 * 
 	 * @throws GLException Thrown if the current thread isn't the rendering one.
 	 */
 	public static void checkGLThread() {
-		if(!GL_THREAD_NAME.equals(Thread.currentThread().getName())) {
-			throw new GLException("The method should only be called from '" + GL_THREAD_NAME + "'!");
+		if(GL_THREAD_REFERENCE != Thread.currentThread()) {
+			throw new GLException("The method should only be called from '" + GL_THREAD_REFERENCE + "'!");
 		}
+	}
+	
+	/**
+	 * Return whether the currently used {@link Thread} is the one used by the <code>OpenGL</code> context for rendering.
+	 * 
+	 * @return Whether the current thread is the rendering one.
+	 */
+	public static boolean isGLThread() {
+		return GL_THREAD_REFERENCE == Thread.currentThread();
 	}
 	
 	/**
@@ -511,13 +547,16 @@ public class MercuryContext implements Runnable {
 	}
 	
 	/**
-	 * Set the title of the window's context.
-	 * Note that it is only visible when windowed.
+	 * Set the title of the <code>MercuryContext</code>'s window.
+	 * Note that it is only visible in windowed mode.
+	 * <p>
+	 * The method can only be called if the window isn't in fullscreen mode and in the main {@link Thread}.
 	 * 
 	 * @param title The title of the window.
 	 */
 	public void setTitle(String title) {
 		if(initialized.get() && window != NULL) {
+			checkGLThread();
 			glfwSetWindowTitle(window, title);
 		}
 	}

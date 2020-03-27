@@ -2,20 +2,23 @@ package fr.mercury.nucleus.application.module;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Deque;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.concurrent.TaskExecutor;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.Application;
+import fr.mercury.nucleus.application.MercuryContext;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.Timer;
 
@@ -59,7 +62,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	/**
 	 * The executor for tasks to be executed on the rendering thread.
 	 */
-	private TaskExecutor graphicsExecutor;
+	private Deque<GraphicsAction> graphicsExecutor;
 
 	/**
 	 * Instantiates a new <code>TaskExecutorModule</code> with the default {@link #NB_THREADS}
@@ -78,7 +81,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	public TaskExecutorModule(int nbThreads) {
 		restartExecutor(nbThreads);
 		this.scheduledService = Executors.newSingleThreadScheduledExecutor();
-		this.graphicsExecutor = new TaskExecutor();
+		this.graphicsExecutor = new ConcurrentLinkedDeque<>();
 	}
 	
 	@Override
@@ -91,7 +94,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 			this.scheduledService = Executors.newSingleThreadScheduledExecutor();
 		}
 		if(graphicsExecutor == null) {
-			this.graphicsExecutor = new TaskExecutor();
+			this.graphicsExecutor = new ConcurrentLinkedDeque<>();
 		}
 		
 		super.initialize(application);
@@ -101,7 +104,17 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	@OpenGLCall
 	public void update(Timer timer) {
 		// Run the graphics tasks in the rendering thread.
-		graphicsExecutor.execute();
+		executeGraphics(timer);
+	}
+	
+	private void executeGraphics(Timer timer) {
+		while (!graphicsExecutor.isEmpty()) {
+			GraphicsAction action = graphicsExecutor.peek();
+			if(action.action.getAsBoolean()) {
+				graphicsExecutor.poll();
+				action.semaphore.release();
+			}
+		}
 	}
 	
 	@Override
@@ -142,17 +155,45 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	}
 	
 	/**
-	 * Submits the provided {@link Runnable} to be executed with the <code>TaskExecutorModule</code>,
+	 * Submits the provided {@link BooleanSupplier} to be executed with the <code>TaskExecutorModule</code>,
 	 * in the <code>OpenGL</code> {@link Thread}.
 	 * <p>
-	 * The task will be executed the next time this module gets updated by the {@link Application} managing it.
+	 * The task will be executed instantly if in the OpenGL thread or the next time this module gets updated 
+	 * by the {@link Application} managing it and until the returned value return true.
 	 * 
-	 * @param task The task to be executed in the graphics thread (not null).
+	 * @param action The action to be executed in the graphics thread (not null).
 	 */
-	@OpenGLCall
-	public void submitGraphics(Runnable task) {
-		Validator.nonNull(task, "The task to be executed can't be null!");
-		graphicsExecutor.execute(task);
+	public void submitGraphics(BooleanSupplier action) {
+		Validator.nonNull(action, "The task to be executed can't be null!");
+		if(MercuryContext.isGLThread()) {
+			action.getAsBoolean();
+		} else {
+			graphicsExecutor.addLast(new GraphicsAction(action));
+		}
+	}
+	
+	/**
+	 * Submits the provided {@link BooleanSupplier} to be executed with the <code>TaskExecutorModule</code>,
+	 * in the <code>OpenGL</code> {@link Thread}, blocking the thread until the action has been successfully executed.
+	 * <p>
+	 * The task will be executed instantly if in the OpenGL thread or the next time this module gets updated 
+	 * by the {@link Application} managing it and until the returned value return true.
+	 * 
+	 * @param action The action to be executed in the graphics thread (not null).
+	 */
+	public void submitGraphicsBlocking(BooleanSupplier action) {
+		Validator.nonNull(action, "The task to be executed can't be null!");
+		if(MercuryContext.isGLThread()) {
+			if(!action.getAsBoolean()) {
+				GraphicsAction graphicsAction = new GraphicsAction(action);
+				graphicsExecutor.addLast(graphicsAction);
+				graphicsAction.semaphore.acquireUninterruptibly();
+			}
+		} else {
+			GraphicsAction graphicsAction = new GraphicsAction(action);
+			graphicsExecutor.addLast(graphicsAction);
+			graphicsAction.semaphore.acquireUninterruptibly();
+		}
 	}
 	
 	/**
@@ -190,12 +231,36 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	}
 	
 	/**
-	 * Return the {@link Executor} of the <code>TaskExecutorModule</code> which is running on 
-	 * the <code>OpenGL</code> {@link Thread}.
+	 * <code>GraphicsAction</code> is a wrapper class containing a {@link BooleanSupplier} which can be executed
+	 * on the main {@link Thread} to deal with graphics and a {@link Semaphore} which allows for blocking the thread
+	 * until successful execution.
 	 * 
-	 * @return The executor for tasks to be executed on the rendering thread.
+	 * @see TaskExecutorModule#submitGraphics(BooleanSupplier)
+	 * @see TaskExecutorModule#submitGraphicsBlocking(BooleanSupplier)
+	 * 
+	 * @author GnosticOccultist
 	 */
-	public Executor getGraphicsExecutor() {
-		return graphicsExecutor;
+	public class GraphicsAction {
+		
+		/**
+		 * The action which will be executed until it has returned false. 
+		 */
+		private final BooleanSupplier action;
+		/** 
+		 * The semaphore used for blocking and release the thread.
+		 */
+		private final Semaphore semaphore;
+		
+		/**
+		 * Private constructor to inhibit instantiation of <code>GraphicsAction</code>.
+		 * Use {@link TaskExecutorModule#submitGraphics(BooleanSupplier)} or {@link TaskExecutorModule#submitGraphicsBlocking(BooleanSupplier)}
+		 * to create and submit a new instance of this class.
+		 * 
+		 * @param action The action to execute (not null).
+		 */
+		private GraphicsAction(BooleanSupplier action) {
+			this.action = action;
+			this.semaphore = new Semaphore(0);
+		}
 	}
 }

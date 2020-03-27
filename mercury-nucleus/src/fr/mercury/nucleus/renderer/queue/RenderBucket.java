@@ -2,8 +2,8 @@ package fr.mercury.nucleus.renderer.queue;
 
 import java.util.Comparator;
 
-import fr.alchemy.utilities.SortUtil;
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.collections.array.ArrayUtil;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.renderer.AbstractRenderer;
@@ -150,7 +150,7 @@ public class RenderBucket {
 		// Perform the sort only is there is more than one anima in the bucket.
 		if(size > 1) {
 			// Shell sorting the array.
-			SortUtil.shellSort(array, 0, size - 1, comparator);
+			ArrayUtil.shellSort(array, 0, size - 1, comparator);
 		}
 	}
 	

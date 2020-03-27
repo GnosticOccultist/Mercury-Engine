@@ -9,8 +9,8 @@ import java.util.Optional;
 import java.util.Stack;
 
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.array.Array;
-import fr.alchemy.utilities.array.ReadOnlyArray;
+import fr.alchemy.utilities.collections.array.Array;
+import fr.alchemy.utilities.collections.array.ReadOnlyArray;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Matrix3f;

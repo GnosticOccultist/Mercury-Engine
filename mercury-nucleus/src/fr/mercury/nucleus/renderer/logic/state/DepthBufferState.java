@@ -9,6 +9,8 @@ import fr.mercury.nucleus.scenegraph.AnimaMundi;
  * For example when drawing multiple shapes, the rasterizer tests the depth value (z-value) of a fragment against the content of the depth buffer using 
  * the depth test algorithm, in this case the {@link DepthFunction}, to know if the fragment should be drawn or discarded. The depth buffer can 
  * also be set as readable-only to prevent any new z-value to be written, even if the depth test passes, but to have an effect the depth-test must be enabled.
+ * The depth buffer stores depth values as 16, 24 or 32 bit floats increasing the precision of the depth test and preventing Z-fighting issues. Nowadays, 
+ * most systems uses a 24 bit floats depth buffer.
  * <p>
  * The depth test is by default disabled and its algorithm is set to {@link DepthFunction#LESS} but the depth buffer is writable.
  * <p>

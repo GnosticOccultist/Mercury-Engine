@@ -7,7 +7,6 @@ import javax.swing.JOptionPane;
 
 import org.lwjgl.opengl.GLCapabilities;
 
-import fr.alchemy.utilities.array.ArrayUtil;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.MercurySettings;
@@ -54,10 +53,10 @@ public class PhysicalDevice {
 			return;
 		}
 		
-		List<String> required = ArrayUtil.toList(requiredExtensions);
-		boolean hasRequired = ArrayUtil.toList(extensions).containsAll(required);
+		List<String> required = Arrays.asList(requiredExtensions);
+		boolean hasRequired = Arrays.asList(extensions).containsAll(required);
 		if(!hasRequired) {
-			required.removeAll(ArrayUtil.toList(extensions));
+			required.removeAll(Arrays.asList(extensions));
 			JOptionPane.showMessageDialog(null, "Unfortunately your video card doesn't support the required OpenGL extensions " 
 					+ Arrays.toString(required.toArray()) + "! \n\n"
 					+ "To run correctly " + settings.getTitle() + " you may need to upgrade your card, or select an "
