@@ -104,10 +104,18 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	@OpenGLCall
 	public void update(Timer timer) {
 		// Run the graphics tasks in the rendering thread.
-		executeGraphics(timer);
+		// TODO: See if the timer interface can be helpful to pass as an argument.
+		executeGraphics();
 	}
 	
-	private void executeGraphics(Timer timer) {
+	/**
+	 * Executes all pending {@link GraphicsAction} and remove/release them when finished.
+	 * <p>
+	 * Note that before the <code>TaskExecutorModule</code> shutdown, every graphics action are called
+	 * even if they do block the main {@link Thread}.
+	 */
+	@OpenGLCall
+	private void executeGraphics() {
 		while (!graphicsExecutor.isEmpty()) {
 			GraphicsAction action = graphicsExecutor.peek();
 			if(action.action.getAsBoolean()) {
@@ -128,6 +136,8 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 			
 			return null;
 		});
+		
+		executeGraphics();
 		
 		executor = null;
 		scheduledService = null;
