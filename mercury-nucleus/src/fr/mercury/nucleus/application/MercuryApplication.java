@@ -65,7 +65,7 @@ public abstract class MercuryApplication implements Application {
 	/**
 	 * The timer of the application in nanoseconds.
 	 */
-	protected Timer timer = new SpeedableNanoTimer();
+	protected SpeedableNanoTimer timer = new SpeedableNanoTimer();
 	/**
 	 * The camera used for rendering.
 	 */

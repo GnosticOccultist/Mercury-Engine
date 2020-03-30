@@ -6,16 +6,6 @@ package fr.mercury.nucleus.utils;
  * @author GnosticOccultist
  */
 public interface Timer {
-
-	/**
-	 * Updates the <code>Timer</code> by updating its {@link #getTimePerFrame()} and {@link #getFrameRate()} values.
-	 */
-	void update();
-	
-	/**
-	 * Resets the <code>Timer</code> by setting the current time as its starting time.
-	 */
-	void reset();
 	
 	/**
 	 * Return the current time in seconds per frame of the <code>Timer</code>.
@@ -53,4 +43,11 @@ public interface Timer {
 	 * @return The amount of timer since the timer has (re)started in timer units.
 	 */
 	long getTime();
+	
+	/**
+	 * Return the resolution of the <code>Timer</code>, converting from seconds to its units.
+	 * 
+	 * @return The resolution used by the timer (&gt;0).
+	 */
+	long getResolution();
 }
