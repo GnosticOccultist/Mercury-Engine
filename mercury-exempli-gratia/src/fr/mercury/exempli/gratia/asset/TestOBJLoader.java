@@ -9,7 +9,7 @@ import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
 import fr.mercury.nucleus.texture.TextureState.WrapMode;
 import fr.mercury.nucleus.utils.OpenGLCall;
-import fr.mercury.nucleus.utils.Timer;
+import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
  * <code>TestOBJLoader</code> showcase the usage of an {@link OBJLoader} to load a {@link PhysicaMundi} in Mercury.
@@ -91,7 +91,7 @@ public class TestOBJLoader extends MercuryApplication {
 	
 	@Override
 	@OpenGLCall
-	protected void update(Timer timer) {
+	protected void update(ReadableTimer timer) {
 		// Rotate slowly the cube, teapot and capricorn.
 		cube.rotate(0, 0.01f, 0);
 		teapot.rotate(0, 0.01f, 0);

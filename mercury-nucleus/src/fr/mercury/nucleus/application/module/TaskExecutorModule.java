@@ -20,7 +20,7 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.application.MercuryContext;
 import fr.mercury.nucleus.utils.OpenGLCall;
-import fr.mercury.nucleus.utils.Timer;
+import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
  * <code>TaskExecutorModule</code> is an implementation of {@link AbstractApplicationModule} which allows
@@ -102,7 +102,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 
 	@Override
 	@OpenGLCall
-	public void update(Timer timer) {
+	public void update(ReadableTimer timer) {
 		// Run the graphics tasks in the rendering thread.
 		// TODO: See if the timer interface can be helpful to pass as an argument.
 		executeGraphics();

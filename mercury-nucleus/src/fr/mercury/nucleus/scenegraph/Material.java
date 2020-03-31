@@ -49,11 +49,11 @@ public class Material {
 	 * In order for the material to be correctly used, {@link #addShaderSource(ShaderSource) add}
 	 * {@link ShaderSource} to it.
 	 * 
-	 * @param name 		  The name of the material.
+	 * @param name 		  The name of the material (not null).
 	 * @param description The description of the material.
 	 */
 	public Material(String name, String description) {
-		Validator.nonNull(name);
+		Validator.nonNull(name, "The material's name can't be null!");
 		
 		this.name = name;
 		this.description = description;
@@ -123,6 +123,14 @@ public class Material {
 		if(texture != null) {
 			texture.cleanup();
 		}
+	}
+	
+	public Material copy() {
+		Material copy = new Material(name, description);
+		copy.prefabUniforms.addAll(prefabUniforms);
+		copy.shaders.putAll(shaders);
+		
+		return copy;
 	}
 	
 	@Override

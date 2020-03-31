@@ -3,6 +3,7 @@ package fr.mercury.exempli.gratia.renderer.logic.state;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.LoggerLevel;
 import fr.mercury.nucleus.application.MercuryApplication;
+import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.renderer.logic.state.BlendState;
 import fr.mercury.nucleus.renderer.logic.state.BlendState.BlendFunction;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
@@ -21,7 +22,7 @@ import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
 import fr.mercury.nucleus.texture.TextureState.WrapMode;
 import fr.mercury.nucleus.utils.OpenGLCall;
-import fr.mercury.nucleus.utils.Timer;
+import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
  * <code>TestRenderState</code> showcase the usage of the {@link RenderState} implementations in a scenegraph to modify the
@@ -51,6 +52,10 @@ public class TestRenderState extends MercuryApplication {
 	 */
 	public static void main(String[] args) {
 		TestRenderState app = new TestRenderState();
+		MercurySettings settings = new MercurySettings(true);
+		settings.addBoolean("Fullscreen", true);
+		
+		app.setSettings(settings);
 		app.start();
 	}
 	
@@ -110,11 +115,15 @@ public class TestRenderState extends MercuryApplication {
 		
 		teapot.setMaterial(materials[2]);
 		// Set the texture of the teapot to the loaded texture atlas.
-		teapot.getMaterial().texture = texture.copy();
+		Texture2D copy = texture.copy();
+		copy.upload();
+		teapot.getMaterial().texture = copy;
 		
 		capricorn.setMaterial(materials[2]);
 		// Set the texture of the capricorn to the loaded texture atlas.
-		capricorn.getMaterial().texture = texture.copy();
+		copy = texture.copy();
+		copy.upload();
+		capricorn.getMaterial().texture = copy;
 		
 		// Apply some render states to the scene-root.
 		PolygonModeState polygonState = new PolygonModeState().setPolygonMode(Face.FRONT_AND_BACK, PolygonMode.LINE).enable();
@@ -133,7 +142,7 @@ public class TestRenderState extends MercuryApplication {
 	
 	@Override
 	@OpenGLCall
-	protected void update(Timer timer) {
+	protected void update(ReadableTimer timer) {
 		super.update(timer);
 		
 		// Rotate slowly the cube, teapot and capricorn.

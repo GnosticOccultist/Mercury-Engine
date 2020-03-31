@@ -2,7 +2,7 @@ package fr.mercury.nucleus.application.module;
 
 import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.utils.OpenGLCall;
-import fr.mercury.nucleus.utils.Timer;
+import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
  * <code>ApplicationModule</code> represents an addon which rely only on the existence of an {@link Application}. It contains
@@ -27,7 +27,7 @@ public interface ApplicationModule {
 	 * @param timer The timer used by the application (not null).
 	 */
 	@OpenGLCall
-	void update(Timer timer);
+	void update(ReadableTimer timer);
 	
 	/**
 	 * Cleanup the <code>ApplicationModule</code> and de-initialized it.

@@ -32,7 +32,7 @@ import fr.mercury.nucleus.scenegraph.visitor.AbstractVisitor;
 import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
 import fr.mercury.nucleus.scenegraph.visitor.Visitor;
-import fr.mercury.nucleus.utils.Timer;
+import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
  * <code>AnimaMundi</code> is an abstraction layer for the <code>Tree-Data-Structure</code> representing 
@@ -159,7 +159,7 @@ public abstract class AnimaMundi {
 	 * 
 	 * @param timer The timer used by the application (not null).
 	 */
-	public void updateGeometricState(Timer timer) {
+	public void updateGeometricState(ReadableTimer timer) {
 		
 		if(dirtyMarks.isEmpty()) {
 			updateChildren(timer);
@@ -182,7 +182,7 @@ public abstract class AnimaMundi {
 	 * 
 	 * @param timer The timer used by the application (not null).
 	 */
-	protected void updateChildren(Timer timer) {}
+	protected void updateChildren(ReadableTimer timer) {}
 	
 	/**
 	 * Update the world {@link Transform} by combining the local transform

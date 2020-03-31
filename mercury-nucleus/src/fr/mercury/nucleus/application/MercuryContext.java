@@ -57,6 +57,7 @@ import fr.mercury.nucleus.renderer.device.Vendor;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.NanoTimer;
 import fr.mercury.nucleus.utils.OpenGLCall;
+import fr.mercury.nucleus.utils.Timer;
 
 /**
  * <code>GLFWContext</code> is a wrapper class to handle the creation of 
@@ -108,7 +109,7 @@ public class MercuryContext implements Runnable {
 	/**
 	 * The timer using to calculate the sleeping time.
 	 */
-	private NanoTimer timer;
+	private Timer timer;
 	/**
 	 * The frame-rate limit.
 	 */

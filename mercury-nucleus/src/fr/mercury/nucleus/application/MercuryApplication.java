@@ -16,6 +16,7 @@ import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
 import fr.mercury.nucleus.utils.OpenGLCall;
+import fr.mercury.nucleus.utils.ReadableTimer;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 import fr.mercury.nucleus.utils.Timer;
 
@@ -65,7 +66,7 @@ public abstract class MercuryApplication implements Application {
 	/**
 	 * The timer of the application in nanoseconds.
 	 */
-	protected SpeedableNanoTimer timer = new SpeedableNanoTimer();
+	protected Timer timer = new SpeedableNanoTimer();
 	/**
 	 * The camera used for rendering.
 	 */
@@ -194,7 +195,7 @@ public abstract class MercuryApplication implements Application {
 	 * @see #internalUpdate()
 	 */
 	@OpenGLCall
-	protected void update(Timer timer) {}
+	protected void update(ReadableTimer timer) {}
 
 	/**
 	 * <b>Don't call manually</b>
