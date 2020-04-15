@@ -13,6 +13,7 @@ import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
+import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.Image;
@@ -57,6 +58,10 @@ public class AssetManager {
 		}
 		
 		throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
+	}
+	
+	public AnimaMundi loadAssimp(String path) {
+		return new AssimpLoader().load(path);
 	}
 	
 	public Material[] loadMaterial(String path) {

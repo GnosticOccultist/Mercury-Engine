@@ -1,9 +1,6 @@
 package fr.mercury.exempli.gratia.renderer.logic.state;
 
-import fr.alchemy.utilities.logging.FactoryLogger;
-import fr.alchemy.utilities.logging.LoggerLevel;
 import fr.mercury.nucleus.application.MercuryApplication;
-import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.renderer.logic.state.BlendState;
 import fr.mercury.nucleus.renderer.logic.state.BlendState.BlendFunction;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
@@ -52,10 +49,6 @@ public class TestRenderState extends MercuryApplication {
 	 */
 	public static void main(String[] args) {
 		TestRenderState app = new TestRenderState();
-		MercurySettings settings = new MercurySettings(true);
-		settings.addBoolean("Fullscreen", true);
-		
-		app.setSettings(settings);
 		app.start();
 	}
 	
@@ -65,7 +58,7 @@ public class TestRenderState extends MercuryApplication {
 		// Load the 2D texture for the cube and upload it directly to the GPU.
 		Texture2D textureOcto = assetManager.loadTexture2D("/textures/octostone.png")
 				.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
-				.setWrapMode(WrapMode.CLAMP_EDGES, WrapMode.CLAMP_EDGES);
+				.setWrapMode(WrapMode.REPEAT, WrapMode.CLAMP_BORDER);
 		textureOcto.upload();
 				
 		// Load the 2D texture for the cube and upload it directly to the GPU.
@@ -76,7 +69,7 @@ public class TestRenderState extends MercuryApplication {
 		
 		PhysicaMundi box = assetManager.loadPhysicaMundi("/model/cube.obj");
 		box.setName("box");
-		box.setTranslation(0.0f, 0.0f, 7f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
+		box.setTranslation(0.0f, 0.0f, 1f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		NucleusMundi transparentNucleus = new NucleusMundi("Transparent Group");
 		
@@ -136,8 +129,6 @@ public class TestRenderState extends MercuryApplication {
 		scene.attachAll(box, transparentNucleus);
 		scene.setRenderStates(new DepthBufferState(), new BlendState(), new FaceCullingState().setFace(Face.BACK).enable());
 		transparentNucleus.setBucket(BucketType.TRANSPARENT);
-		
-		FactoryLogger.getLogger("mercury.renderer").setActive(LoggerLevel.DEBUG, true);
 	}
 	
 	@Override
