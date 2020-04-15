@@ -96,6 +96,9 @@ public abstract class GLBuffer extends GLObject {
 			return;
 		}
 		
+		// Rewind the buffer to prepare for reading.
+		this.data.rewind();
+		
 		if(data instanceof FloatBuffer) {
 			GL15.glBufferData(getOpenGLType(), (FloatBuffer) data, getOpenGLUsage());
 		} else if(data instanceof IntBuffer) {
