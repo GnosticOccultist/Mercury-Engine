@@ -2,6 +2,7 @@ package fr.mercury.exempli.gratia.asset;
 
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.asset.AssimpLoader;
+import fr.mercury.nucleus.asset.AssimpLoader.ConfigFlag;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.TextureAtlas;
@@ -56,17 +57,17 @@ public class TestAssimpLoader extends MercuryApplication {
 		atlas.setIndex(0);
 		
 		// Load and prepare the cube in the scene.
-		cube = (PhysicaMundi) assetManager.loadAssimp("/model/cube.obj");
+		cube = (PhysicaMundi) assetManager.loadAssimp("/model/cube.obj", ConfigFlag.IGNORE_ROOT_NODE);
 		cube.setName("cube");
 		cube.setTranslation(0.0f, 0.0f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		// Load and prepare the teapot in the scene.
-		teapot = (PhysicaMundi) assetManager.loadAssimp("/model/teapot.obj");
+		teapot = (PhysicaMundi) assetManager.loadAssimp("/model/teapot.obj", ConfigFlag.IGNORE_ROOT_NODE);
 		teapot.setName("teapot");
 		teapot.setTranslation(-5.0f, -0.5f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		// Load and prepare the capricorn in the scene.
-		capricorn = (PhysicaMundi) assetManager.loadAssimp("/model/capricorn.obj");
+		capricorn = (PhysicaMundi) assetManager.loadAssimp("/model/capricorn.obj", ConfigFlag.IGNORE_ROOT_NODE);
 		capricorn.setName("capricorn");
 		capricorn.setTranslation(5.0f, -1.0f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(0.05f, 0.05f, 0.05f);
 		

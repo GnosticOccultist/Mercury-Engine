@@ -60,8 +60,8 @@ public class AssetManager {
 		throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
 	}
 	
-	public AnimaMundi loadAssimp(String path) {
-		return new AssimpLoader().load(path);
+	public AnimaMundi loadAssimp(String path, int configFlags) {
+		return new AssimpLoader().load(path, configFlags);
 	}
 	
 	public Material[] loadMaterial(String path) {
