@@ -14,15 +14,16 @@ import fr.alchemy.utilities.event.EventType;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.MercuryContext;
+import fr.mercury.nucleus.application.service.GLFWWindow;
 
 public final class GLFWKeyInput {
 
 	private static final Logger logger = FactoryLogger.getLogger("mercury.input");
 	
 	/**
-	 * The context handling the key input.
+	 * The window handling the key input.
 	 */
-	private final MercuryContext context;
+	private final GLFWWindow window;
 	/**
 	 * The input processor to dispatch the key events to.
 	 */
@@ -40,13 +41,13 @@ public final class GLFWKeyInput {
 	private GLFWCharCallback charCallback;
 
 	/**
-	 * Instantiates a new <code>GLFWKeyInput</code> for the provided {@link MercuryContext}.
+	 * Instantiates a new <code>GLFWKeyInput</code> using the provided {@link GLFWWindow}.
 	 * 
-	 * @param context The context to create the key input for.
+	 * @param window The window to create the key input with.
 	 */
-	public GLFWKeyInput(MercuryContext context) {
-		Validator.nonNull(context);
-		this.context = context;
+	public GLFWKeyInput(GLFWWindow window) {
+		Validator.nonNull(window);
+		this.window = window;
 	}
 
 	/**
@@ -55,9 +56,9 @@ public final class GLFWKeyInput {
 	 */
 	public void initialize() {
 		
-		final long window = context.getWindowID();
+		final var id = window.getID();
 		
-		glfwSetKeyCallback(window, keyCallback = new GLFWKeyCallback() {
+		glfwSetKeyCallback(id, keyCallback = new GLFWKeyCallback() {
 			
 			@Override
 			public void invoke(long window, int key, int scancode, int action, int mods) {
@@ -78,20 +79,20 @@ public final class GLFWKeyInput {
 						break;
 				}
 				
-				final KeyEvent event = new KeyEvent(type, toMercuryCode(key), '\0', mods, repeatCount);
+				final var event = new KeyEvent(type, toMercuryCode(key), '\0', mods, repeatCount);
 				event.setTime(inputTime());
 				queueUpEvent(event);
 			}
 		});
 		
-		glfwSetCharCallback(window, charCallback = new GLFWCharCallback() {
+		glfwSetCharCallback(id, charCallback = new GLFWCharCallback() {
 			
 			@Override
 			public void invoke(long window, int codepoint) {
 				
-				final char keyChar = (char) codepoint;
+				final var keyChar = (char) codepoint;
 				
-				final KeyEvent event = new KeyEvent(KeyEvent.KEY_TYPED, 0x00, keyChar, 0);
+				final var event = new KeyEvent(KeyEvent.KEY_TYPED, 0x00, keyChar, 0);
 				event.setTime(inputTime());
 				queueUpEvent(event);
 			}

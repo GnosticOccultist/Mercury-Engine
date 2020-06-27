@@ -9,7 +9,6 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.service.ApplicationService;
 import fr.mercury.nucleus.asset.AssetManager;
-import fr.mercury.nucleus.input.BaseInputProcessor;
 import fr.mercury.nucleus.input.InputProcessor;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Renderer;
@@ -65,15 +64,15 @@ public abstract class MercuryApplication implements Application {
 	 */
 	protected Timer timer = new SpeedableNanoTimer();
 	/**
-	 * The camera used for rendering.
+	 * The camera or null if doesn't support rendering.
 	 */
 	protected Camera camera;
 	/**
-	 * The renderer.
+	 * The renderer or null if doesn't support rendering.
 	 */
 	protected Renderer renderer;
 	/**
-	 * The root node for the scene.
+	 * The root node for the scene or null if doesn't support rendering.
 	 */
 	protected NucleusMundi scene = new NucleusMundi("root-nucleus");
 	
@@ -102,17 +101,16 @@ public abstract class MercuryApplication implements Application {
 	@OpenGLCall
 	public void internalInitialize() {
 		
-		// Initialize the camera.
-		camera = new Camera(settings.getWidth(), settings.getHeight());
-		camera.setLocation(0f, 0f, 8f);
-		camera.setFrustumPerspective(45F, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
-		
-		// Initialize renderer.
-		renderer = new Renderer(camera);
-		
-		// Initialize input processor with context inputs.
-		var inputProcessor = new BaseInputProcessor(context.getMouseInput(), context.getKeyInput());
-		linkService(inputProcessor);
+		var renderable = context.getType().isRenderable();
+		if(renderable) {
+			// Initialize the camera.
+			camera = new Camera(settings.getWidth(), settings.getHeight());
+			camera.setLocation(0f, 0f, 8f);
+			camera.setFrustumPerspective(45F, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
+			
+			// Initialize renderer.
+			renderer = new Renderer(camera);
+		}
 		
 		// Reset the timer before invoking anything else,
 		// to ensure the first time per frame isn't too large...
@@ -168,11 +166,13 @@ public abstract class MercuryApplication implements Application {
 		// Update the implementation.
 		update(timer);
 		
-		// Update the geometric information of the scene and its hierarchy.
-		scene.updateGeometricState(timer);
-		
-		// Perform rendering of the scene.
-		renderer.renderScene(scene);
+		if(renderer != null) {
+			// Update the geometric information of the scene and its hierarchy.
+			scene.updateGeometricState(timer);
+			
+			// Perform rendering of the scene.
+			renderer.renderScene(scene);
+		}
 	}
 	
 	/**

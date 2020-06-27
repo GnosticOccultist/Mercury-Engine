@@ -2,6 +2,9 @@ package fr.mercury.nucleus.application;
 
 import java.util.HashMap;
 
+import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.application.MercuryContext.Type;
+
 /**
  * <code>MercurySettings</code> stores the settings to be used by the {@link Application}.
  * <p>
@@ -19,6 +22,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 	private static final MercurySettings DEFAULT = new MercurySettings(false);
 	
 	static {
+		DEFAULT.put("ContextType", Type.WINDOW);
 		DEFAULT.put("Width", 1280);
 		DEFAULT.put("Height", 768);
 		DEFAULT.put("Title", "Mercury-Engine");
@@ -56,6 +60,25 @@ public final class MercurySettings extends HashMap<String, Object> {
  	 */
 	public void copyFrom(MercurySettings other) {
 		putAll(other);
+	}
+	
+	/**
+	 * Return the {@link Type} to use for creating the {@link MercuryContext}.
+	 * 
+	 * @return The context type used by the application (not null).
+	 */
+	public Type getContextType() {
+		return (Type) get("ContextType");
+	}
+	
+	/**
+	 * Set the {@link Type} to use for creating the {@link MercuryContext}.
+	 * 
+	 * @param type The context type to use with the application (not null).
+	 */
+	public void setContextType(Type type) {
+		Validator.nonNull(type, "The context type can't be null!");
+		put("ContextType", type);
 	}
 	
 	/**

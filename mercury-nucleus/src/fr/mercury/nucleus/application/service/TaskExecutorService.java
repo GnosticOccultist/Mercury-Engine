@@ -177,7 +177,7 @@ public class TaskExecutorService extends AbstractApplicationService {
 	 */
 	public void submitGraphics(BooleanSupplier action) {
 		Validator.nonNull(action, "The task to be executed can't be null!");
-		if(MercuryContext.isGLThread()) {
+		if(MercuryContext.isMainThread()) {
 			action.getAsBoolean();
 		} else {
 			graphicsExecutor.addLast(new GraphicsAction(action));
@@ -195,7 +195,7 @@ public class TaskExecutorService extends AbstractApplicationService {
 	 */
 	public void submitGraphicsBlocking(BooleanSupplier action) {
 		Validator.nonNull(action, "The task to be executed can't be null!");
-		if(MercuryContext.isGLThread()) {
+		if(MercuryContext.isMainThread()) {
 			if(!action.getAsBoolean()) {
 				GraphicsAction graphicsAction = new GraphicsAction(action);
 				graphicsExecutor.addLast(graphicsAction);

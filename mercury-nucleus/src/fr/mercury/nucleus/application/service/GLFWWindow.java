@@ -188,7 +188,7 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 	public void moveWindow(int x, int y) {
 		Validator.nonNegative(x, "The X coordinate of the window can't be negative!");
 		Validator.nonNegative(y, "The Y coordinate of the window can't be negative!");
-		MercuryContext.checkGLThread();
+		MercuryContext.checkMainThread();
 		glfwSetWindowPos(window, x, y);
 	}
 
@@ -204,9 +204,27 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 	@OpenGLCall
 	public void setTitle(String title) {
 		if (window != NULL) {
-			MercuryContext.checkGLThread();
+			MercuryContext.checkMainThread();
 			glfwSetWindowTitle(window, title);
 		}
+	}
+	
+	/**
+	 * Return the window width in screen coordinates.
+	 * 
+	 * @return The window width.
+	 */
+	public int getWidth() {
+		return application.getSettings().getWidth();
+	}
+	
+	/**
+	 * Return the window height in screen coordinates.
+	 * 
+	 * @return The window height.
+	 */
+	public int getHeight() {
+		return application.getSettings().getHeight();
 	}
 
 	@Override

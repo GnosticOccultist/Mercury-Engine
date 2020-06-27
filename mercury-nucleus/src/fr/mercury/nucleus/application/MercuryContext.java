@@ -14,20 +14,21 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.service.GLFWWindow;
 import fr.mercury.nucleus.application.service.Window;
+import fr.mercury.nucleus.input.BaseInputProcessor;
 import fr.mercury.nucleus.input.GLFWKeyInput;
 import fr.mercury.nucleus.input.GLFWMouseInput;
 import fr.mercury.nucleus.renderer.device.PhysicalDevice;
 import fr.mercury.nucleus.renderer.device.Vendor;
-import fr.mercury.nucleus.utils.GLException;
+import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.NanoTimer;
 import fr.mercury.nucleus.utils.Timer;
 
 /**
- * <code>GLFWContext</code> is a wrapper class to handle the creation of GLFW
- * context and LWJGL initialization.
+ * <code>MercuryContext</code> represent the core layer of an {@link Application}. It contains the main-loop within which the
+ * update and render logic take place. The usage of a context is defined by its {@link Type}, for example some context type 
+ * can't display a window, handle inputs or play sounds.
  * <p>
- * It also contains the <code>Application</code> main-loop with update and
- * render methods.
+ * 
  * 
  * @author GnosticOccultist
  */
@@ -40,20 +41,20 @@ public class MercuryContext implements Runnable {
 	/**
 	 * The name of the rendering thread or main thread.
 	 */
-	protected static final String GL_THREAD_NAME = "OpenGL Render Thread";
+	protected static final String MAIN_THREAD_NAME = "Main/Render Thread";
 	/**
 	 * A reference of the rendering thread or main thread.
 	 */
-	protected static Thread GL_THREAD_REFERENCE;
+	protected static Thread MAIN_THREAD_REFERENCE;
 
 	/**
 	 * The application which manages the context.
 	 */
 	private Application application;
 	/**
-	 * The window used by the context, or null for headless context.
+	 * The type of context.
 	 */
-	private Window window;
+	private Type type;
 	/**
 	 * The general settings.
 	 */
@@ -79,32 +80,44 @@ public class MercuryContext implements Runnable {
 	 */
 	private double frameSleepTime;
 	/**
-	 * The mouse input handler.
-	 */
-	private GLFWMouseInput mouseInput;
-	/**
-	 * The mouse input handler.
-	 */
-	private GLFWKeyInput keyInput;
-	/**
-	 * The physical device used for rendering.
+	 * The physical device used for rendering, or null for headless context.
 	 */
 	private PhysicalDevice physicalDevice;
+	/**
+	 * The window used by the context, or null for headless context.
+	 */
+	private Window window;
 
 	/**
-	 * Instantiates and return the <code>MercuryContext</code> bound to the provided
-	 * application and using the provided <code>MercurySettings</code>.
+	 * Instantiates and return a new <code>MercuryContext</code> bound to the provided {@link Application}.
+	 * The context is created accordingly to the given {@link MercurySettings}.
 	 * 
-	 * @param application The application to bound to.
-	 * @param settings    The settings.
-	 * @return The new context.
+	 * @param application The application to bound the context to (not null).
+	 * @param settings    The settings to use for creation (not null).
+	 * @return 			  A new context instance (not null).
 	 */
 	public static MercuryContext newContext(Application application, MercurySettings settings) {
-
-		MercuryContext context = new MercuryContext();
+		Validator.nonNull(application, "The application can't be null!");
+		Validator.nonNull(settings, "The settings can't be null!");
+		
+		var context = new MercuryContext();
 		context.setSettings(settings);
 		context.setApplication(application);
-
+		
+		var type = settings.getContextType();
+		context.type = type;
+		switch (type) {
+			case HEADLESS:
+				// No need for window.
+				break;
+			case WINDOW:
+				context.window = new GLFWWindow();
+				application.linkService(context.window);
+				break;
+			default:
+				break;
+		}
+		
 		return context;
 	}
 
@@ -114,9 +127,14 @@ public class MercuryContext implements Runnable {
 	 * Please use {@link #newContext(Application, MercurySettings)} to create the
 	 * <code>MercuryContext</code>.
 	 */
-	private MercuryContext() {
-	}
+	private MercuryContext() {}
 
+	/**
+	 * Initialize the <code>MercuryContext</code> if it hasn't been already.
+	 * The method will start the main-loop of the application.
+	 * 
+	 * @see #restart()
+	 */
 	public void initialize() {
 		if (initialized.get()) {
 			logger.warning("The context is already initialized!");
@@ -127,8 +145,11 @@ public class MercuryContext implements Runnable {
 	}
 
 	/**
-	 * Restart the context to apply new settings. The context should first be
-	 * initialized.
+	 * Restart the <code>MercuryContext</code> to apply new {@link MercurySettings}. 
+	 * The context should first be initialized.
+	 * 
+	 * @see #initialize()
+	 * @see #setSettings(MercurySettings)
 	 */
 	public void restart() {
 		if (initialized.get()) {
@@ -143,8 +164,8 @@ public class MercuryContext implements Runnable {
 
 		// Set the correct name for the thread and keep a reference for checking
 		// purposes.
-		Thread.currentThread().setName(GL_THREAD_NAME);
-		GL_THREAD_REFERENCE = Thread.currentThread();
+		Thread.currentThread().setName(MAIN_THREAD_NAME);
+		MAIN_THREAD_REFERENCE = Thread.currentThread();
 
 		if (application == null) {
 			throw new IllegalArgumentException("The bounded application cannot be null !");
@@ -159,7 +180,8 @@ public class MercuryContext implements Runnable {
 
 			runLoop();
 
-			if (application.checkService(GLFWWindow.class, w -> w.shouldClose())) {
+			if (application.checkService(GLFWWindow.class, 
+					w -> w.shouldClose())) {
 				break;
 			}
 		}
@@ -168,7 +190,7 @@ public class MercuryContext implements Runnable {
 		/*
 		 * Wait until all GL commands are executed.
 		 */
-		GL11C.glFinish();
+		ifRenderable(GL11C::glFinish);
 	}
 
 	/**
@@ -194,7 +216,7 @@ public class MercuryContext implements Runnable {
 		application.internalUpdate();
 
 		// Try flushing all previous GL commands before swapping buffers.
-		GL11C.glFlush();
+		ifRenderable(GL11C::glFlush);
 
 		application.service(GLFWWindow.class, GLFWWindow::finishFrame);
 
@@ -203,7 +225,7 @@ public class MercuryContext implements Runnable {
 		if (frameRateLimit != settings.getFrameRate()) {
 			setFrameRateLimit(settings.getFrameRate());
 		}
-
+		
 		if (frameRateLimit > 0) {
 			var sleep = frameSleepTime - (timer.getTimePerFrame() / 1000.0);
 			var sleepMillis = (long) sleep;
@@ -220,10 +242,12 @@ public class MercuryContext implements Runnable {
 	}
 
 	/**
-	 * Initialize the LWJGL display in OpenGL Thread.
+	 * Initialize the <code>MercuryContext</code> inside the main {@link Thread} to handle
+	 * graphics related actions.
 	 * 
-	 * @return
-	 * @throws Exception
+	 * @return Whether the context has been successfully initialized.
+	 * 
+	 * @throws Exception Thrown if the initialization failed.
 	 */
 	private boolean initializeInMercury() {
 		try {
@@ -232,19 +256,15 @@ public class MercuryContext implements Runnable {
 
 			createContext(settings);
 
-			mouseInput = new GLFWMouseInput(this);
-			mouseInput.initialize();
-
-			keyInput = new GLFWKeyInput(this);
-			keyInput.initialize();
-
 			initialized.set(true);
 
 		} catch (Exception ex) {
-
-			// Creation failed destroying the context
-			// and stopping there.
+			/*
+			 * Creation failed destroying the window and input 
+			 * processor and stopping there.
+			 */
 			application.service(GLFWWindow.class, GLFWWindow::destroy);
+			application.service(BaseInputProcessor.class, BaseInputProcessor::cleanup);
 			ex.printStackTrace();
 			return false;
 		}
@@ -254,13 +274,16 @@ public class MercuryContext implements Runnable {
 	}
 
 	private void createContext(MercurySettings settings) {
-
-		window = new GLFWWindow();
-		application.linkService((AbstractApplicationService) window);
+		// The context doesn't need a window, nor a renderer, nor input.
+		if(window == null) {
+			return;
+		}
+		
 		window.initialize(settings);
 
 		// Make the OpenGL context current.
 		window.makeContextCurrent();
+		
 		GLCapabilities capabilities = GL.createCapabilities();
 
 		// Once the OpenGL context is set, change vSync if needed.
@@ -285,6 +308,18 @@ public class MercuryContext implements Runnable {
 
 		// Finally show the window when finished.
 		window.show();
+		
+		var glfwWindow = (GLFWWindow) window;
+		
+		var mouseInput = new GLFWMouseInput(glfwWindow);
+		mouseInput.initialize();
+
+		var keyInput = new GLFWKeyInput(glfwWindow);
+		keyInput.initialize();
+		
+		// Initialize input processor with window input handlers.
+		var inputProcessor = new BaseInputProcessor(mouseInput, keyInput);
+		application.linkService(inputProcessor);
 	}
 
 	/**
@@ -321,25 +356,25 @@ public class MercuryContext implements Runnable {
 	}
 
 	/**
-	 * Check that the currently used {@link Thread} is the one used by the
-	 * <code>OpenGL</code> context for rendering.
+	 * Check that the currently used {@link Thread} is the main one, usually
+	 * the one where rendering needs to occur.
 	 * 
-	 * @throws GLException Thrown if the current thread isn't the rendering one.
+	 * @throws MercuryException Thrown if the current thread isn't the main one.
 	 */
-	public static void checkGLThread() {
-		if (GL_THREAD_REFERENCE != Thread.currentThread()) {
-			throw new GLException("The method should only be called from '" + GL_THREAD_REFERENCE + "'!");
+	public static void checkMainThread() {
+		if (MAIN_THREAD_REFERENCE != Thread.currentThread()) {
+			throw new MercuryException("The method should only be called from '" + MAIN_THREAD_REFERENCE + "'!");
 		}
 	}
 
 	/**
-	 * Return whether the currently used {@link Thread} is the one used by the
-	 * <code>OpenGL</code> context for rendering.
+	 * Return whether the currently used {@link Thread} is the main one, usually
+	 * the one where rendering needs to occur.
 	 * 
-	 * @return Whether the current thread is the rendering one.
+	 * @return Whether the current thread is the main one.
 	 */
-	public static boolean isGLThread() {
-		return GL_THREAD_REFERENCE == Thread.currentThread();
+	public static boolean isMainThread() {
+		return MAIN_THREAD_REFERENCE == Thread.currentThread();
 	}
 
 	/**
@@ -376,44 +411,73 @@ public class MercuryContext implements Runnable {
 	public void setApplication(Application application) {
 		this.application = application;
 	}
-
+	
 	/**
-	 * Return the width of the <code>MercuryContext</code>'s window.
+	 * Return the {@link Type} of the <code>MercuryContext</code>.
 	 * 
-	 * @return The width of the context window.
+	 * @return The type of context (not null).
 	 */
-	public int getWidth() {
-		return settings.getWidth();
+	public Type getType() {
+		return type;
 	}
-
+	
 	/**
-	 * Return the height of the <code>MercuryContext</code>'s window.
+	 * Execute the provided {@link Runnable} if the <code>MercuryContext</code> is renderable.
 	 * 
-	 * @return The height of the context window.
+	 * @param action The action to execute (not null).
+	 * 
+	 * @see Type#isRenderable()
 	 */
-	public int getHeight() {
-		return settings.getHeight();
+	public void ifRenderable(Runnable action) {
+		Validator.nonNull(action, "The action can't be null!");
+		
+		var renderable = type.isRenderable();
+		if(renderable) {
+			action.run();
+		}
 	}
-
+	
 	/**
-	 * Return the {@link GLFWMouseInput} for the <code>MercuryContext</code>.
+	 * <code>Type</code> enumerates the different context which can be created along the {@link Application}.
 	 * 
-	 * @return The GLFW mouse input.
+	 * @author GnosticOccultist
 	 */
-	public GLFWMouseInput getMouseInput() {
-		return mouseInput;
-	}
-
-	/**
-	 * Return the {@link GLFWKeyInput} for the <code>MercuryContext</code>.
-	 * 
-	 * @return The GLFW key input.
-	 */
-	public GLFWKeyInput getKeyInput() {
-		return keyInput;
-	}
-
-	public long getWindowID() {
-		return window.getID();
+	public enum Type {
+		
+		/**
+		 * The window context supports displaying a window in fullscreen or windowed mode,
+		 * and render graphics onto it. The window is created using native operating system.
+		 * <p>
+		 * This type also supports an event-based input system (mouse and keyboard), as well
+		 * as sound playing and streaming.
+		 */
+		WINDOW,
+		/**
+		 * The headless context doesn't define any renderable surface and doesn't provide
+		 * any window, input or sound playing or streaming.
+		 * <p>
+		 * Generally used to create a server.
+		 */
+		HEADLESS {
+			
+			/**
+			 * Return false, headless context shouldn't be renderable.
+			 * 
+			 * @return Always false.
+			 */
+			@Override
+			protected boolean isRenderable() {
+				return false;
+			}
+		};
+		
+		/**
+		 * Return whether the <code>Type</code> of context support rendering on a surface.
+		 * 
+		 * @return Whether the context supports rendering.
+		 */
+		protected boolean isRenderable() {
+			return true;
+		}
 	}
 }
