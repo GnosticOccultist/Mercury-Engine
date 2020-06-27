@@ -9,6 +9,7 @@ import java.util.List;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.alchemy.utilities.logging.LoggerLevel;
+import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
 import fr.mercury.nucleus.utils.data.Allocator;
 
@@ -40,6 +41,10 @@ public final class NativeObjectCleaner {
 	 * The list of cleaning actions to be executed at the end of the frame.
 	 */
 	private static final List<Runnable> CLEAN_ACTIONS = new ArrayList<>();
+	/**
+	 * The list of all cleanables.
+	 */
+	private static final List<Cleanable> CLEANABLES = new ArrayList<>();
 
 	static {
 		logger.setActive(LoggerLevel.DEBUG, true);
@@ -48,8 +53,7 @@ public final class NativeObjectCleaner {
 	/**
 	 * Private constructor to inhibit instantiation of <code>NativeObjectCleaner</code>.
 	 */
-	private NativeObjectCleaner() {
-	}
+	private NativeObjectCleaner() {}
 
 	/**
 	 * Registers the specified {@link NativeObject} to be referenced and cleaned by
@@ -62,8 +66,14 @@ public final class NativeObjectCleaner {
 	 */
 	public static Cleanable register(NativeObject nativeObj) {
 		var id = nativeObj.getID();
-		Runnable cleanupTask = () -> nativeObj.cleanup(id);
-		return register(nativeObj, () -> CLEAN_ACTIONS.add(cleanupTask));
+		var name = nativeObj.toString();
+		
+		var cleanupTask = nativeObj.onDestroy(id);
+		return register(nativeObj, () -> { 
+			
+			logger.debug("Cleaning up " + name + ".");
+			CLEAN_ACTIONS.add(cleanupTask);
+		});
 	}
 
 	/**
@@ -78,8 +88,10 @@ public final class NativeObjectCleaner {
 	 */
 	public static Cleanable register(Object obj, Runnable cleanAction) {
 		synchronized (LOCK) {
-			logger.debug("Registered " + obj + "");
-			return CLEANER.register(obj, cleanAction);
+			logger.debug("Registered " + obj + ".");
+			var cleanable = CLEANER.register(obj, cleanAction);
+			CLEANABLES.add(cleanable);
+			return cleanable;
 		}
 	}
 
@@ -99,5 +111,26 @@ public final class NativeObjectCleaner {
 			
 			CLEAN_ACTIONS.clear();
 		}
+	}
+	
+	/**
+	 * Clean all previously registered objects by invoking their cleaning action.
+	 * The method should be called on the render thread if it can handle {@link GLObject}.
+	 * The method is usually invoked when the {@link Application} is closing.
+	 */
+	public static void cleanAll() {
+		if (CLEANABLES.isEmpty()) {
+			return;
+		}
+		
+		synchronized (LOCK) {
+			for (var cleanable : CLEANABLES) {
+				cleanable.clean();
+			}
+			
+			CLEANABLES.clear();
+		}
+		
+		cleanUnused();
 	}
 }

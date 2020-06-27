@@ -9,13 +9,13 @@ import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
- * <code>VertexArray</code> is a <code>GLObject</code>, which can contain a list of <code>VertexBuffer</code>
+ * <code>VertexArray</code> (VAO) is an implementation of {@link GLObject}, which can contain a list of {@link VertexBuffer}
  * associated to an attribute.
- * The attribute can be asssigned to a location and later, be enabled to access the stored data of the <code>VertexBuffer</code>
- * and use it for the rendering process.
+ * The attribute can be asssigned to a location and later, be enabled to access the stored data of said buffer and use 
+ * it for the rendering process.
  * <p>
- * Before storing any <code>VertexBuffer</code> or creating the attributes, the <code>VertexArray</code> needs to be created
- * and bound to the OpenGL context, marking it as currently usable.
+ * Before storing any vertex buffer or creating the attributes, the vertex array needs to be {@link #upload() created and bound} 
+ * to the OpenGL context, marking it as currently usable.
  * 
  * @author GnosticOccultist
  */
@@ -29,7 +29,18 @@ public final class VertexArray extends GLObject {
 	 * @return	  Whether the vertex array is valid.
 	 */
 	public static boolean valid(VertexArray vao) {
-		return GL30.glIsVertexArray(vao.getID());
+		return valid(vao.id);
+	}
+	
+	/**
+	 * Determines if the provided {@link VertexArray} correspond to an OpenGL 
+	 * vertex array object.
+	 * 
+	 * @param id The identifier of the native vertex array to validate.
+	 * @return	 Whether the native vertex array is valid.
+	 */
+	public static boolean valid(int id) {
+		return GL30.glIsVertexArray(id);
 	}
 	
 	/**
@@ -68,6 +79,7 @@ public final class VertexArray extends GLObject {
 	}
 	
 	@Override
+	@OpenGLCall
 	public void cleanup() {
 		unbind();
 		
@@ -84,5 +96,11 @@ public final class VertexArray extends GLObject {
 	@OpenGLCall
 	protected Consumer<Integer> deleteAction() {
 		return GL30::glDeleteVertexArrays;
+	}
+	
+	@Override
+	@OpenGLCall
+	public Runnable onDestroy(int id) {
+		return () -> GL30.glDeleteVertexArrays(id);
 	}
 }

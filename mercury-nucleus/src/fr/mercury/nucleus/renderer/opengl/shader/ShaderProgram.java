@@ -306,6 +306,7 @@ public final class ShaderProgram extends GLObject {
 	}
 	
 	@Override
+	@OpenGLCall
 	public void cleanup() {
 		uniforms.values().forEach(Uniform::cleanup);
 		uniforms.clear();
@@ -315,7 +316,14 @@ public final class ShaderProgram extends GLObject {
 			source.cleanup();
 		}
 		sources.clear();
+		
 		super.cleanup();
+	}
+	
+	@Override
+	@OpenGLCall
+	public Runnable onDestroy(int id) {
+		return () -> GL20.glDeleteProgram(id);
 	}
 	
 	@Override

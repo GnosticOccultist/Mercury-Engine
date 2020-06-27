@@ -160,6 +160,12 @@ public final class ShaderSource extends GLObject {
 		return GL20::glDeleteShader;
 	}
 	
+	@Override
+	@OpenGLCall
+	public Runnable onDestroy(int id) {
+		return () -> GL20.glDeleteShader(id);
+	}
+	
 	/**
 	 * <code>ShaderType</code> represents the type of OpenGL Shader, which control its own
 	 * pipeline.

@@ -334,4 +334,10 @@ public class VertexBuffer extends GLBuffer {
 	protected Consumer<Integer> deleteAction() {
 		return GL15::glDeleteBuffers;
 	}
+	
+	@Override
+	@OpenGLCall
+	public Runnable onDestroy(int id) {
+		return () -> GL15.glDeleteBuffers(id);
+	}
 }

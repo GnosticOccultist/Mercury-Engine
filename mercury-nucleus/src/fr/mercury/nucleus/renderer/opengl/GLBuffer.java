@@ -137,6 +137,7 @@ public abstract class GLBuffer extends GLObject {
 	}
 	
 	@Override
+	@OpenGLCall
 	public void cleanup() {
 		unbind();
 		

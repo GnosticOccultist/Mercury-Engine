@@ -29,19 +29,25 @@ public abstract class NativeObject {
 
 	/**
 	 * Cleanup the <code>NativeObject</code> once its associated native object isn't needed anymore.
-	 * <p>
-	 * This method is generally called automatically by the {@link NativeObjectCleaner}.
-	 * 
-	 * @param id The identifier of the associated native object (&gt;0).
+	 * This method will also reset the state of the native object to be later reused.
 	 */
 	@OpenGLCall
-	public abstract void cleanup(int id);
+	public abstract void cleanup();
 
-	public abstract Runnable onDestroy();
+	/**
+	 * Called by the {@link NativeObjectCleaner} when the <code>NativeObject</code> is marked as unused.
+	 * <p>
+	 * Implementation of this method, should only call destroy method on the native side staticly, not through
+	 * the object's instance.
+	 * 
+	 * @param id The identifier of the native object (&gt;0).
+	 * @return	 A runnable action to execute when the object is marked as unused.
+	 */
+	@OpenGLCall
+	public abstract Runnable onDestroy(int id);
 
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "#" + getID();
 	}
-
 }

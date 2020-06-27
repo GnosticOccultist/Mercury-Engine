@@ -111,6 +111,12 @@ public class Framebuffer extends GLObject {
 		return GL30::glDeleteFramebuffers;
 	}
 	
+	@Override
+	@OpenGLCall
+	public Runnable onDestroy(int id) {
+		return () -> GL30.glDeleteFramebuffers(id);
+	}
+	
 	/**
 	 * <code>FramebufferTarget</code> enumerates all target parameter available when creating, binding/unbinding, or other 
 	 * commands with a {@link Framebuffer} inside the OpenGL context. 

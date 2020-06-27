@@ -19,6 +19,7 @@ import fr.mercury.nucleus.utils.ReadableTimer;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 import fr.mercury.nucleus.utils.Timer;
 import fr.mercury.nucleus.utils.data.Allocator;
+import fr.mercury.nucleus.utils.gc.NativeObjectCleaner;
 
 /**
  * <code>MercuryApplication</code> is an abstract implementation of a usable {@link Application} using the <code>Mercury-Engine</code>.
@@ -187,6 +188,8 @@ public abstract class MercuryApplication implements Application {
 			logger.debug(count + " pushed stack on the current frame. Consider "
 					+ "popping them when no longer used!");
 		}
+		
+		NativeObjectCleaner.cleanUnused();
 	}
 	
 	/**
@@ -222,7 +225,7 @@ public abstract class MercuryApplication implements Application {
 		services.clear();
 		
 		timer.reset();
-		renderer.cleanup(scene);
+		NativeObjectCleaner.cleanAll();
 		
 		logger.info("Closing the application: " + getClass().getSimpleName());
 	}

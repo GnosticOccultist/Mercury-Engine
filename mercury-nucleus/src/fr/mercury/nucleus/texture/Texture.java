@@ -144,7 +144,7 @@ public abstract class Texture extends GLObject {
 		}
 		
 		// Don't know if it's really useful...
-		GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
+		GL11C.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
 			
 		// Prepare image buffer for reading.
 		ByteBuffer buffer = image.getData();
@@ -165,22 +165,22 @@ public abstract class Texture extends GLObject {
 	protected void applyParameters() {
 		
 		if(currentState.minFilter != toApply.minFilter) {
-			GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_MIN_FILTER, toApply.determineMinFilter());
+			GL11C.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_MIN_FILTER, toApply.determineMinFilter());
 			currentState.minFilter = toApply.minFilter;
 		}
 		
 		if(currentState.magFilter != toApply.magFilter) {
-			GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_MAG_FILTER, toApply.determineMagFilter());
+			GL11C.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_MAG_FILTER, toApply.determineMagFilter());
 			currentState.magFilter = toApply.magFilter;
 		}
 		
 		if(currentState.sWrap != toApply.sWrap) {
-			GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_WRAP_S, toApply.determineSWrapMode());
+			GL11C.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_WRAP_S, toApply.determineSWrapMode());
 			currentState.sWrap = toApply.sWrap;
 		}
 		
 		if(currentState.tWrap != toApply.tWrap) {
-			GL11.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_WRAP_T, toApply.determineTWrapMode());
+			GL11C.glTexParameteri(getOpenGLType(), GL11.GL_TEXTURE_WRAP_T, toApply.determineTWrapMode());
 			currentState.tWrap = toApply.tWrap;
 		}
 		
@@ -322,6 +322,7 @@ public abstract class Texture extends GLObject {
 	 * It also {@link TextureState#reset() reset} the state of the <code>Texture</code> for later utilization.
 	 */
 	@Override
+	@OpenGLCall
 	public void cleanup() {
 		super.cleanup();
 		
@@ -391,6 +392,12 @@ public abstract class Texture extends GLObject {
 	@OpenGLCall
 	protected Consumer<Integer> deleteAction() {
 		return GL11::glDeleteTextures;
+	}
+	
+	@Override
+	@OpenGLCall
+	public Runnable onDestroy(int id) {
+		return () -> GL11.glDeleteTextures(id);
 	}
 	
 	/**
