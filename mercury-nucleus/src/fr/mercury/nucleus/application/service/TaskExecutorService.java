@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.application.module;
+package fr.mercury.nucleus.application.service;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -18,12 +18,14 @@ import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.Application;
+import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.application.MercuryContext;
+import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
- * <code>TaskExecutorModule</code> is an implementation of {@link AbstractApplicationModule} which allows
+ * <code>TaskExecutorModule</code> is an implementation of {@link AbstractApplicationService} which allows
  * for asynchronous execution of submitted tasks using an {@link ExecutorService} containing multiple 
  * separate {@link Thread}.
  * It also allows execution of tasks in the <code>OpenGL</code> {@link Thread}, for any graphics related methods.
@@ -39,7 +41,7 @@ import fr.mercury.nucleus.utils.ReadableTimer;
  * 
  * @author GnosticOccultist
  */
-public class TaskExecutorModule extends AbstractApplicationModule {
+public class TaskExecutorService extends AbstractApplicationService {
 	
 	/**
 	 * The logger for the tasking module.
@@ -68,7 +70,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	 * Instantiates a new <code>TaskExecutorModule</code> with the default {@link #NB_THREADS}
 	 * number of {@link Thread} to generate in the pool.
 	 */
-	public TaskExecutorModule() {
+	public TaskExecutorService() {
 		this(NB_THREADS);
 	}
 	
@@ -78,7 +80,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	 * 
 	 * @param nbThreads The number of threads to generate in the pool.
 	 */
-	public TaskExecutorModule(int nbThreads) {
+	public TaskExecutorService(int nbThreads) {
 		restartExecutor(nbThreads);
 		this.scheduledService = Executors.newSingleThreadScheduledExecutor();
 		this.graphicsExecutor = new ConcurrentLinkedDeque<>();
@@ -86,7 +88,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	
 	@Override
 	@OpenGLCall
-	public void initialize(Application application) {
+	public void initialize(MercurySettings settings) {
 		if(executor == null) {
 			restartExecutor(NB_THREADS);
 		}
@@ -97,7 +99,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 			this.graphicsExecutor = new ConcurrentLinkedDeque<>();
 		}
 		
-		super.initialize(application);
+		super.initialize(settings);
 	}
 
 	@Override
@@ -245,8 +247,8 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 	 * on the main {@link Thread} to deal with graphics and a {@link Semaphore} which allows for blocking the thread
 	 * until successful execution.
 	 * 
-	 * @see TaskExecutorModule#submitGraphics(BooleanSupplier)
-	 * @see TaskExecutorModule#submitGraphicsBlocking(BooleanSupplier)
+	 * @see TaskExecutorService#submitGraphics(BooleanSupplier)
+	 * @see TaskExecutorService#submitGraphicsBlocking(BooleanSupplier)
 	 * 
 	 * @author GnosticOccultist
 	 */
@@ -263,7 +265,7 @@ public class TaskExecutorModule extends AbstractApplicationModule {
 		
 		/**
 		 * Private constructor to inhibit instantiation of <code>GraphicsAction</code>.
-		 * Use {@link TaskExecutorModule#submitGraphics(BooleanSupplier)} or {@link TaskExecutorModule#submitGraphicsBlocking(BooleanSupplier)}
+		 * Use {@link TaskExecutorService#submitGraphics(BooleanSupplier)} or {@link TaskExecutorService#submitGraphicsBlocking(BooleanSupplier)}
 		 * to create and submit a new instance of this class.
 		 * 
 		 * @param action The action to execute (not null).

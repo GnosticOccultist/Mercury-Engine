@@ -55,7 +55,7 @@ public final class GLFWKeyInput {
 	 */
 	public void initialize() {
 		
-		final long window = context.getWindow();
+		final long window = context.getWindowID();
 		
 		glfwSetKeyCallback(window, keyCallback = new GLFWKeyCallback() {
 			

@@ -1,7 +1,7 @@
 package fr.mercury.exempli.gratia.texture;
 
 import fr.mercury.nucleus.application.MercuryApplication;
-import fr.mercury.nucleus.application.module.TaskExecutorModule;
+import fr.mercury.nucleus.application.service.TaskExecutorService;
 import fr.mercury.nucleus.renderer.logic.state.BlendState;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
@@ -72,9 +72,9 @@ public class TestTextureAtlas extends MercuryApplication {
 		scene.setRenderStates(new DepthBufferState(), new BlendState(), new FaceCullingState().setFace(Face.BACK).enable());
 		
 		// Link the task execution module to the application and schedule an updating index task each second.
-		TaskExecutorModule module = new TaskExecutorModule();
+		TaskExecutorService module = new TaskExecutorService();
 		module.scheduleAtFixedRate(this::updateIndex, 1000);
-		linkModule(module);
+		linkService(module);
 	}
 	
 	@Override

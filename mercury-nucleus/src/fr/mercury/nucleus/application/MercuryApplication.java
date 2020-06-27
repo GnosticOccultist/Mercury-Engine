@@ -7,7 +7,7 @@ import java.util.Set;
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
-import fr.mercury.nucleus.application.module.ApplicationModule;
+import fr.mercury.nucleus.application.service.ApplicationService;
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.input.BaseInputProcessor;
 import fr.mercury.nucleus.input.InputProcessor;
@@ -19,6 +19,7 @@ import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.ReadableTimer;
 import fr.mercury.nucleus.utils.SpeedableNanoTimer;
 import fr.mercury.nucleus.utils.Timer;
+import fr.mercury.nucleus.utils.data.Allocator;
 
 /**
  * <code>MercuryApplication</code> is an abstract implementation of a usable {@link Application} using the <code>Mercury-Engine</code>.
@@ -32,7 +33,7 @@ import fr.mercury.nucleus.utils.Timer;
  * notified about inputs related events.
  * 
  * @see #getScene()
- * @see #getModule(Class)
+ * @see #getService(Class)
  * 
  * @author GnosticOccultist
  */
@@ -52,17 +53,13 @@ public abstract class MercuryApplication implements Application {
 	 */
 	protected MercurySettings settings;
 	/**
-	 * The set of modules linked to the application.
+	 * The set of services linked to the application.
 	 */
-	protected final Set<ApplicationModule> modules = new HashSet<>();
+	protected final Set<ApplicationService> services = new HashSet<>();
 	/**
 	 * The asset manager.
 	 */
 	protected AssetManager assetManager = new AssetManager();
-	/**
-	 * The base input processor.
-	 */
-	protected BaseInputProcessor inputProcessor;
 	/**
 	 * The timer of the application in nanoseconds.
 	 */
@@ -114,14 +111,15 @@ public abstract class MercuryApplication implements Application {
 		renderer = new Renderer(camera);
 		
 		// Initialize input processor with context inputs.
-		inputProcessor = new BaseInputProcessor(context.getMouseInput(), context.getKeyInput());
+		var inputProcessor = new BaseInputProcessor(context.getMouseInput(), context.getKeyInput());
+		linkService(inputProcessor);
 		
 		// Reset the timer before invoking anything else,
 		// to ensure the first time per frame isn't too large...
 		timer.reset();
 		
-		// Initialize application's modules.
-		modules.forEach(module -> module.initialize(this));
+		// Initialize application's services.
+		services.stream().filter(module -> !module.isInitialized()).forEach(module -> module.initialize(settings));
 		
 		// Initialize the implementation.
 		initialize();
@@ -162,16 +160,10 @@ public abstract class MercuryApplication implements Application {
 		
 		timer.update();
 		
-		if(settings.getBoolean("ShowFPS")) {
-			context.setTitle(settings.getTitle() + " - " + (int) (timer.getFrameRate()) + " FPS");
-		}
-		
-		inputProcessor.update();
-		
-		// Initialize modules which haven't already.
-		modules.stream().filter(module -> !module.isInitialized()).forEach(module -> module.initialize(this));
-		// Update application's modules.
-		modules.stream().filter(ApplicationModule::isEnabled).forEach(module -> module.update(timer));
+		// Initialize services which haven't already.
+		services.stream().filter(module -> !module.isInitialized()).forEach(module -> module.initialize(settings));
+		// Update application's services.
+		services.stream().forEach(module -> module.update(timer));
 		
 		// Update the implementation.
 		update(timer);
@@ -181,6 +173,20 @@ public abstract class MercuryApplication implements Application {
 		
 		// Perform rendering of the scene.
 		renderer.renderScene(scene);
+	}
+	
+	/**
+	 * Performs some actions with the <code>MercuryApplication</code> once the front and back buffer have
+	 * been swapped, meaning the rendered frame is visible on the window.
+	 */
+	@Override
+	@OpenGLCall
+	public void postFrame() {
+		var count = Allocator.stackFrameIndex();
+		if(count > 0) {
+			logger.debug(count + " pushed stack on the current frame. Consider "
+					+ "popping them when no longer used!");
+		}
 	}
 	
 	/**
@@ -197,6 +203,11 @@ public abstract class MercuryApplication implements Application {
 	@OpenGLCall
 	protected void update(ReadableTimer timer) {}
 
+	@Override
+	public void gainFocus() {
+		timer.reset();
+	}
+	
 	/**
 	 * <b>Don't call manually</b>
 	 * <p>
@@ -207,10 +218,8 @@ public abstract class MercuryApplication implements Application {
 	@OpenGLCall
 	public void cleanup() {
 		
-		modules.forEach(ApplicationModule::cleanup);
-		
-		inputProcessor.destroy();
-		inputProcessor = null;
+		services.forEach(ApplicationService::cleanup);
+		services.clear();
 		
 		timer.reset();
 		renderer.cleanup(scene);
@@ -232,16 +241,16 @@ public abstract class MercuryApplication implements Application {
 	 * linked to the <code>MercuryApplication</code>.
 	 * <p>
 	 * This function is supposed to be used to access the module, however it shouldn't be used 
-	 * to detach it from the application, use {@link #unlinkModule(ApplicationModule)} instead.
+	 * to detach it from the application, use {@link #unlinkService(ApplicationModule)} instead.
 	 * 
 	 * @param type The type of module to return.
 	 * @return     An optional value containing either a module matching the given type, or 
 	 * 			   nothing if none is linked to the application.
 	 * 
-	 * @see #getModule(Class)
+	 * @see #getService(Class)
 	 */
-	public <M extends ApplicationModule> Optional<M> getOptionalModule(Class<M> type) {
-		return Optional.ofNullable(getModule(type));
+	public <M extends AbstractApplicationService> Optional<M> getOptionalModule(Class<M> type) {
+		return Optional.ofNullable(getService(type));
 	}
 	
 	/**
@@ -249,20 +258,20 @@ public abstract class MercuryApplication implements Application {
 	 * <code>MercuryApplication</code>.
 	 * <p>
 	 * This function is supposed to be used to access the module, however it shouldn't be used 
-	 * to detach it from the application, use {@link #unlinkModule(ApplicationModule)} instead.
+	 * to detach it from the application, use {@link #unlinkService(ApplicationModule)} instead.
 	 * 
 	 * @param type The type of module to return (not null).
 	 * @return	   A module matching the given type, or null if none is linked to 
 	 * 			   the application.
 	 * 
-	 * @see #unlinkModule(ApplicationModule)
+	 * @see #unlinkService(ApplicationModule)
 	 * @see #getOptionalModule(Class)
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <M extends ApplicationModule> M getModule(Class<M> type) {
+	public <M extends ApplicationService> M getService(Class<M> type) {
 		Validator.nonNull(type, "The module's type can't be null!");
-		for(ApplicationModule module : modules) {
+		for(ApplicationService module : services) {
 			if(module.getClass().isAssignableFrom(type)) {
 				return (M) module;
 			}
@@ -277,9 +286,10 @@ public abstract class MercuryApplication implements Application {
 	 * @param module The module to be linked (not null).
 	 */
 	@Override
-	public void linkModule(ApplicationModule module) {
+	public void linkService(ApplicationService module) {
 		Validator.nonNull(module, "The module can't be null!");
-		this.modules.add(module);
+		this.services.add(module);
+		module.setApplication(this);
 	}
 	
 	/**
@@ -288,10 +298,11 @@ public abstract class MercuryApplication implements Application {
 	 * 
 	 * @param module The module which is to be cleaned up and removed (not null).
 	 */
-	public void unlinkModule(ApplicationModule module) {
+	public void unlinkService(ApplicationService module) {
 		Validator.nonNull(module, "The module can't be null!");
-		if(modules.remove(module)) {
+		if(services.remove(module)) {
 			module.cleanup();
+			module.setApplication(null);
 		}
 	}
 	
@@ -305,6 +316,11 @@ public abstract class MercuryApplication implements Application {
 	 */
 	public NucleusMundi getScene() {
 		return scene;
+	}
+	
+	@Override
+	public MercurySettings getSettings() {
+		return settings;
 	}
 	
 	/**

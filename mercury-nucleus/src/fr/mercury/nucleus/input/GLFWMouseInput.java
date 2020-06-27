@@ -87,7 +87,7 @@ public final class GLFWMouseInput {
 	 */
 	public void initialize() {
 		
-		final long window = context.getWindow();
+		final long window = context.getWindowID();
 		
 		glfwSetCursorPosCallback(window, cursorPosCallback = new GLFWCursorPosCallback() {
 			@Override
@@ -254,9 +254,9 @@ public final class GLFWMouseInput {
 		this.cursorVisible = cursorVisible;
 		
 		if(cursorVisible) {
-			glfwSetInputMode(context.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			glfwSetInputMode(context.getWindowID(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		} else {
-			glfwSetInputMode(context.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			glfwSetInputMode(context.getWindowID(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
 	}
 	

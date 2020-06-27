@@ -5,7 +5,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 import fr.alchemy.utilities.Validator;
-import fr.mercury.nucleus.application.module.TaskExecutorModule;
+import fr.mercury.nucleus.application.service.TaskExecutorService;
 
 /**
  * <code>AssetLoader</code> is an interface for implementing a specific type of
@@ -59,7 +59,7 @@ public interface AssetLoader<T> {
 	 * <p>
 	 * Note however than <code>OpenGL</code> specific method can't be invoked inside the future or in the 
 	 * listener, unless the provided {@link Executor} is running on the <code>OpenGL</code> {@link Thread}, 
-	 * like {@link TaskExecutorModule#getGraphicsExecutor()}
+	 * like {@link TaskExecutorService#getGraphicsExecutor()}
 	 * 
 	 * @param path 	   The path of the object to load (not null or empty).
 	 * @param executor The executor to use for running the given listener.
@@ -68,7 +68,7 @@ public interface AssetLoader<T> {
 	 * 				   but shouldn't be needed if you provide a listener for the result.
 	 * 
 	 * @see #loadFuture(String, Consumer)
-	 * @see TaskExecutorModule
+	 * @see TaskExecutorService
 	 */
 	default CompletableFuture<Void> loadFuture(String path, Executor executor, Consumer<T> listener) {
 		Validator.nonEmpty(path, "The asset path to load can't be null or empty!");

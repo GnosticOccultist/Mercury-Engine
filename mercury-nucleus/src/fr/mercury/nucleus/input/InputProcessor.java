@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.input;
 
 import fr.mercury.nucleus.application.Application;
+import fr.mercury.nucleus.application.service.ApplicationService;
 
 /**
  * <code>InputProcessor</code> is an interface allowing to receive low-level {@link InputEvent} from the current {@link Application}
@@ -8,7 +9,7 @@ import fr.mercury.nucleus.application.Application;
  * 
  * @author GnosticOccultist
  */
-public interface InputProcessor {
+public interface InputProcessor extends ApplicationService {
 	
 	/**
 	 * Called when the <code>InputProcessor</code> receives a new {@link MouseEvent} to be processed.
