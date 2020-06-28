@@ -328,7 +328,13 @@ public abstract class Texture extends GLObject {
 		
 		// Reset the state of the texture.
 		currentState.reset();
-		toApply.reset();
+	}
+	
+	@Override
+	protected void restart() {
+		this.image.setNeedUpdate(true);
+		
+		super.restart();
 	}
 	
 	/**

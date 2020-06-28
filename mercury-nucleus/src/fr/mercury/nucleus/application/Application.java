@@ -41,13 +41,19 @@ public interface Application {
 	void postFrame();
 
 	/**
-	 * Cleanup the application when the context has been ask for destruction.
+	 * Cleanup the <code>Application</code> when the context has been ask for destruction.
 	 * <p>
 	 * It is mostly used to delete and free any OpenGL objects ensuring a clean
-	 * shutdown of the <code>Application</code>.
+	 * shutdown of the application.
 	 */
 	@OpenGLCall
 	void cleanup();
+	
+	/**
+	 * Restart the <code>Application</code>, applying the new {@link MercurySettings}
+	 * to the {@link MercuryContext} and restarting it.
+	 */
+	void restart();
 
 	/**
 	 * Notify the <code>Application</code> about a resizing
@@ -59,6 +65,11 @@ public interface Application {
 	 */
 	void resize(int width, int height);
 
+	/**
+	 * Return the {@link MercurySettings} of the <code>Application</code>.
+	 * 
+	 * @return The settings used to create the context (not null).
+	 */
 	MercurySettings getSettings();
 
 	/**

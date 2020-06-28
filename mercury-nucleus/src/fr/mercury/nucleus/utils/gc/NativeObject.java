@@ -19,6 +19,10 @@ public abstract class NativeObject {
 	protected void onAssigned(int id) {
 		NativeObjectCleaner.register(this);
 	}
+	
+	protected void restart() {
+		
+	}
 
 	/**
 	 * Return the ID of the assigned native object, assuming that one is assigned.

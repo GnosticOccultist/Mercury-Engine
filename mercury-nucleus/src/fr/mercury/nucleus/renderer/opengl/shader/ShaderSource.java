@@ -149,6 +149,13 @@ public final class ShaderSource extends GLObject {
 	}
 	
 	@Override
+	protected void restart() {
+		this.needsUpdate = true;
+		
+		super.restart();
+	}
+	
+	@Override
 	@OpenGLCall
 	protected Integer acquireID() {
 		return GL20.glCreateShader(type.toOpenGLType());

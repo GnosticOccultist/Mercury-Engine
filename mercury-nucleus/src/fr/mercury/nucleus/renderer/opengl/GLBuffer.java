@@ -144,6 +144,13 @@ public abstract class GLBuffer extends GLObject {
 		super.cleanup();
 	}
 	
+	@Override
+	protected void restart() {
+		this.needsUpdate = true;
+		
+		super.restart();
+	}
+	
 	/**
 	 * <code>BufferType</code> gives informations about the uses of the <code>GLBuffer</code> and its
 	 * purpose.

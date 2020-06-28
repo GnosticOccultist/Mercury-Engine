@@ -9,6 +9,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
 import static org.lwjgl.glfw.GLFW.GLFW_REFRESH_RATE;
 import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
+import static org.lwjgl.glfw.GLFW.GLFW_SAMPLES;
 import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
 import static org.lwjgl.glfw.GLFW.glfwDefaultWindowHints;
@@ -22,6 +23,7 @@ import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowIcon;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
@@ -37,6 +39,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.nio.IntBuffer;
 
+import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWVidMode;
 
 import fr.alchemy.utilities.Validator;
@@ -45,6 +48,8 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.application.MercuryContext;
 import fr.mercury.nucleus.application.MercurySettings;
+import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.ReadableTimer;
 import fr.mercury.nucleus.utils.data.Allocator;
@@ -86,7 +91,8 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 		// Whether the window is going to be resizable or not based on the configs.
 		glfwWindowHint(GLFW_RESIZABLE, settings.isResizable() ? GL_TRUE : GL_FALSE);
 		// Set the refresh rate of the window (frequency).
-		glfwWindowHint(GLFW_REFRESH_RATE, 60);
+		glfwWindowHint(GLFW_REFRESH_RATE, settings.getFrequency());
+		glfwWindowHint(GLFW_SAMPLES, settings.getSamples());
 
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -158,6 +164,10 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 		if (!settings.isFullscreen()) {
 			moveWindow((videoMode.width() - settings.getWidth()) / 2, (videoMode.height() - settings.getHeight()) / 2);
 		}
+		
+		var iconPath = settings.getString("Icons");
+		var icon = application.getService(AssetManager.class).loadImage(iconPath);
+		setIcon(icon);
 
 		super.initialize(settings);
 	}
@@ -207,6 +217,19 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 			MercuryContext.checkMainThread();
 			glfwSetWindowTitle(window, title);
 		}
+	}
+	
+	@OpenGLCall
+	public void setIcon(Image image) {
+		var iconData = image.getData();
+		iconData.rewind();
+		
+		var img = GLFWImage.malloc();
+	    var imageBuff = GLFWImage.malloc(1);
+	    
+	    img.set(image.getWidth(), image.getHeight(), iconData);
+	    imageBuff.put(0, img);
+	    glfwSetWindowIcon(window, imageBuff);
 	}
 	
 	/**
@@ -269,5 +292,7 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 		} catch (Exception ex) {
 			logger.error("Failed to destroy window!", ex);
 		}
+		
+		cleanup();
 	}
 }

@@ -321,6 +321,13 @@ public final class ShaderProgram extends GLObject {
 	}
 	
 	@Override
+	protected void restart() {
+		this.needsUpdate = true;
+		
+		super.restart();
+	}
+	
+	@Override
 	@OpenGLCall
 	public Runnable onDestroy(int id) {
 		return () -> GL20.glDeleteProgram(id);

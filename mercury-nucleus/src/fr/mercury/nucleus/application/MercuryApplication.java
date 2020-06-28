@@ -57,10 +57,6 @@ public abstract class MercuryApplication implements Application {
 	 */
 	protected final Set<ApplicationService> services = new HashSet<>();
 	/**
-	 * The asset manager.
-	 */
-	protected AssetManager assetManager = new AssetManager();
-	/**
 	 * The timer of the application in nanoseconds.
 	 */
 	protected Timer timer = new SpeedableNanoTimer();
@@ -76,6 +72,10 @@ public abstract class MercuryApplication implements Application {
 	 * The root node for the scene or null if doesn't support rendering.
 	 */
 	protected NucleusMundi scene = new NucleusMundi("root-nucleus");
+	/**
+	 * The asset manager, will also be added to the services set.
+	 */
+	protected AssetManager assetManager = new AssetManager();
 	
 	/**
 	 * Starts the <code>MercuryApplication</code> and creates the {@link MercuryContext}.
@@ -88,7 +88,11 @@ public abstract class MercuryApplication implements Application {
 			settings = new MercurySettings(true);
 		}
 		
+		// We need the asset manager before initialization for the icons.
+		linkService(assetManager);
+		
 		logger.info("Starting the application: " + getClass().getSimpleName());
+		
 		context = MercuryContext.newContext(this, settings);
 		context.initialize();
 	}
@@ -231,12 +235,17 @@ public abstract class MercuryApplication implements Application {
 	}
 	
 	/**
-     * Sets the context settings to the application ones, and
-     * restart the <code>MercuryContext</code> in order to apply any changes.
-     */
+	 * Restart the <code>MercuryApplication</code>, applying the new {@link MercurySettings}
+	 * to the {@link MercuryContext} and restarting it.
+	 */
+	@Override
 	public void restart() {
+		NativeObjectCleaner.reset();
+		
 		context.setSettings(settings);
 		context.restart();
+		
+		NativeObjectCleaner.restart();
 	}
 	
 	/**
@@ -321,13 +330,18 @@ public abstract class MercuryApplication implements Application {
 		return scene;
 	}
 	
+	/**
+	 * Return the {@link MercurySettings} of the <code>Application</code>.
+	 * 
+	 * @return The settings used to create the context (not null).
+	 */
 	@Override
 	public MercurySettings getSettings() {
 		return settings;
 	}
 	
 	/**
-	 * Set the <code>MercurySettings</code> for the <code>Application</code>.
+	 * Set the {@link MercurySettings} for the <code>Application</code>.
 	 * <p>
 	 * You can change the display settings when the application is running but
 	 * in order to apply the changes you will need to call {@link #restart()}.

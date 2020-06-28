@@ -110,6 +110,14 @@ public abstract class GLObject extends NativeObject implements Comparable<GLObje
 		setID(INVALID_ID);
 	}
 	
+	@Override
+	@OpenGLCall
+	protected void restart() {
+		super.restart();
+		
+		create();
+	}
+	
 	/**
 	 * Return the deleting action for the object.
 	 * 

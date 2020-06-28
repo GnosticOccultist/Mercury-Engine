@@ -36,7 +36,7 @@ public final class NativeObjectCleaner {
 	/**
 	 * The cleaner used to clean objects when references are reclaimed.
 	 */
-	private static final Cleaner CLEANER = Cleaner.create();
+	private static Cleaner CLEANER = Cleaner.create();
 	/**
 	 * The list of cleaning actions to be executed at the end of the frame.
 	 */
@@ -45,6 +45,10 @@ public final class NativeObjectCleaner {
 	 * The list of all cleanables.
 	 */
 	private static final List<Cleanable> CLEANABLES = new ArrayList<>();
+	/**
+	 * The list of registered native objects.
+	 */
+	private static final List<NativeObject> NATIVE_OBJECTS = new ArrayList<>();
 
 	static {
 		logger.setActive(LoggerLevel.DEBUG, true);
@@ -68,6 +72,8 @@ public final class NativeObjectCleaner {
 		var id = nativeObj.getID();
 		var name = nativeObj.toString();
 		
+		NATIVE_OBJECTS.add(nativeObj);
+		
 		var cleanupTask = nativeObj.onDestroy(id);
 		return register(nativeObj, () -> { 
 			
@@ -89,8 +95,14 @@ public final class NativeObjectCleaner {
 	public static Cleanable register(Object obj, Runnable cleanAction) {
 		synchronized (LOCK) {
 			logger.debug("Registered " + obj + ".");
+			
+			if(CLEANER == null) {
+				CLEANER = Cleaner.create();
+			}
+			
 			var cleanable = CLEANER.register(obj, cleanAction);
 			CLEANABLES.add(cleanable);
+			
 			return cleanable;
 		}
 	}
@@ -132,5 +144,31 @@ public final class NativeObjectCleaner {
 		}
 		
 		cleanUnused();
+	}
+	
+	public static void reset() {
+		synchronized (LOCK) {
+			for(var obj : NATIVE_OBJECTS) {
+				System.out.println("Cleaning up " + obj);
+				obj.cleanup();
+			}
+			
+			CLEANABLES.clear();
+			CLEAN_ACTIONS.clear();
+			
+			CLEANER = null;
+		}
+	}
+	
+	public static void restart() {
+		synchronized (LOCK) {
+			var copy = new ArrayList<>(NATIVE_OBJECTS);
+			NATIVE_OBJECTS.clear();
+			
+			for(var obj : copy) {
+				obj.restart();
+				System.out.println("Restart up " + obj);
+			}
+		}
 	}
 }

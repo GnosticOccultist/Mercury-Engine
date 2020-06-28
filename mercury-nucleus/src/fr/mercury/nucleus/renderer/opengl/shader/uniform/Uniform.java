@@ -4,7 +4,6 @@ import java.nio.FloatBuffer;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
@@ -17,6 +16,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.scenegraph.environment.Fog;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
+import fr.mercury.nucleus.utils.data.Allocator;
 
 /**
  * <code>Uniform</code> defines a variable inside a "glsl" file (<i>for example a shader</i>), to which the user can 
@@ -267,7 +267,7 @@ public class Uniform {
 				
 				Matrix4f matrix = (Matrix4f) value;
 				if(buffer == null) {
-					buffer = MemoryUtil.memAllocFloat(16);
+					buffer = Allocator.allocFloat(16);
 				} else {
 					buffer.clear();
 				}
@@ -294,7 +294,7 @@ public class Uniform {
 	 */
 	public void cleanup() {
 		this.needsUpdate = true;
-		setLocation(-2);
+		setLocation(UNKNOWN_LOCATION);
 	}
 	
 	/**
