@@ -424,39 +424,41 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	@Override
 	public FloatBuffer asModelBuffer(FloatBuffer store) {
 		Validator.nonNull(store, "The float buffer can't be null!");
-		
-		store.put(3, 0.0F);
-		store.put(7, 0.0F);
-		store.put(11, 0.0F);
-		
-		if(rotationMatrix) {
-			store.put(0, scale.x() * rotation.m00);
-            store.put(1, scale.x() * rotation.m10);
-            store.put(2, scale.x() * rotation.m20);
-            store.put(4, scale.y() * rotation.m01);
-            store.put(5, scale.y() * rotation.m11);
-            store.put(6, scale.y() * rotation.m21);
-            store.put(8, scale.z() * rotation.m02);
-            store.put(9, scale.z() * rotation.m12);
-            store.put(10, scale.z() * rotation.m22);
-        } else {
-            store.put(0, rotation.m00);
-            store.put(1, rotation.m10);
-            store.put(2, rotation.m20);
-            store.put(4, rotation.m01);
-            store.put(5, rotation.m11);
-            store.put(6, rotation.m21);
-            store.put(8, rotation.m02);
-            store.put(9, rotation.m12);
-            store.put(10, rotation.m22);
-        }
-		
-		store.put(12, translation.x());
-        store.put(13, translation.y());
-        store.put(14, translation.z());
-        store.put(15, 1.0F);
-        
-        return store;
+
+		if (rotationMatrix) {
+			store.put(scale.x() * rotation.m00);
+			store.put(scale.x() * rotation.m10);
+			store.put(scale.x() * rotation.m20);
+			store.put(0.0F);
+			store.put(scale.y() * rotation.m01);
+			store.put(scale.y() * rotation.m11);
+			store.put(scale.y() * rotation.m21);
+			store.put(0.0F);
+			store.put(scale.z() * rotation.m02);
+			store.put(scale.z() * rotation.m12);
+			store.put(scale.z() * rotation.m22);
+			store.put(0.0F);
+		} else {
+			store.put(rotation.m00);
+			store.put(rotation.m10);
+			store.put(rotation.m20);
+			store.put(0.0F);
+			store.put(rotation.m01);
+			store.put(rotation.m11);
+			store.put(rotation.m21);
+			store.put(0.0F);
+			store.put(rotation.m02);
+			store.put(rotation.m12);
+			store.put(rotation.m22);
+			store.put(0.0F);
+		}
+
+		store.put(translation.x());
+		store.put(translation.y());
+		store.put(translation.z());
+		store.put(1.0F);
+
+		return store;
 	}
 	
 	public Transform worldTransform(ReadableTransform parent, Transform store) { 

@@ -7,6 +7,9 @@ layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 texCoord;
 #endif
 layout (location = 2) in vec3 normal;
+#ifdef INSTANCING
+layout (location = 3) in mat4 instanceMatrix;
+#endif
 
 #ifdef USE_FOG
 	out vec4 viewPos;
@@ -39,5 +42,9 @@ void main() {
 		frag_TexCoord = vec2(x, y);
 	#endif
 	
-	gl_Position = computePosition(position);
+	#ifdef INSTANCING
+		gl_Position = computeInstancePosition(position, instanceMatrix);
+	#else
+		gl_Position = computePosition(position);
+	#endif
 }

@@ -3,6 +3,7 @@ package fr.mercury.nucleus.renderer;
 import org.lwjgl.opengl.GL11C;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.logging.LoggerLevel;
 import fr.mercury.nucleus.renderer.logic.DefaultRenderLogic;
 import fr.mercury.nucleus.renderer.logic.RenderLogic;
 import fr.mercury.nucleus.renderer.logic.state.RenderState;
@@ -78,7 +79,11 @@ public class Renderer extends AbstractRenderer {
 		this.defaultLogic = new DefaultRenderLogic();
 		
 		registerBucket(BucketType.OPAQUE);
-		registerBucket(BucketType.TRANSPARENT);
+		var bucket = new RenderBucket(camera);
+		bucket.setComparator(bucket.new TransparentComparator());
+		registerBucket(BucketType.TRANSPARENT, bucket);
+		
+		logger.setActive(LoggerLevel.DEBUG, true);
 	}
 	
 	/**
@@ -135,6 +140,8 @@ public class Renderer extends AbstractRenderer {
 		// Upload latest changes to the OpenGL state.
 		shader.upload();
 		
+		enableAttributes(physica);
+		
 		applyRenderStates(physica);
 		
 		defaultLogic.begin(physica);
@@ -158,6 +165,27 @@ public class Renderer extends AbstractRenderer {
 				
 				applyRenderState(state);
 				state.setNeedsUpdate(false);
+			}
+		}
+	}
+	
+	private void enableAttributes(PhysicaMundi physica) {
+		var mesh = physica.getMesh();
+		var mat = physica.getMaterial();
+		
+		if(!mesh.isBufferClean()) {
+			mesh.upload();
+			
+			for(var attrib : mat.getAttributes()) {
+				
+				var key = attrib.getName();
+				var buffer = mesh.getBuffer(key);
+				if(buffer == null) {
+					throw new MercuryException("No VertexBuffer setup in " + 
+							physica + " for attribute '" + key + "'!");
+				}
+				
+				attrib.bindAttribute(buffer);
 			}
 		}
 	}

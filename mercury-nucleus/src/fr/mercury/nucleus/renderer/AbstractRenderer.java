@@ -101,6 +101,24 @@ public abstract class AbstractRenderer {
 	}
 	
 	/**
+	 * Register a new {@link RenderBucket} with the specified {@link BucketType} and {@link Comparator} 
+	 * for the <code>AbstractRenderer</code>.
+	 * 
+	 * @param type 	 The bucket type to register (not null).
+	 * @param bucket The render bucket to register for the type (not null).
+	 */
+	public void registerBucket(BucketType type, RenderBucket bucket) {
+		Validator.nonNull(type, "The bucket type to register can't be null!");
+		Validator.nonNull(bucket, "The bucket to register can't be null!");
+		
+		if(type.equals(BucketType.LEGACY) || type.equals(BucketType.NONE)) {
+			throw new MercuryException("The bucket '" + type + "' cannot be registered!");
+		}
+		
+		buckets.put(type, bucket);
+	}
+	
+	/**
 	 * Submit the specified {@link AnimaMundi} to a {@link RenderBucket} matching 
 	 * the {@link BucketType}. 
 	 * <p>

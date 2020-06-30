@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexAttribute;
 import fr.mercury.nucleus.texture.Texture;
 
 public class Material {
@@ -25,6 +26,10 @@ public class Material {
 	 * The prefab uniforms needed by the material, set during material-file reading.
 	 */
 	private final List<String> prefabUniforms = new ArrayList<>();
+	/**
+	 * The attributes used to pass vertex data through the shader.
+	 */
+	private final List<VertexAttribute> attributes = new ArrayList<>();
 	/**
 	 * The set of the shader sources for the material.
 	 */
@@ -102,6 +107,15 @@ public class Material {
 	
 	public List<String> getPrefabUniforms() {
 		return prefabUniforms;
+	}
+	
+	public List<VertexAttribute> getAttributes() {
+		return attributes;
+	}
+	
+	public void addAttribute(VertexAttribute attribute) {
+		Validator.nonNull(attribute, "The vertex attribute can't be null!");
+		this.attributes.add(attribute);
 	}
 	
 	public String getName() {

@@ -7,10 +7,12 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL15C;
 import org.lwjgl.opengl.GL30;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType.Format;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
@@ -31,6 +33,10 @@ public abstract class GLBuffer extends GLObject {
 	 * The usage of the buffer.
 	 */
 	protected Usage usage;
+	/**
+	 * The format used for the data.
+	 */
+	protected Format format;
 	/**
 	 * The data contained in the buffer.
 	 */
@@ -89,7 +95,7 @@ public abstract class GLBuffer extends GLObject {
 	 * Note that the stored data cannot be null.
 	 */
 	@OpenGLCall
-	protected void storeData() {
+	protected void storeData(boolean newVBO) {
 		
 		if(data == null) {
 			this.needsUpdate = false;
@@ -99,14 +105,19 @@ public abstract class GLBuffer extends GLObject {
 		// Rewind the buffer to prepare for reading.
 		this.data.rewind();
 		
+		if(newVBO) {
+			var byteSize = data.capacity() * format.getSizeInByte();
+			GL15C.glBufferData(getOpenGLType(), byteSize, getOpenGLUsage());
+		}
+		
 		if(data instanceof FloatBuffer) {
-			GL15.glBufferData(getOpenGLType(), (FloatBuffer) data, getOpenGLUsage());
+			GL15C.glBufferSubData(getOpenGLType(), 0, (FloatBuffer) data);
 		} else if(data instanceof IntBuffer) {
-			GL15.glBufferData(getOpenGLType(), (IntBuffer) data, getOpenGLUsage());
+			GL15C.glBufferSubData(getOpenGLType(), 0, (IntBuffer) data);
 		} else if(data instanceof ShortBuffer) {
-			GL15.glBufferData(getOpenGLType(), (ShortBuffer) data, getOpenGLUsage());
+			GL15C.glBufferSubData(getOpenGLType(), 0, (ShortBuffer) data);
 		} else if(data instanceof ByteBuffer) {
-			GL15.glBufferData(getOpenGLType(), (ByteBuffer) data, getOpenGLUsage());
+			GL15C.glBufferSubData(getOpenGLType(), 0, (ByteBuffer) data);
 		} else {
 			throw new IllegalArgumentException("Can't upload data from buffer type: " + data.getClass().getSimpleName());
 		}
@@ -120,7 +131,7 @@ public abstract class GLBuffer extends GLObject {
 	 * 
 	 * @return Whether the data buffer needs to be reuploaded through the OpenGL context.
 	 */
-	protected boolean needsUpdate() {
+	public boolean needsUpdate() {
 		return needsUpdate;
 	}
 	

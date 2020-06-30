@@ -27,7 +27,13 @@ public enum VertexBufferType {
 	/**
 	 * Defines the texture coordinates for the vertex with 2 floats component.
 	 */
-	TEX_COORD(BufferType.VERTEX_DATA, 2, Format.FLOAT),
+	TEX_COORD(BufferType.VERTEX_DATA, 2, Format.FLOAT) {
+		
+		@Override
+		public String toString() {
+			return "texCoord";
+		}
+	},
 	/**
 	 * Defines the normal vector for the vertex with 3 floats component.
 	 * It is expected to be normalized as it express a direction.
@@ -54,7 +60,13 @@ public enum VertexBufferType {
 	 * Defines the index for the joint with 4 floats component.
 	 * This is used for an animated mesh.
 	 */
-	JOINT_INDEX(BufferType.VERTEX_DATA, 4, Format.FLOAT),
+	JOINT_INDEX(BufferType.VERTEX_DATA, 4, Format.FLOAT) {
+		
+		@Override
+		public String toString() {
+			return "jointIndex";
+		}
+	},
 	/**
 	 * Defines the index for constructing the vertices with 1 uint component.
 	 */
@@ -138,6 +150,11 @@ public enum VertexBufferType {
 	 */
 	public int getOpenGLFormat() {
 		return getOpenGLFormat(format);
+	}
+	
+	@Override
+	public String toString() {
+		return name().toLowerCase();
 	}
 	
 	/**

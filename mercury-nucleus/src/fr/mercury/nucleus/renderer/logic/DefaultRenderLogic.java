@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.renderer.logic;
 
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexAttribute;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
@@ -27,8 +28,10 @@ public class DefaultRenderLogic implements RenderLogic {
 	public void begin(PhysicaMundi physica) {
 		
 		var mesh = physica.getMesh();
-		
 		mesh.bindBeforeRender();
+		
+		var material = physica.getMaterial();
+		material.getAttributes().forEach(VertexAttribute::enable);
 	}
 
 	@Override
@@ -39,7 +42,11 @@ public class DefaultRenderLogic implements RenderLogic {
 		
 		// Check that our mesh as an indices buffer setup to draw elements, otherwise draw arrays.
 		if(mesh.hasIndices()) {
-			drawElements(mesh);
+			if(mesh.isInstanced()) {
+				drawElementsInstanced(mesh);
+			} else {
+				drawElements(mesh);
+			}
 		} else {
 			drawArrays(mesh);
 		}
@@ -49,8 +56,10 @@ public class DefaultRenderLogic implements RenderLogic {
 	@OpenGLCall
 	public void end(PhysicaMundi physica) {
 		
-		var mesh = physica.getMesh();
+		var material = physica.getMaterial();
+		material.getAttributes().forEach(VertexAttribute::disable);
 		
+		var mesh = physica.getMesh();
 		mesh.unbindAfterRender();
 	}
 }

@@ -60,9 +60,9 @@ public interface RenderLogic {
 	}
 	
 	@OpenGLCall
-	default void drawElementsInstanced(Mesh mesh, int instanceCount) {
+	default void drawElementsInstanced(Mesh mesh) {
 		GL31C.glDrawElementsInstanced(mesh.toOpenGLMode(), mesh.getVertexCount(),
-				VertexBufferType.getOpenGLFormat(mesh.getIndicesFormat()), 0, instanceCount);
+				VertexBufferType.getOpenGLFormat(mesh.getIndicesFormat()), 0, mesh.getInstanceCount());
 	}
 	
 	

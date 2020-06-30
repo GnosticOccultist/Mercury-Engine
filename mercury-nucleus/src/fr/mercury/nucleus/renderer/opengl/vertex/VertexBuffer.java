@@ -38,20 +38,20 @@ public class VertexBuffer extends GLBuffer {
 	/**
 	 * The vertex buffer type.
 	 */
-	private VertexBufferType vertexBufferType;
+	private VertexBufferType type;
 	/**
-	 * The format to use for the vertex data, if null it will use the preferred format of {@link VertexBufferType}.
+	 * The size of each vertex data, will be used if the type is null.
 	 */
-	private Format format;
+	private int size = 4;
 	/**
 	 * The offset at which the vertex data is situated in a {@link VertexArray}, by default 0.
 	 */
-	private short offset = 0;
+	private int offset = 0;
 	/**
 	 * The amount of bytes between each vertex data, by default 0 &rarr; the data is tightly packed and <code>OpenGL</code>
 	 * will compute the stride based on the size per component and the data format used.
 	 */
-	private short stride = 0;
+	private int stride = 0;
 	/**
 	 * Return whether the vertex data should be normalized. Only works for non floating-point type format.
 	 */
@@ -81,7 +81,26 @@ public class VertexBuffer extends GLBuffer {
 		Validator.nonNull(usage, "The vertex buffer's usage cannot be null!");
 		Validator.nonNull(format, "The vertex buffer's format cannot be null!");
 		
-		this.vertexBufferType = type;
+		this.type = type;
+		this.usage = usage;
+		this.format = format;
+	}
+	
+	/**
+	 * Instantiates a new <code>VertexBuffer</code> with no contained data, but with 
+	 * the provided size per vertex data, {@link Usage} and {@link Format} of the data to store.
+	 * 
+	 * @param size   The size of each vertex data (&ge;1, &le;4).
+	 * @param usage  The usage's type (not null).
+	 * @param format The format of the data to store (not null).
+	 */
+	public VertexBuffer(int size, Usage usage, Format format) {
+		Validator.inRange(size, "The size of each vertex data must be between 1 and 4!", 1, 4);
+		Validator.nonNull(usage, "The vertex buffer's usage cannot be null!");
+		Validator.nonNull(format, "The vertex buffer's format cannot be null!");
+		
+		this.type = null;
+		this.size = size;
 		this.usage = usage;
 		this.format = format;
 	}
@@ -89,24 +108,24 @@ public class VertexBuffer extends GLBuffer {
 	@Override
 	@OpenGLCall
 	public void upload() {
-		create();
+		var newVBO = create();
 		
 		bind();
 		
 		if(needsUpdate()) {
-			storeData();
+			storeData(newVBO);
 		}
 	}
 	
 	/**
 	 * Return the <code>VertexBuffer</code> {@link BufferType type}.
-	 * It corresponds to {@link VertexBufferType#getBufferType()}.
+	 * It corresponds to {@link VertexBufferType#getBufferType()} or {@link BufferType#VERTEX_DATA} if not defined.
 	 * 
 	 * @return The vertex buffer's type.
 	 */
 	@Override
 	protected BufferType getType() {
-		return vertexBufferType.getBufferType();
+		return type == null ? BufferType.VERTEX_DATA : type.getBufferType();
 	}
 	
 	/**
@@ -211,7 +230,7 @@ public class VertexBuffer extends GLBuffer {
 	 * @return The type of vertex data contained in the vertex buffer.
 	 */
 	public VertexBufferType getVertexBufferType() {
-		return vertexBufferType;
+		return type;
 	}
 	
 	/**
@@ -220,7 +239,7 @@ public class VertexBuffer extends GLBuffer {
 	 * @return Whether the vertex buffer contains index data.
 	 */
 	public boolean isIndexBuffer() {
-		return vertexBufferType == VertexBufferType.INDEX;
+		return type == VertexBufferType.INDEX;
 	}
 	
 	/**
@@ -267,7 +286,7 @@ public class VertexBuffer extends GLBuffer {
 	 * 
 	 * @return The stride of the buffer in bytes (&ge;0).
 	 */
-	public short getStride() {
+	public int getStride() {
 		return stride;
 	}
 	
@@ -282,7 +301,7 @@ public class VertexBuffer extends GLBuffer {
 	 * 
 	 * @param stride The stride of the buffer in bytes (&ge;0).
 	 */
-	public void setStride(short stride) {
+	public void setStride(int stride) {
 		if(this.stride == stride) {
 			return;
 		}
@@ -298,7 +317,7 @@ public class VertexBuffer extends GLBuffer {
 	 * 
 	 * @return The offset of the buffer in bytes (&ge;0).
 	 */
-	public short getOffset() {
+	public int getOffset() {
 		return offset;
 	}
 	
@@ -312,7 +331,7 @@ public class VertexBuffer extends GLBuffer {
 	 * 
 	 * @param offset The offset of the buffer in bytes (&ge;0).
 	 */
-	public void setOffset(short offset) {
+	public void setOffset(int offset) {
 		if(this.offset == offset) {
 			return;
 		}
@@ -321,6 +340,19 @@ public class VertexBuffer extends GLBuffer {
 		
 		this.offset = offset;
 		this.needsUpdate = true;
+	}
+	
+	/**
+	 * Return the size for each vertex data stored in the <code>VertexBuffer</code>.
+	 * The method will return the size described in the {@link VertexBufferType} as a priority if defined.
+	 * 
+	 * @return The size of each vertex data (&ge;1, &le;4).
+	 */
+	public int getSize() {
+		var result = type != null ? type.getSize() : size;
+		
+		assert result >= 1 && result <= 4;
+		return result;
 	}
 	
 	@Override

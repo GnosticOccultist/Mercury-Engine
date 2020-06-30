@@ -244,13 +244,25 @@ public class RenderBucket {
 	}
 	
 	/**
-	 * Sets the {@link Camera} used by the <code>RenderBucket</code>.
+	 * Sets the {@link Camera} used to sort the {@link AnimaMundi} to render 
+	 * the <code>RenderBucket</code>.
 	 * 
 	 * @param camera The camera used by the bucket (not null).
 	 */
 	public void setCamera(Camera camera) {
 		Validator.nonNull(camera, "The camera can't be null!");
 		this.camera = camera;
+	}
+	
+	/**
+	 * Sets the {@link Comparator} used to sort the {@link AnimaMundi} to render 
+	 * the <code>RenderBucket</code>.
+	 * 
+	 * @param comparator The comparator used by the bucket (not null).
+	 */
+	public void setComparator(Comparator<AnimaMundi> comparator) {
+		Validator.nonNull(comparator, "The comparator can't be null!");
+		this.comparator = comparator;
 	}
 	
 	/**

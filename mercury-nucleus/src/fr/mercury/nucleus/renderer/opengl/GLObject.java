@@ -66,8 +66,10 @@ public abstract class GLObject extends NativeObject implements Comparable<GLObje
 	 * destroyed when no longer needed.
 	 */
 	@OpenGLCall
-	protected void create() {
-		if(id == INVALID_ID) {
+	protected boolean create() {
+		var newNative = id == INVALID_ID;
+		
+		if(newNative) {
 			var id = acquireID();
 			if(id == 0) {
 				throw new GLException("Failed to create " + 
@@ -77,6 +79,8 @@ public abstract class GLObject extends NativeObject implements Comparable<GLObje
 			setID(id);
 			onAssigned(id);
 		}
+		
+		return newNative;
 	}
 	
 	/**
