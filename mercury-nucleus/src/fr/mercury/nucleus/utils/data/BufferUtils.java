@@ -3,11 +3,11 @@ package fr.mercury.nucleus.utils.data;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
-
-import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Vector2f;
@@ -134,6 +134,39 @@ public final class BufferUtils {
 	}
 	
 	/**
+	 * Writes the ints from the provided source {@link IntBuffer} into the given {@link Buffer}.
+	 * <p>
+	 * The method is using a relative put method.
+	 * 
+	 * @param buffer The buffer to write to (not null).
+	 * @param source The source buffer to read the ints from (not null).
+	 * @return		 The buffer with the new data written (not null).
+	 */
+	public static Buffer put(Buffer buffer, IntBuffer source) {
+		Validator.nonNull(buffer, "The buffer to write to can't be null!");
+		Validator.nonNull(source, "The buffer to read from can't be null!");
+		
+		int n = source.remaining();
+		for(int i = 0; i < n; i++) {
+			if(buffer instanceof ByteBuffer) {
+				((ByteBuffer) buffer).put((byte) source.get());
+			} else if(buffer instanceof ShortBuffer) {
+				((ShortBuffer) buffer).put((short) source.get());
+			} else if(buffer instanceof IntBuffer) {
+				((IntBuffer) buffer).put(source);
+			} else if(buffer instanceof FloatBuffer) {
+				((FloatBuffer) buffer).put((float) source.get());
+			} else if(buffer instanceof LongBuffer) {
+				((LongBuffer) buffer).put((long) source.get());
+			} else if(buffer instanceof DoubleBuffer) {
+				((DoubleBuffer) buffer).put((double) source.get());
+			}
+		}
+		
+		return buffer;
+	}
+	
+	/**
 	 * Creates a new <code>Buffer</code> by allocating a block of <code>size</code> of bytes memory.
 	 * The buffer's byte order is set to {@link ByteOrder#nativeOrder()}.
 	 * <p>
@@ -164,7 +197,7 @@ public final class BufferUtils {
 	 */
 	public static ByteBuffer createByteBuffer(int size) {
 		Validator.positive(size, "The size of the buffer to allocate must be strictly positive!");
-		ByteBuffer buffer = MemoryUtil.memAlloc(size).order(ByteOrder.nativeOrder());
+		ByteBuffer buffer = Allocator.alloc(size);
 		buffer.clear();
 		return buffer;
 	}
@@ -178,7 +211,7 @@ public final class BufferUtils {
 	 */
 	public static ShortBuffer createShortBuffer(int size) {
 		Validator.positive(size, "The size of the buffer to allocate must be strictly positive!");
-		ShortBuffer buffer = MemoryUtil.memAlloc(Short.BYTES * size).order(ByteOrder.nativeOrder()).asShortBuffer();
+		ShortBuffer buffer = Allocator.allocShort(size);
 		buffer.clear();
 		return buffer;
 	}
@@ -192,7 +225,7 @@ public final class BufferUtils {
 	 */
 	public static IntBuffer createIntBuffer(int size) {
 		Validator.positive(size, "The size of the buffer to allocate must be strictly positive!");
-		IntBuffer buffer = MemoryUtil.memAlloc(Integer.BYTES * size).order(ByteOrder.nativeOrder()).asIntBuffer();
+		IntBuffer buffer = Allocator.allocInt(size);
 		buffer.clear();
 		return buffer;
 	}
@@ -206,7 +239,7 @@ public final class BufferUtils {
 	 */
 	public static FloatBuffer createFloatBuffer(int size) {
 		Validator.positive(size, "The size of the buffer to allocate must be strictly positive!");
-		FloatBuffer buffer = MemoryUtil.memAlloc(Float.BYTES * size).order(ByteOrder.nativeOrder()).asFloatBuffer();
+		FloatBuffer buffer = Allocator.allocFloat(size);
 		buffer.clear();
 		return buffer;
 	}

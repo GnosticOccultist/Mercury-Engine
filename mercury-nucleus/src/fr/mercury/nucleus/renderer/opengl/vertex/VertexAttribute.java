@@ -56,7 +56,8 @@ public class VertexAttribute {
 	
 	@OpenGLCall
 	public void bindAttribute(VertexBuffer buffer) {
-		buffer.upload();
+		// First bind the concerned VBO.
+		buffer.bind();
 		
 		var type = buffer.getVertexBufferType();
 		var size = buffer.getSize();

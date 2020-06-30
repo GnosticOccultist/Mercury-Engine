@@ -28,7 +28,7 @@ public class DefaultRenderLogic implements RenderLogic {
 	public void begin(PhysicaMundi physica) {
 		
 		var mesh = physica.getMesh();
-		mesh.bindBeforeRender();
+		mesh.bind();
 		
 		var material = physica.getMaterial();
 		material.getAttributes().forEach(VertexAttribute::enable);
@@ -60,6 +60,6 @@ public class DefaultRenderLogic implements RenderLogic {
 		material.getAttributes().forEach(VertexAttribute::disable);
 		
 		var mesh = physica.getMesh();
-		mesh.unbindAfterRender();
+		mesh.unbind();
 	}
 }

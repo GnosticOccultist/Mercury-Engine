@@ -1,8 +1,8 @@
 package fr.mercury.nucleus.asset;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.function.Consumer;
 
 import org.lwjgl.assimp.AIFace;
@@ -54,7 +54,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 				var file = AIFile.create();
 				var filePath = MemoryUtil.memUTF8(fileName);
 
-				var buffer = MemoryUtil.memAlloc(8192);
+				var buffer = BufferUtils.createByteBuffer(8192);
 				var data = FileUtils.toByteBuffer(filePath, buffer, this::resize);
 
 				file.ReadProc((pFile, pBuffer, size, count) -> {
@@ -85,7 +85,6 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 				var newBuffer = BufferUtils.createByteBuffer(size);
 				buffer.flip();
 				newBuffer.put(buffer);
-				MemoryUtil.memFree(buffer);
 				return newBuffer;
 			}
 		};
@@ -154,13 +153,13 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 				b -> mesh.setupBuffer(VertexBufferType.TEX_COORD, Usage.STATIC_DRAW, b));
 		toFloatBuffer(aiMesh.mNormals(), 3, b -> mesh.setupBuffer(VertexBufferType.NORMAL, Usage.STATIC_DRAW, b));
 		toFloatBuffer(aiMesh.mTangents(), 3, b -> mesh.setupBuffer(VertexBufferType.TANGENT, Usage.STATIC_DRAW, b));
-
-		toIntBuffer(aiMesh.mFaces(), b -> mesh.setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, b));
+		
+		toIntBuffer(aiMesh.mFaces(), aiMesh.mNumVertices(), b -> mesh.setupIndexBuffer(b));
 
 		var mode = convertPrimitive(aiMesh.mPrimitiveTypes());
 		mesh.setMode(mode);
-
-		mesh.upload();
+		
+		// The mesh should be uploaded by the Renderer only.
 		return new PhysicaMundi(aiMesh.mName().dataString(), mesh);
 	}
 
@@ -205,16 +204,16 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 				m.c4(), m.d1(), m.d2(), m.d3(), m.d4());
 	}
 
-	private void toIntBuffer(AIFace.Buffer source, Consumer<IntBuffer> consumer) {
+	private void toIntBuffer(AIFace.Buffer source, int verticesCount, Consumer<Buffer> consumer) {
 		var count = source != null ? source.remaining() : 0;
 		if(count == 0) {
 			return;
 		}
 
-		var buffer = BufferUtils.createIntBuffer(count * 3);
+		var buffer = BufferUtils.createIndicesBuffer(count * 3, verticesCount);
 		for(var i = 0; i < count; ++i) {
 			var face = source.get();
-			buffer.put(face.mIndices());
+			BufferUtils.put(buffer, face.mIndices());
 		}
 
 		consumer.accept(buffer);
@@ -237,6 +236,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 				buffer.put(vec.z());
 			}
 		}
+		buffer.flip();
 
 		consumer.accept(buffer);
 	}

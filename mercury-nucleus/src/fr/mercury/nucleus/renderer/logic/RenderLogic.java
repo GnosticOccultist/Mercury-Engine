@@ -52,16 +52,16 @@ public interface RenderLogic {
 	 */
 	@OpenGLCall
 	default void drawElements(Mesh mesh) {
-		if(!mesh.hasIndices()) {
-			throw new IllegalArgumentException("The mesh can't be correctly rendered if no indices "
-					+ "have been setup. Please use the drawArrays method instead.");
-		}
-		GL11.glDrawElements(mesh.toOpenGLMode(), mesh.getVertexCount(), VertexBufferType.getOpenGLFormat(mesh.getIndicesFormat()), 0);
+		assert mesh.hasIndices();
+		
+		GL11.glDrawElements(mesh.toOpenGLMode(), mesh.getElementCount(), VertexBufferType.getOpenGLFormat(mesh.getIndicesFormat()), 0);
 	}
 	
 	@OpenGLCall
 	default void drawElementsInstanced(Mesh mesh) {
-		GL31C.glDrawElementsInstanced(mesh.toOpenGLMode(), mesh.getVertexCount(),
+		assert mesh.hasIndices();
+		
+		GL31C.glDrawElementsInstanced(mesh.toOpenGLMode(), mesh.getElementCount(),
 				VertexBufferType.getOpenGLFormat(mesh.getIndicesFormat()), 0, mesh.getInstanceCount());
 	}
 	
@@ -78,7 +78,7 @@ public interface RenderLogic {
 	 */
 	@OpenGLCall
 	default void drawRangeElements(Mesh mesh) {
-		GL20.glDrawRangeElements(mesh.toOpenGLMode(), 0, mesh.getVertexCount(), mesh.getBuffer(VertexBufferType.INDEX).getData().limit(), 
+		GL20.glDrawRangeElements(mesh.toOpenGLMode(), 0, mesh.getElementCount(), mesh.getBuffer(VertexBufferType.INDEX).getData().limit(), 
 				VertexBufferType.getOpenGLFormat(mesh.getIndicesFormat()), 0);
 	}
 }

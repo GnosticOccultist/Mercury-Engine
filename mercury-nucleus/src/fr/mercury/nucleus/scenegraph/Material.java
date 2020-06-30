@@ -10,7 +10,9 @@ import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexAttribute;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
 import fr.mercury.nucleus.texture.Texture;
+import fr.mercury.nucleus.utils.MercuryException;
 
 public class Material {
 	
@@ -69,6 +71,38 @@ public class Material {
 			program.register(texture);
 			texture.upload();
 			texture.bindToUnit(0);
+		}
+	}
+	
+	/**
+	 * Prepare and binds the {@link VertexAttribute} of the <code>Material</code> to the {@link VertexBuffer}
+	 * defined in the {@link Mesh} of the provided {@link PhysicaMundi}.
+	 * <p>
+	 * The method will only setup the attributes if one of the VBO is dirty.
+	 * 
+	 * @param physica The physica-mundi to bind attributes to.
+	 */
+	public void bindAttributes(PhysicaMundi physica) {
+		var mesh = physica.getMesh();
+		
+		// If one of the buffer is dirty re-bind all the attributes.
+		if(mesh.isDirty()) {
+			
+			// Upload the VAO and VBOs of the mesh.
+			mesh.upload();
+			
+			for(var attrib : attributes) {
+				
+				var key = attrib.getName();
+				var buffer = mesh.getBuffer(key);
+				
+				if(buffer == null) {
+					throw new MercuryException("No VertexBuffer setup in " + 
+							physica + " for attribute '" + key + "'!");
+				}
+				
+				attrib.bindAttribute(buffer);
+			}
 		}
 	}
 	

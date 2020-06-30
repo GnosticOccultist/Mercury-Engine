@@ -43,9 +43,19 @@ public final class Allocator {
 	/**
 	 * Private constructor to inhibit instantiation of <code>Allocator</code>.
 	 */
-	private Allocator() {
-	}
+	private Allocator() {}
 
+	/**
+	 * Allocates a new {@link ByteBuffer} of the provided size using the
+	 * {@link #DEFAULT_ALLOC_TYPE}.
+	 * 
+	 * @param size The size of the buffer in shorts (&gt;0).
+	 * @return 	   A new allocated buffer of the specified size.
+	 */
+	public static ByteBuffer alloc(int size) {
+		return alloc(size, DEFAULT_ALLOC_TYPE);
+	}
+	
 	/**
 	 * Allocates a new {@link ByteBuffer} of the provided size and of the given
 	 * allocation {@link Type}.
@@ -55,7 +65,7 @@ public final class Allocator {
 	 * 
 	 * @param size The size of the buffer in bytes (&gt;0).
 	 * @param type The type of allocation to use (not null).
-	 * @return A new allocated buffer of the specified size.
+	 * @return 	   A new allocated buffer of the specified size.
 	 */
 	public static ByteBuffer alloc(int size, Type type) {
 		Validator.positive(size, "The size of the memory block to allocate must be positive!");
@@ -82,6 +92,17 @@ public final class Allocator {
 		assert buffer != null;
 		return buffer;
 	}
+	
+	/**
+	 * Allocates a new {@link ShortBuffer} of the provided size using the
+	 * {@link #DEFAULT_ALLOC_TYPE}.
+	 * 
+	 * @param size The size of the buffer in shorts (&gt;0).
+	 * @return 	   A new allocated buffer of the specified size.
+	 */
+	public static ShortBuffer allocShort(int size) {
+		return allocShort(size, DEFAULT_ALLOC_TYPE);
+	}
 
 	/**
 	 * Allocates a new {@link ShortBuffer} of the provided size and of the given
@@ -92,7 +113,7 @@ public final class Allocator {
 	 * 
 	 * @param size The size of the buffer in shorts (&gt;0).
 	 * @param type The type of allocation to use (not null).
-	 * @return A new allocated buffer of the specified size.
+	 * @return	   A new allocated buffer of the specified size.
 	 */
 	public static ShortBuffer allocShort(int size, Type type) {
 		Validator.positive(size, "The size of the memory block to allocate must be positive!");
@@ -119,6 +140,17 @@ public final class Allocator {
 		assert buffer != null;
 		return buffer;
 	}
+	
+	/**
+	 * Allocates a new {@link IntBuffer} of the provided size using the
+	 * {@link #DEFAULT_ALLOC_TYPE}.
+	 * 
+	 * @param size The size of the buffer in ints (&gt;0).
+	 * @return 	   A new allocated buffer of the specified size.
+	 */
+	public static IntBuffer allocInt(int size) {
+		return allocInt(size, DEFAULT_ALLOC_TYPE);
+	}
 
 	/**
 	 * Allocates a new {@link IntBuffer} of the provided size and of the given
@@ -129,7 +161,7 @@ public final class Allocator {
 	 * 
 	 * @param size The size of the buffer in ints (&gt;0).
 	 * @param type The type of allocation to use (not null).
-	 * @return A new allocated buffer of the specified size.
+	 * @return 	   A new allocated buffer of the specified size.
 	 */
 	public static IntBuffer allocInt(int size, Type type) {
 		Validator.positive(size, "The size of the memory block to allocate must be positive!");
@@ -162,7 +194,7 @@ public final class Allocator {
 	 * {@link #DEFAULT_ALLOC_TYPE}.
 	 * 
 	 * @param size The size of the buffer in floats (&gt;0).
-	 * @return A new allocated buffer of the specified size.
+	 * @return 	   A new allocated buffer of the specified size.
 	 */
 	public static FloatBuffer allocFloat(int size) {
 		return allocFloat(size, DEFAULT_ALLOC_TYPE);
@@ -177,7 +209,7 @@ public final class Allocator {
 	 * 
 	 * @param size The size of the buffer in floats (&gt;0).
 	 * @param type The type of allocation to use (not null).
-	 * @return A new allocated buffer of the specified size.
+	 * @return 	   A new allocated buffer of the specified size.
 	 */
 	public static FloatBuffer allocFloat(int size, Type type) {
 		Validator.positive(size, "The size of the memory block to allocate must be positive!");
@@ -214,7 +246,7 @@ public final class Allocator {
 	 * 
 	 * @param size The size of the buffer in longs (&gt;0).
 	 * @param type The type of allocation to use (not null).
-	 * @return A new allocated buffer of the specified size.
+	 * @return 	   A new allocated buffer of the specified size.
 	 */
 	public static LongBuffer allocLong(int size, Type type) {
 		Validator.positive(size, "The size of the memory block to allocate must be positive!");
@@ -251,7 +283,7 @@ public final class Allocator {
 	 * 
 	 * @param size The size of the buffer in doubles (&gt;0).
 	 * @param type The type of allocation to use (not null).
-	 * @return A new allocated buffer of the specified size.
+	 * @return 	   A new allocated buffer of the specified size.
 	 */
 	public static DoubleBuffer allocDouble(int size, Type type) {
 		Validator.positive(size, "The size of the memory block to allocate must be positive!");

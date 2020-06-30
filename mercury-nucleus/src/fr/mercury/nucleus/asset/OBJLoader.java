@@ -329,12 +329,11 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
 			mesh.setupBuffer(VertexBufferType.TEX_COORD, Usage.STATIC_DRAW, texCoordBuffer);
 			mesh.setupBuffer(VertexBufferType.NORMAL, Usage.STATIC_DRAW, normalsBuffer);
 			
-			mesh.setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, buffer);
+			mesh.setupIndexBuffer(buffer);
 			
 			mesh.setMode(Mode.TRIANGLES);
-			// Upload to the mesh to be ready for rendering.
-			mesh.upload();
 			
+			// The mesh should be uploaded by the Renderer only.
 			return mesh;
 		}
 		

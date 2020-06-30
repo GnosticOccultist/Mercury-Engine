@@ -6,6 +6,7 @@ import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.asset.AssimpLoader.ConfigFlag;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
+import fr.mercury.nucleus.renderer.logic.state.FaceCullingState.WindingOrder;
 import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
 import fr.mercury.nucleus.renderer.logic.state.PolygonModeState.PolygonMode;
 import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
@@ -104,7 +105,7 @@ public class TestMeshInstancing extends MercuryApplication {
 		mesh.setupBuffer("instanceMatrix", 4, Usage.DYNAMIC_DRAW, data);
 
 		var polygonState = new PolygonModeState().setPolygonMode(Face.FRONT_AND_BACK, PolygonMode.LINE).enable();
-		var faceCulling = new FaceCullingState().setFace(Face.BACK).enable();
+		var faceCulling = new FaceCullingState().setFace(Face.BACK).setWindingOrder(WindingOrder.CLOCKWISE).enable();
 		scene.setRenderStates(polygonState, faceCulling);
 
 		scene.attach(cube);

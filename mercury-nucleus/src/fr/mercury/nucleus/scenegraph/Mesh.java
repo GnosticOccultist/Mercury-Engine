@@ -7,7 +7,6 @@ import java.util.Map;
 import org.lwjgl.opengl.GL11;
 
 import fr.alchemy.utilities.Validator;
-import fr.mercury.nucleus.renderer.opengl.GLBuffer.BufferType;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexArray;
@@ -48,45 +47,55 @@ public class Mesh {
 	 * The count of instances to draw for the mesh.
 	 */
 	private int instanceCount = 1;
+	/**
+	 * The count of vertices in the mesh.
+	 */
+	private int vertexCount = -1;
 	
 	/**
-	 * Instantiates a new <code>Mesh</code> with no <code>VertexBuffer</code> set.
+	 * Instantiates a new <code>Mesh</code> with no {@link VertexBuffer} set.
 	 * The mode is set by default to {@link Mode#TRIANGLES}.
 	 * <p>
-	 * To setup a buffer for this mesh, use {@link #setupBuffer(VertexBufferType, Usage, float[])}.
+	 * To setup a buffer for this mesh, use {@link #setupBuffer(VertexBufferType, Usage, Buffer)}.
+	 * 
+	 * @see #setupBuffer(VertexBufferType, Usage, Buffer)
+	 * @see #setupIndexBuffer(int[])
 	 */
 	public Mesh() {
 		this.vao = new VertexArray();
 		this.buffers = new HashMap<>();
 	}
 	
+	/**
+	 * Return whether the <code>Mesh</code> is dirty meaning at least one of its {@link VertexBuffer}
+	 * has unuploaded changes to it.
+	 * 
+	 * @return Wether the mesh is dirty. 
+	 */
+	public boolean isDirty() {
+		return buffers.values().stream()
+				.filter(VertexBuffer::needsUpdate)
+				.findAny().isPresent();
+	}
+	
+	/**
+	 * Binds the <code>Mesh</code> to be used by the <code>OpenGL</code> context,
+	 * by binding its {@link VertexArray}.
+	 * 
+	 * @see VertexArray#bind()
+	 */
 	public void bind() {
-		vao.upload();
-		
-		buffers.values().forEach(VertexBuffer::upload);
+		vao.bind();
 	}
 	
-	public boolean isBufferClean() {
-		return !buffers.values().stream().filter(VertexBuffer::needsUpdate).findAny().isPresent();
-	}
-	
-	public void bindBeforeRender() {
-		vao.upload();
-		
-		buffers.values().forEach(VertexBuffer::upload);
-	}
-	
-	public void unbindAfterRender() {
-		
-		unbind();
-	}
-	
-	protected void unbind() {
-		
+	/**
+	 * Unbinds the <code>Mesh</code> to be no longer used by the <code>OpenGL</code> 
+	 * context, by unbinding the current {@link VertexArray}.
+	 * 
+	 * @see VertexArray#unbind()
+	 */
+	public void unbind() {
 		VertexArray.unbind();
-		
-		VertexBuffer.unbind(BufferType.VERTEX_DATA);
-		VertexBuffer.unbind(BufferType.VERTEX_INDEXING);
 	}
 	
 	/**
@@ -101,7 +110,7 @@ public class Mesh {
 	 * 
 	 * @param data The array of indices as integer values to store in the buffer.
 	 */
-	public void setupIndexBuffer(int[] data) {
+	public void setupIndexBuffer(Buffer data) {
 		setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, data);
 	}
 	
@@ -129,6 +138,10 @@ public class Mesh {
 			buffers.put(key, vbo);
 		} else {
 			vbo.storeDataBuffer(data);
+		}
+		
+		if(type == VertexBufferType.POSITION) {
+			updateVertexCount();
 		}
 	}
 	
@@ -183,6 +196,10 @@ public class Mesh {
 		} else {
 			vbo.storeData(data);
 		}
+		
+		if(type == VertexBufferType.POSITION) {
+			updateVertexCount();
+		}
 	}
 	
 	/**
@@ -210,6 +227,10 @@ public class Mesh {
 		} else {
 			vbo.storeData(data);
 		}
+		
+		if(type == VertexBufferType.POSITION) {
+			updateVertexCount();
+		}
 	}
 	
 	/**
@@ -226,10 +247,7 @@ public class Mesh {
 	public void upload() {
 		vao.upload();
 		
-		// Sets the vertex attributes and enable it.
-		for(VertexBuffer vertexBuffer : buffers.values()) {
-			vertexBuffer.upload();
-		}
+		buffers.values().forEach(VertexBuffer::upload);
 	}
 	
 	/**
@@ -306,19 +324,21 @@ public class Mesh {
 	 * 
 	 * @return The number of vertices or -1 for undetermined count.
 	 */
-	public int getVertexCount() {
-		
-		var indices = getBuffer(VertexBufferType.INDEX).getData();
-		if(indices != null) {
-			return indices.limit();
-		}
-		
+	private void updateVertexCount() {
 		var vertices = getBuffer(VertexBufferType.POSITION).getData();
 		if(vertices != null) {
-			return vertices.limit() / VertexBufferType.POSITION.getSize();
+			var result = vertices.limit() / VertexBufferType.POSITION.getSize();
+			this.vertexCount = result;
 		}
-		
-		return -1;
+	}
+	
+	public int getVertexCount() {
+		return vertexCount;
+	}
+	
+	public int getElementCount() {
+		var result = getBuffer(VertexBufferType.INDEX).getData().limit();
+		return result;
 	}
 	
 	/**
