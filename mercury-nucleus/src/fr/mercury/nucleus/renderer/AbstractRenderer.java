@@ -435,6 +435,11 @@ public abstract class AbstractRenderer {
 		for(int i = 0; i < prefabUniforms.size(); i++) {
 			
 			var prefabName = prefabUniforms.get(i);
+			if("CAMERA_POS".equals(prefabName)) {
+				shader.addUniform("cameraPos", UniformType.VECTOR3F, camera.getLocation());
+			}
+			
+			// Look for an environment element attached to an animae.
 			var property = physica.getEnvironmentElement(prefabName);
 			
 			if(property != null) {
@@ -501,6 +506,9 @@ public abstract class AbstractRenderer {
 				buffer.set(projection);
 				buffer.mult(view, buffer);
 				break;
+			case NORMAL:
+				// TODO: 
+				break;
 			default:
 				throw new UnsupportedOperationException("The provided type of matrix: " + type + " can't be computed!");
 		}
@@ -549,7 +557,11 @@ public abstract class AbstractRenderer {
 		 * The view-projection-model matrix used to display an entire scene-graph
 		 * correctly in 3D-space taking into account the camera, window and object's transform.
 		 */
-		VIEW_PROJECTION_MODEL("viewProjectionModelMatrix", true);
+		VIEW_PROJECTION_MODEL("viewProjectionModelMatrix", true),
+		/**
+		 * The normal matrix computed using the model matrix.
+		 */
+		NORMAL("normalMatrix", true);
 		
 		/**
 		 * The uniform name used inside the shader.

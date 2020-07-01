@@ -24,23 +24,23 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 	/**
 	 * The zero components <code>Vector3f</code> &rarr; [0,0,0].
 	 */
-	public static final Vector3f ZERO = new Vector3f(0, 0, 0);
+	public static final ReadableVector3f ZERO = new Vector3f(0, 0, 0);
 	/**
 	 * The unit <code>Vector3f</code> in the X-axis &rarr; [1,0,0].
 	 */
-	public static final Vector3f UNIT_X = new Vector3f(1, 0, 0);
+	public static final ReadableVector3f UNIT_X = new Vector3f(1, 0, 0);
 	/**
 	 * The unit <code>Vector3f</code> in the Y-axis &rarr; [0,1,0].
 	 */
-	public static final Vector3f UNIT_Y = new Vector3f(0, 1, 0);
+	public static final ReadableVector3f UNIT_Y = new Vector3f(0, 1, 0);
 	/**
 	 * The unit <code>Vector3f</code> in the Z-axis &rarr; [0,0,1].
 	 */
-	public static final Vector3f UNIT_Z = new Vector3f(0, 0, 1);
+	public static final ReadableVector3f UNIT_Z = new Vector3f(0, 0, 1);
 	/**
 	 * The one components <code>Vector3f</code> &rarr; [1,1,1].
 	 */
-	public static final Vector3f ONE = new Vector3f(1, 1, 1);
+	public static final ReadableVector3f ONE = new Vector3f(1, 1, 1);
 	
 	/**
 	 * The X-component of the vector.
@@ -81,7 +81,7 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 	 * 
 	 * @param other The other vector to get the components.
 	 */
-	public Vector3f(Vector3f other) {
+	public Vector3f(ReadableVector3f other) {
 		set(other);
 	}
 	
