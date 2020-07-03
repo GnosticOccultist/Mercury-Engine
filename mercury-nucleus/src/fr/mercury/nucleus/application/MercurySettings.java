@@ -94,7 +94,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 	/**
 	 * Return the {@link Window} width in screen coordinates.
 	 * 
-	 * @return The window's width (&gt;0).
+	 * @return The window's width (&ge;0).
 	 */
 	public int getWidth() {
 		var result = getInteger("Width");
@@ -105,18 +105,21 @@ public final class MercurySettings extends HashMap<String, Object> {
 
 	/**
 	 * Set the with of the {@link Window} in screen coordinates.
+	 * <p>
+	 * Note that if the desired height of the window is set to be 0, then the resolution of 
+	 * the monitor will be used instead.
 	 * 
-	 * @param width The width of the window (&gt;0, default&rarr;1280).
+	 * @param width The width of the window (&ge;0, default&rarr;1280).
 	 */
 	public void setWidth(int width) {
-		Validator.positive(width, "The width of the window must be strictly positive!");
+		Validator.nonNegative(width, "The width of the window must be strictly positive!");
 		addInteger("Width", width);
 	}
 
 	/**
 	 * Return the window {@link Window} in screen coordinates.
 	 * 
-	 * @return The window's height (&gt;0).
+	 * @return The window's height (&ge;0).
 	 */
 	public int getHeight() {
 		var result = getInteger("Height");
@@ -127,11 +130,14 @@ public final class MercurySettings extends HashMap<String, Object> {
 
 	/**
 	 * Set the height of the {@link Window} in screen coordinates.
+	 * <p>
+	 * Note that if the desired height of the window is set to be 0, then the resolution of 
+	 * the monitor will be used instead.
 	 * 
-	 * @param height The height of the window (&gt;0, default&rarr;768).
+	 * @param height The height of the window (&ge;0, default&rarr;768).
 	 */
 	public void setHeight(int height) {
-		Validator.positive(height, "The height of the window must be strictly positive!");
+		Validator.nonNegative(height, "The height of the window must be strictly positive!");
 		addInteger("Height", height);
 	}
 
