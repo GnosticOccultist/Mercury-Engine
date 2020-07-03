@@ -93,7 +93,7 @@ public class TestMeshInstancing extends MercuryApplication {
 		var data = BufferUtils.createFloatBuffer(instanceCount * 16);
 		for (int i = 0; i < instanceCount; i++) {
 			var transform = randomizeTransform(RANDOM);
-			transform.asModelBuffer(data);
+			transform.populate(data);
 		}
 		// Flip the buffer since the method above uses relative put methods.
 		data.flip();

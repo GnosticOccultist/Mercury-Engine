@@ -302,10 +302,6 @@ public class MercuryContext implements Runnable {
 			GL11.glEnable(GL13.GL_MULTISAMPLE);
 		}
 
-		// Enable depth testing.
-		GL11C.glEnable(GL11C.GL_DEPTH_TEST);
-		GL11C.glDepthFunc(GL11C.GL_LEQUAL);
-
 		// Finally show the window when finished.
 		window.show();
 		

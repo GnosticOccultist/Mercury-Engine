@@ -1,5 +1,6 @@
 package fr.mercury.nucleus.math.readable;
 
+import fr.mercury.nucleus.math.objects.FloatBufferPopulator;
 import fr.mercury.nucleus.math.objects.Matrix3f;
 
 /**
@@ -9,7 +10,7 @@ import fr.mercury.nucleus.math.objects.Matrix3f;
  * 
  * @author GnosticOccultist
  */
-public interface ReadableMatrix3f {
+public interface ReadableMatrix3f extends FloatBufferPopulator {
 	
 	/**
 	 * Return the row 0 - column 0 component of the <code>ReadableMatrix3f</code>.

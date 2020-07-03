@@ -1,5 +1,6 @@
 package fr.mercury.nucleus.math.objects;
 
+import java.nio.BufferOverflowException;
 import java.nio.FloatBuffer;
 
 import fr.alchemy.utilities.Validator;
@@ -24,7 +25,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	/**
 	 * The <code>Transform</code> identity &rarr; Translation: [0,0,0] | Rotation: [0,0,0,1] | Scale: [1,1,1].
 	 */
-	public static final Transform IDENTITY_TRANSFORM = new Transform();
+	public static final ReadableTransform IDENTITY_TRANSFORM = new Transform();
 	
 	/**
 	 * The translation of the object.
@@ -421,8 +422,22 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 		return result;
 	}
 	
+	/**
+	 * Populates the given {@link FloatBuffer} with the data from the <code>Transform</code> in column 
+	 * major order.
+	 * <p>
+	 * The method is using relative put method, meaning the float data is written at the current 
+	 * buffer's position and the position is incremented by 16.
+	 * <p>
+	 * The populated buffer can be used safely to transfer data to shaders as mat4 uniforms.
+	 * 
+	 * @param store The buffer to populate with the data (not null). 
+	 * @return 		The given store populated with the transform data.
+	 * 
+	 * @throws BufferOverflowException Thrown if there isn't enough space to write all 16 floats.
+	 */
 	@Override
-	public FloatBuffer asModelBuffer(FloatBuffer store) {
+	public FloatBuffer populate(FloatBuffer store) {
 		Validator.nonNull(store, "The float buffer can't be null!");
 
 		if (rotationMatrix) {
@@ -491,7 +506,8 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
                 scale.mul(scale.x());
             }
             
-            update(true);
+            result.update(true);
+            
             return result;
     	}
     	
@@ -514,6 +530,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
         result.scale.set(1.0F, 1.0F, 1.0F);
         
         result.update(false);
+        
         return result;
 	}
 	

@@ -8,11 +8,16 @@ import java.util.Map;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
 
+import fr.alchemy.utilities.Instantiator;
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Color;
+import fr.mercury.nucleus.math.objects.FloatBufferPopulator;
+import fr.mercury.nucleus.math.objects.Matrix3f;
 import fr.mercury.nucleus.math.objects.Matrix4f;
+import fr.mercury.nucleus.math.readable.ReadableMatrix3f;
+import fr.mercury.nucleus.math.readable.ReadableMatrix4f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.renderer.logic.state.BlendState;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
@@ -48,7 +53,7 @@ public abstract class AbstractRenderer {
 	 * The table containing the various matrices used for rendering in the shader 
 	 * as a float buffer.
 	 */
-	protected final EnumMap<MatrixType, Matrix4f> matrixMap = new EnumMap<>(MatrixType.class);
+	protected final EnumMap<MatrixType, FloatBufferPopulator> matrixMap = new EnumMap<>(MatrixType.class);
 	/**
 	 * The clear values for the color buffer used by the renderer.
 	 */
@@ -417,7 +422,7 @@ public abstract class AbstractRenderer {
 					computeMatrix(type);
 				}
 				
-				shader.addUniform(type.getUniformName(), UniformType.MATRIX4F, matrixMap.get(type));	
+				shader.addUniform(type.getUniformName(), type.getUniformType(), matrixMap.get(type));	
 			}
 		}
 	}
@@ -449,25 +454,41 @@ public abstract class AbstractRenderer {
 	}
 	
 	/**
-	 * Stores the provided {@link Matrix4f} for the given usage {@link MatrixType}
+	 * Stores the provided {@link ReadableMatrix4f} for the given usage {@link MatrixType}.
 	 * 
 	 * @param type   The type of the rendering matrix.
 	 * @param matrix The rendering matrix to store.
 	 */
-	public void setMatrix(MatrixType type, Matrix4f matrix) {
-		var buffer = matrixMap.computeIfAbsent(type, k -> new Matrix4f());
+	public void setMatrix(MatrixType type, ReadableMatrix4f matrix) {
+		type.checkType(matrix);
+		var buffer = (Matrix4f) matrixMap.computeIfAbsent(type, k -> type.newInstance());
 		buffer.set(matrix);
 	}
 	
 	/**
-	 * Stores the provided {@link Matrix4f} for the given usage {@link MatrixType}
+	 * Stores the provided {@link ReadableMatrix3f} for the given usage {@link MatrixType}.
+	 * 
+	 * @param type   The type of the rendering matrix.
+	 * @param matrix The rendering matrix to store.
+	 */
+	public void setMatrix(MatrixType type, ReadableMatrix3f matrix) {
+		type.checkType(matrix);
+		var buffer = (Matrix3f) matrixMap.computeIfAbsent(type, k -> type.newInstance());
+		buffer.set(matrix);
+	}
+	
+	/**
+	 * Stores the provided {@link ReadableTransform} for the given usage {@link MatrixType}.
 	 * 
 	 * @param type   The type of the rendering matrix.
 	 * @param matrix The rendering matrix to store.
 	 */
 	public void setMatrix(MatrixType type, ReadableTransform transform) {
-		var buffer = matrixMap.computeIfAbsent(type, k -> new Matrix4f());
-		transform.asModelMatrix(buffer);
+		var buffer = matrixMap.computeIfAbsent(type, k -> type.newInstance());
+		if(type.accepts(Matrix4f.class)) {
+			var matrix = (Matrix4f) buffer;
+			transform.asModelMatrix(matrix);
+		}
 	}
 	
 	/**
@@ -482,29 +503,32 @@ public abstract class AbstractRenderer {
 					type + " can't be computed!");
 		}
 		
-		var buffer = matrixMap.computeIfAbsent(type, k -> new Matrix4f());
+		var buffer = matrixMap.computeIfAbsent(type, k -> type.newInstance());
 		
 		switch (type) {
 			case VIEW_PROJECTION_MODEL:
-				var viewProj = matrixMap.get(MatrixType.VIEW_PROJECTION);
+				var store = (Matrix4f) buffer;
+				var viewProj = (Matrix4f) matrixMap.get(MatrixType.VIEW_PROJECTION);
 				
 				// First compute the view projection if not already present.
 				if(viewProj == null) {
 					computeMatrix(MatrixType.VIEW_PROJECTION);
-					viewProj = matrixMap.get(MatrixType.VIEW_PROJECTION);
+					viewProj = (Matrix4f) matrixMap.get(MatrixType.VIEW_PROJECTION);
 				}
 				
-				buffer.set(viewProj);
+				store.set(viewProj);
 				
-				var model = matrixMap.get(MatrixType.MODEL);
-				buffer.mult(model, buffer);
+				var model = (Matrix4f) matrixMap.get(MatrixType.MODEL);
+				store.mult(model, store);
 				break;
 			case VIEW_PROJECTION:
-				var projection = matrixMap.get(MatrixType.PROJECTION);
-				var view = matrixMap.get(MatrixType.VIEW);
+				store = (Matrix4f) buffer;
 				
-				buffer.set(projection);
-				buffer.mult(view, buffer);
+				var projection = (Matrix4f) matrixMap.get(MatrixType.PROJECTION);
+				var view = (Matrix4f) matrixMap.get(MatrixType.VIEW);
+				
+				store.set(projection);
+				store.mult(view, store);
 				break;
 			case NORMAL:
 				// TODO: 
@@ -561,7 +585,7 @@ public abstract class AbstractRenderer {
 		/**
 		 * The normal matrix computed using the model matrix.
 		 */
-		NORMAL("normalMatrix", true);
+		NORMAL("normalMatrix", true, Matrix3f.class);
 		
 		/**
 		 * The uniform name used inside the shader.
@@ -571,10 +595,19 @@ public abstract class AbstractRenderer {
 		 * Whether the matrix type can be computed.
 		 */
 		private final boolean compute;
+		/**
+		 * The type of matrix used.
+		 */
+		private final Class<? extends FloatBufferPopulator> type;
 		
 		private MatrixType(String uniformName, boolean compute) {
+			this(uniformName, compute, Matrix4f.class);
+		}
+		
+		private MatrixType(String uniformName, boolean compute, Class<? extends FloatBufferPopulator> type) {
 			this.uniformName = uniformName;
 			this.compute = compute;
+			this.type = type;
 		}
 		
 		/**
@@ -594,6 +627,38 @@ public abstract class AbstractRenderer {
 		 */
 		public boolean canCompute() {
 			return compute;
+		}
+		
+		/**
+		 * Create and return a new instance to store the <code>MatrixType</code> in.
+		 * 
+		 * @return A new instance of matrix (not null).
+		 */
+		@SuppressWarnings("unchecked")
+		public <F extends FloatBufferPopulator> F newInstance() {
+			return (F) Instantiator.fromClass(type);
+		}
+		
+		public <F extends FloatBufferPopulator> void checkType(F obj) {
+			if(!accepts(obj)) {
+				throw new IllegalArgumentException(this + " only accepts " + type.getSimpleName() + " !");
+			}
+		}
+		
+		public <F extends FloatBufferPopulator> boolean accepts(F obj) {
+			return accepts(obj.getClass());
+		}
+		
+		public <F extends FloatBufferPopulator> boolean accepts(Class<F> clazz) {
+			return type.isAssignableFrom(clazz);
+		}
+		
+		public UniformType getUniformType() {
+			if(type == Matrix3f.class) {
+				return UniformType.MATRIX3F;
+			}
+			
+			return UniformType.MATRIX4F;
 		}
 	}
 }
