@@ -453,38 +453,38 @@ public class Matrix3f implements ReadableMatrix3f, Reusable, Comparable<Matrix3f
             return true;
         }
         
-        if (!(o instanceof Matrix3f)) {
+        if (!(o instanceof ReadableMatrix3f)) {
             return false;
         }
 
-        Matrix3f comp = (Matrix3f) o;
-        if (Float.compare(m00, comp.m00) != 0) {
+        var comp = (ReadableMatrix3f) o;
+        if (Float.compare(m00, comp.m00()) != 0) {
             return false;
         }
-        if (Float.compare(m01, comp.m01) != 0) {
+        if (Float.compare(m01, comp.m01()) != 0) {
             return false;
         }
-        if (Float.compare(m02, comp.m02) != 0) {
-            return false;
-        }
-
-        if (Float.compare(m10, comp.m10) != 0) {
-            return false;
-        }
-        if (Float.compare(m11, comp.m11) != 0) {
-            return false;
-        }
-        if (Float.compare(m12, comp.m12) != 0) {
+        if (Float.compare(m02, comp.m02()) != 0) {
             return false;
         }
 
-        if (Float.compare(m20, comp.m20) != 0) {
+        if (Float.compare(m10, comp.m10()) != 0) {
             return false;
         }
-        if (Float.compare(m21, comp.m21) != 0) {
+        if (Float.compare(m11, comp.m11()) != 0) {
             return false;
         }
-        if (Float.compare(m22, comp.m22) != 0) {
+        if (Float.compare(m12, comp.m12()) != 0) {
+            return false;
+        }
+
+        if (Float.compare(m20, comp.m20()) != 0) {
+            return false;
+        }
+        if (Float.compare(m21, comp.m21()) != 0) {
+            return false;
+        }
+        if (Float.compare(m22, comp.m22()) != 0) {
             return false;
         }
 

@@ -638,17 +638,17 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	
 	@Override
 	public boolean equals(Object o) {
-		if (o == null || !(o instanceof Transform)) {
-			return false;
-		}
-
 		if (this == o) {
 			return true;
 		}
 		
-		Transform other = (Transform) o;
-		return translation.equals(other.translation)
-			&& rotation.equals(other.rotation)
-			&& scale.equals(other.scale);
+		if (!(o instanceof ReadableTransform)) {
+			return false;
+		}
+		
+		var other = (ReadableTransform) o;
+		return translation.equals(other.getTranslation())
+			&& rotation.equals(other.getRotation())
+			&& scale.equals(other.getScale());
 	}
 }	

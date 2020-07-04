@@ -209,40 +209,6 @@ public final class Vector2f implements  ReadableVector2f, Comparable<Vector2f>, 
         this.y /= other.y;
         return this;
     }
-    
-    /**
-     * Calculates the dot product of the <code>Vector2f</code> with the provided one.
-     * If dot product = 0, the vectors are orthogonal.
-     * <p>
-	 * The provided vector cannot be null.
-     * 
-     * @param other The vector to get the dot product with.
-     * @return		The resulting scalar from the dot product.
-     */
-    public float dot(Vector2f other) {
-    	Validator.nonNull(other, "The vector cannot be null!");
-    	
-    	return x * other.x + y * other.y;
-    }
-	
-	/**
-	 * Return the length of the <code>Vector2f</code>.
-	 * 
-	 * @return The length of the vector.
-	 */
-	public float length() {
-		return (float) Math.sqrt(x * x + y * y);
-	}
-	
-	/**
-	 * Return whether the <code>Vector2f</code> is a unit vector, 
-	 * meaning its norm ({@link #length()}) is equal to 1.
-	 * 
-	 * @return Whether the vector is a unit vector.
-	 */
-	public boolean isUnitVector() {
-		return length() == 1;
-	}
 	
 	/**
 	 * Normalizes the <code>Vector2f</code>. It will will divide
@@ -260,31 +226,6 @@ public final class Vector2f implements  ReadableVector2f, Comparable<Vector2f>, 
         }
         return this;
 	}
-	
-	/**
-     * Calculates the squared distance between the <code>Vector2f</code> and 
-     * the provided one.
-     *
-     * @param other The vector to determine the distance squared from.
-     * @return 		The distance squared between the two vectors.
-     */
-    public float distanceSquared(ReadableVector2f other) {
-        double dx = x - other.x();
-        double dy = y - other.y();
-        return (float) (dx * dx + dy * dy);
-    }
-    
-    /**
-     * Calculates the distance between the <code>Vector2f</code> and 
-     * the provided one.
-     *
-     * @param other The vector to determine the distance from.
-     * @return 		The distance between the two vectors.
-     */
-    @Override
-    public double distance(ReadableVector2f other) {
-        return Math.sqrt(distanceSquared(other));
-    }
 	
 	/**
 	 * Return the X-component of the <code>Vector2f</code>, as a single-precision float.
@@ -387,16 +328,16 @@ public final class Vector2f implements  ReadableVector2f, Comparable<Vector2f>, 
 			return true;
 		}
 		
-		if(!(o instanceof Vector2f)) {
+		if(!(o instanceof ReadableVector2f)) {
 			return false;
 		}
 		
-		Vector2f other = (Vector2f) o;
-		if (Float.compare(x, other.x) != 0) {
+		var other = (ReadableVector2f) o;
+		if (Float.compare(x, other.x()) != 0) {
 			return false;
 		}
 		
-		return Float.compare(y, other.y) == 0;
+		return Float.compare(y, other.y()) == 0;
 	}
 	
 	/**

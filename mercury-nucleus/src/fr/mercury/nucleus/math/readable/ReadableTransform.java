@@ -5,8 +5,8 @@ import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Transform;
 
 /**
- * <code>ReadableTransform</code> is an interface to implement a readable-only
- * transform, meaning its fields can be accessed but not modified.
+ * <code>ReadableTransform</code> is an interface to implement a readable-only transform with a translation, rotation and scale, 
+ * meaning its fields can be accessed but not modified.
  * The actual implementation of this interface is the {@link Transform} class.
  * 
  * @author GnosticOccultist

@@ -630,21 +630,21 @@ public final class Quaternion implements ReadableQuaternion, Comparable<Quaterni
 			return true;
 		}
 		
-		if (!(o instanceof Quaternion)) {
+		if (!(o instanceof ReadableQuaternion)) {
 			return false;
 		}
 
-		Quaternion other = (Quaternion) o;
-		if (Float.compare(x, other.x) != 0) {
+		var other = (ReadableQuaternion) o;
+		if (Float.compare(x, other.x()) != 0) {
 			return false;
 		}
-		if (Float.compare(y, other.y) != 0) {
+		if (Float.compare(y, other.y()) != 0) {
 			return false;
 		}
-		if (Float.compare(z, other.z) != 0) {
+		if (Float.compare(z, other.z()) != 0) {
 			return false;
 		}
 		
-		return Float.compare(w, other.w) == 0;
+		return Float.compare(w, other.w()) == 0;
 	}
 }
