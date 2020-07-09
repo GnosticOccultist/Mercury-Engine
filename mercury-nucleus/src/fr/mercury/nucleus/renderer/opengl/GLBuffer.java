@@ -30,6 +30,11 @@ import fr.mercury.nucleus.utils.OpenGLCall;
 public abstract class GLBuffer extends GLObject {
 	
 	/**
+	 * The array of currently bound GL buffers to the context, normally one for each buffer type.
+	 */
+	private static final GLBuffer[] CURRENTS = new GLBuffer[BufferType.values().length];
+	
+	/**
 	 * The usage of the buffer.
 	 */
 	protected Usage usage;
@@ -70,7 +75,9 @@ public abstract class GLBuffer extends GLObject {
 	 */
 	public static void unbind(BufferType type) {
 		Validator.nonNull(type, "The buffer type can't be null!");
+		
 		GL15.glBindBuffer(GLBuffer.getOpenGLType(type), 0);
+		CURRENTS[type.ordinal()] = null;
 	}
 	
 	/**
@@ -80,11 +87,16 @@ public abstract class GLBuffer extends GLObject {
 	 */
 	@OpenGLCall
 	public void bind() {
+		if(CURRENTS[getType().ordinal()] == this) {
+			return;
+		}
+		
 		if(getID() == INVALID_ID) {
 			throw new GLException("The " + getClass().getSimpleName() + " isn't created yet!");
 		}
 		
 		GL15.glBindBuffer(getOpenGLType(), getID());
+		CURRENTS[getType().ordinal()] = this;
 	}
 	
 	/**
@@ -144,7 +156,7 @@ public abstract class GLBuffer extends GLObject {
 	 */
 	@OpenGLCall
 	public void unbind() {
-		GL15.glBindBuffer(getOpenGLType(), 0);
+		unbind(getType());
 	}
 	
 	@Override

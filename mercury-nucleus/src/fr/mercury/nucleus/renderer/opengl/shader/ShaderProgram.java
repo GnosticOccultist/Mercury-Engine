@@ -308,6 +308,10 @@ public final class ShaderProgram extends GLObject {
 	@Override
 	@OpenGLCall
 	public void cleanup() {
+		if(CURRENT == this) {
+			CURRENT = null;
+		}
+		
 		uniforms.values().forEach(Uniform::cleanup);
 		uniforms.clear();
 		for(int i = 0; i < sources.size(); i++) {

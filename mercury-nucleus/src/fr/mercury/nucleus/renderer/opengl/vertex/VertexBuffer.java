@@ -1,20 +1,16 @@
 package fr.mercury.nucleus.renderer.opengl.vertex;
 
 import java.nio.Buffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 import java.util.function.Consumer;
 
 import org.lwjgl.opengl.GL15;
-import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType.Format;
 import fr.mercury.nucleus.scenegraph.Mesh;
-import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;
+import fr.mercury.nucleus.utils.data.Allocator;
 
 /**
  * <code>VertexBuffer</code> is an implementation of the {@link GLBuffer}, which
@@ -118,40 +114,21 @@ public class VertexBuffer extends GLBuffer {
 	}
 	
 	/**
-	 * Return the <code>VertexBuffer</code> {@link BufferType type}.
-	 * It corresponds to {@link VertexBufferType#getBufferType()} or {@link BufferType#VERTEX_DATA} if not defined.
-	 * 
-	 * @return The vertex buffer's type.
-	 */
-	@Override
-	protected BufferType getType() {
-		return type == null ? BufferType.VERTEX_DATA : type.getBufferType();
-	}
-	
-	/**
-	 * Store the provided integer data array to the <code>VertexBuffer</code>.
+	 * Store the provided byte data array to the <code>VertexBuffer</code>.
 	 * <p>
 	 * Note that the buffer won't be usable until you call {@link #upload()}, to
 	 * update the stored value.
 	 * 
-	 * @param data The data as an integer array.
+	 * @param data The data as a byte array (not null).
 	 */
-	public void storeData(int[] data) {
-		if(format != Format.UNSIGNED_INT) {
-			throw new IllegalArgumentException("The format of the vertex buffer "
-					+ "can only accept integer data values!");
-		}
+	public void storeData(byte[] data) {
+		Validator.nonNull(data, "The data array can't be null!");
+		Validator.check(format == Format.UNSIGNED_BYTE, "The format '" + format + 
+				"' of the vertex buffer can't accept byte data values!");
 		
-		IntBuffer buffer = null;
-		try {
-			buffer = MemoryUtil.memAllocInt(data.length);
-			buffer.put(data).flip();
-			storeDataBuffer(buffer);
-		} finally {
-			if (buffer != null) {
-                MemoryUtil.memFree(buffer);
-            }
-		}
+		var buffer = Allocator.alloc(data.length);
+		buffer.put(data).flip();
+		storeDataBuffer(buffer);
 	}
 	
 	/**
@@ -160,24 +137,34 @@ public class VertexBuffer extends GLBuffer {
 	 * Note that the buffer won't be usable until you call {@link #upload()}, to
 	 * update the stored value.
 	 * 
-	 * @param data The data as a short array.
+	 * @param data The data as a short array (not null).
 	 */
 	public void storeData(short[] data) {
-		if(format != Format.UNSIGNED_SHORT) {
-			throw new IllegalArgumentException("The format of the vertex buffer "
-					+ "can only accept integer data values!");
-		}
+		Validator.nonNull(data, "The data array can't be null!");
+		Validator.check(format == Format.UNSIGNED_SHORT, "The format '" + format + 
+				"' of the vertex buffer can't accept short data values!");
 		
-		ShortBuffer buffer = null;
-		try {
-			buffer = MemoryUtil.memAllocShort(data.length);
-			buffer.put(data).flip();
-			storeDataBuffer(buffer);
-		} finally {
-			if (buffer != null) {
-                MemoryUtil.memFree(buffer);
-            }
-		}
+		var buffer = Allocator.allocShort(data.length);
+		buffer.put(data).flip();
+		storeDataBuffer(buffer);
+	}
+	
+	/**
+	 * Store the provided integer data array to the <code>VertexBuffer</code>.
+	 * <p>
+	 * Note that the buffer won't be usable until you call {@link #upload()}, to
+	 * update the stored value.
+	 * 
+	 * @param data The data as an integer array (not null).
+	 */
+	public void storeData(int[] data) {
+		Validator.nonNull(data, "The data array can't be null!");
+		Validator.check(format == Format.UNSIGNED_INT, "The format '" + format + 
+				"' of the vertex buffer can't accept int data values!");
+		
+		var buffer = Allocator.allocInt(data.length);
+		buffer.put(data).flip();
+		storeDataBuffer(buffer);
 	}
 	
 	/**
@@ -186,24 +173,16 @@ public class VertexBuffer extends GLBuffer {
 	 * Note that the buffer won't be usable until you call {@link #upload()}, to
 	 * update the stored value.
 	 * 
-	 * @param data The data as a float array.
+	 * @param data The data as a float array (not null).
 	 */
 	public void storeData(float[] data) {
-		if(format != Format.FLOAT) {
-			throw new IllegalArgumentException("The format of the vertex buffer "
-					+ "can only accept float data values!");
-		}
+		Validator.nonNull(data, "The data array can't be null!");
+		Validator.check(format == Format.FLOAT, "The format '" + format + 
+				"' of the vertex buffer can't accept float data values!");
 		
-		FloatBuffer buffer = null;
-		try {
-			buffer = MemoryUtil.memAllocFloat(data.length);
-			buffer.put(data).flip();
-			storeDataBuffer(buffer);
-		} finally {
-			if (buffer != null) {
-                MemoryUtil.memFree(buffer);
-            }
-		}
+		var buffer = Allocator.allocFloat(data.length);
+		buffer.put(data).flip();
+		storeDataBuffer(buffer);
 	}
 	
 	/**
@@ -212,16 +191,26 @@ public class VertexBuffer extends GLBuffer {
 	 * Note that the buffer cannot be {@link Buffer#isReadOnly() readable-only} and won't 
 	 * be usable until you call {@link #upload()}, to update the stored value.
 	 * 
-	 * @param data The buffer storing vertex data.
+	 * @param data The buffer storing vertex data (not null).
 	 */
 	public void storeDataBuffer(Buffer data) {
-		if(data.isReadOnly()) {
-			throw new MercuryException("Stored data inside a VertexBuffer "
+		Validator.nonNull(data, "The data buffer can't be null!");
+		Validator.check(!data.isReadOnly(), "Stored data inside a VertexBuffer "
 					+ "cannot be readable-only!");
-		}
 		
 		this.data = data;
 		this.needsUpdate = true;
+	}
+	
+	/**
+	 * Return the <code>VertexBuffer</code> {@link BufferType type}.
+	 * It corresponds to {@link VertexBufferType#getBufferType()} or {@link BufferType#VERTEX_DATA} if not defined.
+	 * 
+	 * @return The vertex buffer's type.
+	 */
+	@Override
+	protected BufferType getType() {
+		return type == null ? BufferType.VERTEX_DATA : type.getBufferType();
 	}
 	
 	/**

@@ -22,6 +22,11 @@ import fr.mercury.nucleus.utils.OpenGLCall;
 public final class VertexArray extends GLObject {
 	
 	/**
+	 * The currently bound VAO on the OpenGL context.
+	 */
+	private static VertexArray CURRENT = null;
+	
+	/**
 	 * Determines if the provided {@link VertexArray} correspond to an OpenGL 
 	 * vertex array object.
 	 * 
@@ -49,11 +54,16 @@ public final class VertexArray extends GLObject {
 	 */
 	@OpenGLCall
 	public void bind() {
+		if(CURRENT == this) {
+			return;
+		}
+		
 		if(getID() == INVALID_ID) {
 			throw new GLException("The vertex array isn't created yet!");
 		}
 		
 		GL30.glBindVertexArray(getID());
+		CURRENT = this;
 	}
 	
 	/**
@@ -68,6 +78,8 @@ public final class VertexArray extends GLObject {
 	@OpenGLCall
 	public static void unbind() {
 		GL30.glBindVertexArray(0);
+		
+		CURRENT = null;
 	}
 	
 	@Override

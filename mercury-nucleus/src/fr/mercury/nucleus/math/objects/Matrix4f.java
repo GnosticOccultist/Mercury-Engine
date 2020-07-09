@@ -254,7 +254,7 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
 		m22 = -(far + near) / (far - near);
 		m23 = -1.0F;
 		m32 = -(2.0F * far * near) / (far - near);
-		m33 = -0.0F;
+		m33 = 0.0F;
 	}
 	
 	/**
