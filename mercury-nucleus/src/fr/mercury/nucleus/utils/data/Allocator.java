@@ -49,7 +49,7 @@ public final class Allocator {
 	 * Allocates a new {@link ByteBuffer} of the provided size using the
 	 * {@link #DEFAULT_ALLOC_TYPE}.
 	 * 
-	 * @param size The size of the buffer in shorts (&gt;0).
+	 * @param size The size of the buffer in bytes (&gt;0).
 	 * @return 	   A new allocated buffer of the specified size.
 	 */
 	public static ByteBuffer alloc(int size) {

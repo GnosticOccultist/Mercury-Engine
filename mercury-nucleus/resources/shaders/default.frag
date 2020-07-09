@@ -1,4 +1,4 @@
-#version 330
+#version 330 core
 
 #ifdef USE_FOG
 #import "/shaders/Fog.glsl"
@@ -8,9 +8,10 @@ out vec4 frag_Color;
 
 #ifdef USE_TEXTURE
 	uniform sampler2D texture_sampler;
+#else
+	// Use a color at least.
+	uniform vec4 diffuseColor;
 #endif
-
-uniform vec4 diffuseColor;
 
 #ifdef USE_TEXTURE
 	in vec2 frag_TexCoord;
@@ -23,10 +24,12 @@ uniform vec4 diffuseColor;
 
 void main() {
 	
-	vec4 baseColor = diffuseColor;
+	vec4 baseColor = vec4(1.0, 1.0, 1.0, 1.0);
 	
 	#ifdef USE_TEXTURE
 		baseColor = texture(texture_sampler, frag_TexCoord);
+	#else
+		baseColor = diffuseColor;
 	#endif
 	
 	#ifdef USE_FOG

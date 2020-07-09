@@ -3,6 +3,7 @@ package fr.mercury.nucleus.scenegraph;
 import java.nio.Buffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.lwjgl.opengl.GL11;
 
@@ -130,6 +131,26 @@ public class Mesh {
 	 * @param data  The buffer containing the vertex data.
 	 */
 	public void setupBuffer(VertexBufferType type, Usage usage, Buffer data) {
+		setupBuffer(type, usage, data, type == VertexBufferType.POSITION);
+	}
+	
+	/**
+	 * Setup the {@link VertexBuffer} for the specified type and usage and store into
+	 * it the given buffer containing vertex data.
+	 * <p>
+	 * <b>Only one buffer can be set for each {@link VertexBufferType type}</b>, but don't worry this method
+	 * automatically update the stored data for the buffer type if it's already set.
+	 * <p>
+	 * If you want to use the <code>VertexBuffer</code>, you need to upload it to the GPU with the
+	 * OpenGL context using {@link #upload()}. Note that this function will upload all the buffers already
+	 * setup on this <code>Mesh</code>.
+	 * 
+	 * @param type		  The buffer type.
+	 * @param usage 	  The usage for the buffer (how often it will be updated).
+	 * @param data  	  The buffer containing the vertex data.
+	 * @param updateCount Whether to update the count of vertices based on the position or interleaved buffer.
+	 */
+	public void setupBuffer(VertexBufferType type, Usage usage, Buffer data, boolean updateCount) {
 		var key = type.toString();
 		var vbo = buffers.get(key);
 		if(vbo == null) {
@@ -140,7 +161,7 @@ public class Mesh {
 			vbo.storeDataBuffer(data);
 		}
 		
-		if(type == VertexBufferType.POSITION) {
+		if(updateCount) {
 			updateVertexCount();
 		}
 	}
@@ -325,9 +346,23 @@ public class Mesh {
 	 * @return The number of vertices or -1 for undetermined count.
 	 */
 	private void updateVertexCount() {
-		var vertices = getBuffer(VertexBufferType.POSITION).getData();
+		var buffer = getBuffer(VertexBufferType.POSITION);
+		if(buffer == null) {
+			buffer = getBuffer(VertexBufferType.INTERLEAVED);
+		}
+		
+		if(buffer == null) {
+			throw new NoSuchElementException("Can't update vertices count "
+					+ "without position or interleaved buffer!");
+		}
+		
+		var vertices = buffer.getData();
+		var format = buffer.getFormat();
 		if(vertices != null) {
 			var result = vertices.limit() / VertexBufferType.POSITION.getSize();
+			if(format == Format.UNSIGNED_BYTE) {
+				result /= VertexBufferType.POSITION.getPreferredFormat().getSizeInByte();
+			}
 			this.vertexCount = result;
 		}
 	}

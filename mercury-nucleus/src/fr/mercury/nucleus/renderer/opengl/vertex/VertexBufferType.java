@@ -70,7 +70,12 @@ public enum VertexBufferType {
 	/**
 	 * Defines the index for constructing the vertices with 1 uint component.
 	 */
-	INDEX(BufferType.VERTEX_INDEXING, 1, Format.UNSIGNED_INT);
+	INDEX(BufferType.VERTEX_INDEXING, 1, Format.UNSIGNED_INT),
+	/**
+	 * A custom vertex buffer which uses interleaved data format, if such vertex buffer is defined in a Mesh,
+	 * then it will be used to pass data to vertex attributes.
+	 */
+	INTERLEAVED(BufferType.VERTEX_DATA, Format.UNSIGNED_BYTE);
 	
 	/**
 	 * The buffer type to use either {@link BufferType#VERTEX_DATA} or 

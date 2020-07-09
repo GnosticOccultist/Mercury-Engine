@@ -78,5 +78,21 @@
 		"uniforms": {
 			"prefabs": ["VIEW_PROJECTION_MODEL"]
 		}
+	},
+	
+	"Unlit_no_fog_interleaved": {
+		"description": "Simple default material used for rendering animae without any lighting or fog but using mesh instancing.",
+		"attributes": [
+			{ "name": "position", "location": 0, "bufferType": "interleaved" },
+			{ "name": "texCoord", "location": 1, "bufferType": "interleaved" },
+			{ "name": "normal", "location": 2, "bufferType": "interleaved" }
+		],
+		"shaders": [ 
+			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_TEXTURE"] },
+			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE"] }
+		],
+		"uniforms": {
+			"prefabs": ["VIEW_PROJECTION_MODEL"]
+		}
 	}
 }
