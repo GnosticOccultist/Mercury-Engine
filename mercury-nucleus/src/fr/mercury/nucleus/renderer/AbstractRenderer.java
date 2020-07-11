@@ -12,6 +12,7 @@ import fr.alchemy.utilities.Instantiator;
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.FloatBufferPopulator;
 import fr.mercury.nucleus.math.objects.Matrix3f;
@@ -38,7 +39,7 @@ import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
-public abstract class AbstractRenderer {
+public abstract class AbstractRenderer extends AbstractApplicationService implements Renderer {
 	
 	/**
 	 * The logger for the Mercury Renderer.

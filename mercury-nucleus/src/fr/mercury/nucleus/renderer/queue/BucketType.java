@@ -4,14 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import fr.alchemy.utilities.Validator;
-import fr.mercury.nucleus.renderer.Renderer;
+import fr.mercury.nucleus.renderer.DefaultRenderer;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
 
 /**
  * <code>BucketType</code> describes a specific type of {@link RenderBucket} a {@link AnimaMundi} 
  * can use to be rendered on the screen. 
  * <p>
- * In order to do this the {@link Renderer} will have {@link Renderer#registerBucket(BucketType) to create} 
+ * In order to do this the {@link DefaultRenderer} will have {@link DefaultRenderer#registerBucket(BucketType) to create} 
  * a {@link RenderBucket} for the type, so each anima-mundi which uses this type of bucket can be 
  * submitted to the bucket, sorted and finally rendered. 
  * 

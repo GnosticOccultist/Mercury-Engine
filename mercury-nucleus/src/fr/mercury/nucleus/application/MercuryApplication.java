@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import fr.alchemy.utilities.Instantiator;
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
@@ -11,6 +12,7 @@ import fr.mercury.nucleus.application.service.ApplicationService;
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.input.InputProcessor;
 import fr.mercury.nucleus.renderer.Camera;
+import fr.mercury.nucleus.renderer.DefaultRenderer;
 import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
@@ -27,7 +29,7 @@ import fr.mercury.nucleus.utils.gc.NativeObjectCleaner;
  * extending its basic capabilities depending on the user needs.
  * <p>
  * Such application is capable of rendering a 3D scene described by a hierarchy of {@link AnimaMundi} extending from the {@link #scene root-node}
- * using its own {@link Camera} and {@link Renderer}.
+ * using its own {@link Camera} and {@link DefaultRenderer}.
  * <p>
  * An {@link AssetManager} and an {@link InputProcessor} are contained within the application in order to handle asset loading and being 
  * notified about inputs related events.
@@ -108,13 +110,25 @@ public abstract class MercuryApplication implements Application {
 		
 		var renderable = context.getType().isRenderable();
 		if(renderable) {
+			
 			// Initialize the camera.
 			camera = new Camera(settings.getWidth(), settings.getHeight());
 			camera.setLocation(0f, 0f, 8f);
 			camera.setFrustumPerspective(45F, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
+						
+			// Try initializing the renderer from settings.
+			var type = settings.getRendererType();
 			
-			// Initialize renderer.
-			renderer = new Renderer(camera);
+			try {
+				this.renderer = Instantiator.fromNameWith(type, Renderer.class, camera);
+			} catch (Exception ex) {
+				logger.error("Unable to instantiate Renderer implementation from class '" 
+						+ type + "'! Switching to DefaultRenderer instead");
+				
+				this.renderer = new DefaultRenderer(camera);
+			}
+			
+			linkService(renderer);
 		}
 		
 		// Reset the timer before invoking anything else,

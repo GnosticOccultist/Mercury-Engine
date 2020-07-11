@@ -1,7 +1,7 @@
 package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.pool.Reusable;
+import fr.alchemy.utilities.collections.pool.Reusable;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
 
 /**

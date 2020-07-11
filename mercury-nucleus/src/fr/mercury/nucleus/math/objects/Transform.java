@@ -4,7 +4,7 @@ import java.nio.BufferOverflowException;
 import java.nio.FloatBuffer;
 
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.pool.Reusable;
+import fr.alchemy.utilities.collections.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.readable.ReadableMatrix3f;
 import fr.mercury.nucleus.math.readable.ReadableQuaternion;

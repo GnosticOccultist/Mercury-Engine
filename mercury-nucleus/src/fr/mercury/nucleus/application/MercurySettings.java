@@ -5,6 +5,7 @@ import java.util.HashMap;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.application.MercuryContext.Type;
 import fr.mercury.nucleus.application.service.Window;
+import fr.mercury.nucleus.renderer.Renderer;
 
 /**
  * <code>MercurySettings</code> stores the settings to be used by the {@link Application} for creating an appropriate 
@@ -27,6 +28,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 	static {
 		
 		DEFAULT.put("ContextType", Type.WINDOW);
+		DEFAULT.put("RendererType", "fr.mercury.nucleus.renderer.DefaultRenderer");
 		DEFAULT.put("Width", 1280);
 		DEFAULT.put("Height", 768);
 		DEFAULT.put("Title", "Mercury-Engine");
@@ -89,6 +91,32 @@ public final class MercurySettings extends HashMap<String, Object> {
 	public void setContextType(Type type) {
 		Validator.nonNull(type, "The context type can't be null!");
 		put("ContextType", type);
+	}
+	
+	/**
+	 * Return the type of {@link Renderer} implementation to use if the context's {@link Type}
+	 * supports rendering.
+	 * 
+	 * @return The renderer type used by the application (not null, not empty).
+	 */
+	public String getRendererType() {
+		var result = getString("RendererType");
+		
+		assert result != null;
+		assert !result.isEmpty();
+		return result;
+	}
+
+	/**
+	 * Set the type of {@link Renderer} implementation to use if the context's {@link Type}
+	 * supports rendering.
+	 * 
+	 * @param type The renderer type to use with the application (not null, not empty, 
+	 * 			   default&rarr;fr.mercury.nucleus.renderer.Renderer).
+	 */
+	public void setRendererType(String type) {
+		Validator.nonEmpty(type, "The renderer type can't be null or empty!");
+		addString("RendererType", type);
 	}
 	
 	/**
