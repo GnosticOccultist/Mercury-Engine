@@ -120,10 +120,11 @@ public abstract class MercuryApplication implements Application {
 			var type = settings.getRendererType();
 			
 			try {
-				this.renderer = Instantiator.fromNameWith(type, Renderer.class, camera);
+				this.renderer = Instantiator.fromNameImplements(type, Renderer.class, null, camera);
 			} catch (Exception ex) {
 				logger.error("Unable to instantiate Renderer implementation from class '" 
-						+ type + "'! Switching to DefaultRenderer instead");
+						+ type + "'! Switching to DefaultRenderer instead.", ex);
+				
 				
 				this.renderer = new DefaultRenderer(camera);
 			}
