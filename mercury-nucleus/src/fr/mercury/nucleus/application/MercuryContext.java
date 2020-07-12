@@ -3,9 +3,8 @@ package fr.mercury.nucleus.application;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
-import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL13C;
 import org.lwjgl.opengl.GL30C;
 import org.lwjgl.opengl.GLCapabilities;
 
@@ -177,7 +176,7 @@ public class MercuryContext implements Runnable {
 		}
 
 		while (true) {
-
+			
 			runLoop();
 
 			if (application.checkService(GLFWWindow.class, 
@@ -212,9 +211,9 @@ public class MercuryContext implements Runnable {
 		if (!initialized.get()) {
 			throw new IllegalStateException();
 		}
-
+		
 		application.internalUpdate();
-
+		
 		// Try flushing all previous GL commands before swapping buffers.
 		ifRenderable(GL11C::glFlush);
 
@@ -284,10 +283,10 @@ public class MercuryContext implements Runnable {
 		// Make the OpenGL context current.
 		window.makeContextCurrent();
 		
-		GLCapabilities capabilities = GL.createCapabilities();
-
 		// Once the OpenGL context is set, change vSync if needed.
 		window.useVSync(settings.isVSync());
+		
+		GLCapabilities capabilities = GL.createCapabilities();
 
 		/*
 		 * Once we have set the current OpenGL context we can access informations about
@@ -298,8 +297,8 @@ public class MercuryContext implements Runnable {
 		logger.info("Using physical device: \n" + physicalDevice);
 		physicalDevice.check(settings);
 
-		if (settings.getInteger("Samples") != 0) {
-			GL11.glEnable(GL13.GL_MULTISAMPLE);
+		if (settings.getInteger("Samples") > 1) {
+			GL11C.glEnable(GL13C.GL_MULTISAMPLE);
 		}
 
 		// Finally show the window when finished.

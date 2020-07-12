@@ -408,24 +408,39 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 	 * Setup the {@link Uniform} corresponding to the needed {@link MatrixType} specified by the provided
 	 * {@link Material} and applied for the given {@link ShaderProgram}.
 	 * 
-	 * @param shader  The shader program to which the matrix uniforms need to be passed.
-	 * @param physica The physica-mundi requesting the matrix uniforms.
+	 * @param shader  The shader program to which the matrix uniforms need to be passed (not null).
+	 * @param physica The physica-mundi requesting the matrix uniforms (not null).
 	 */
 	protected void setupMatrixUniforms(ShaderProgram shader, PhysicaMundi physica) {
+		Validator.nonNull(shader, "The shader program can't be null!");
+		Validator.nonNull(shader, "The physica-mundi can't be null!");
+		
 		var matrixUniforms = physica.getMaterial().getPrefabUniforms();
 		
 		for(MatrixType type : MatrixType.values()) {
 			var name = type.name();
 			
 			if(matrixUniforms.contains(name)) {
-				// First force-compute the matrix before adding it to the uniform.
-				if(type.canCompute()) {
-					computeMatrix(type);
-				}
-				
-				shader.addUniform(type.getUniformName(), type.getUniformType(), matrixMap.get(type));	
+				setupMatrixUniforms(shader, type);	
 			}
 		}
+	}
+	
+	/**
+	 * Setup the {@link Uniform} corresponding to the needed {@link MatrixType} for the provided {@link ShaderProgram}.
+	 * 
+	 * @param shader The shader program to which the matrix uniforms need to be passed (not null).
+	 * @param type 	 The matrix type to pass as a uniform through the shader program (not null).
+	 */
+	protected void setupMatrixUniforms(ShaderProgram shader, MatrixType type) {
+		Validator.nonNull(shader, "The shader program can't be null!");
+		Validator.nonNull(type, "The matrix type can't be null!");
+		
+		if(type.canCompute()) {
+			computeMatrix(type);
+		}
+				
+		shader.addUniform(type.getUniformName(), type.getUniformType(), matrixMap.get(type));
 	}
 	
 	/**

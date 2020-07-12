@@ -46,6 +46,7 @@ import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.AbstractApplicationService;
+import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.application.MercuryContext;
 import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.asset.AssetManager;
@@ -71,6 +72,7 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 	private boolean focused;
 
 	@Override
+	@OpenGLCall
 	public void initialize(MercurySettings settings) {
 		// Setup an error callback. The default implementation
 		// will print the error message in System.err.
@@ -173,6 +175,7 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 	}
 
 	@Override
+	@OpenGLCall
 	public void update(ReadableTimer timer) {
 		super.update(timer);
 
@@ -183,8 +186,8 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 	}
 
 	/**
-	 * Sets the position of the <code>MercuryContext</code> window's upper left
-	 * corner area to the given screen coordinates.
+	 * Sets the position of the <code>GLFWWindow</code> upper left corner area to 
+	 * the given screen coordinates.
 	 * <p>
 	 * The method can only be called if the window isn't in fullscreen mode and in
 	 * the main {@link Thread}.
@@ -198,13 +201,13 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 	public void moveWindow(int x, int y) {
 		Validator.nonNegative(x, "The X coordinate of the window can't be negative!");
 		Validator.nonNegative(y, "The Y coordinate of the window can't be negative!");
+		
 		MercuryContext.checkMainThread();
 		glfwSetWindowPos(window, x, y);
 	}
 
 	/**
-	 * Set the title of the <code>MercuryContext</code>'s window. Note that it is
-	 * only visible in windowed mode.
+	 * Set the title of the <code>GLFWWindow</code>. Note that it is only visible in windowed mode.
 	 * <p>
 	 * The method can only be called if the window isn't in fullscreen mode and in
 	 * the main {@link Thread}.
@@ -219,8 +222,15 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 		}
 	}
 	
+	/**
+	 * Sets the icon of the <code>GLFWWindow</code> to the provided {@link Image}.
+	 * 
+	 * @param image The image to use as an icon for the window (not null).
+	 */
 	@OpenGLCall
 	public void setIcon(Image image) {
+		Validator.nonNull(image, "The image icon can't be null!");
+		
 		var iconData = image.getData();
 		iconData.rewind();
 		
@@ -250,38 +260,74 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 		return application.getSettings().getHeight();
 	}
 
+	/**
+	 * Return the identifier of the <code>GLFWWindow</code>.
+	 * 
+	 * @return The native identifier of the window.
+	 */
 	@Override
 	public long getID() {
 		return window;
 	}
 
+	/**
+	 * Show the <code>GLFWWindow</code> on screen by making it visible.
+	 */
 	@Override
+	@OpenGLCall
 	public void show() {
 		glfwShowWindow(window);
 	}
 
+	/**
+	 * Return whether the <code>GLFWWindow</code> should close itself.
+	 * 
+	 * @return Whether the window should close.
+	 */
 	@Override
 	public boolean shouldClose() {
 		return glfwWindowShouldClose(window);
 	}
 
+	/**
+	 * Make the OpenGL context of the <code>GLFWWindow</code> current on the calling {@link Thread}.
+	 */
 	@Override
 	public void makeContextCurrent() {
 		glfwMakeContextCurrent(window);
 	}
 
+	/**
+	 * Set whether the <code>GLFWWindow</code> should use vertical synchronization by
+	 * changing the swap interval of the buffers to 1.
+	 * 
+	 * @param vSync Whether to use V-Sync for the window.
+	 */
 	@Override
+	@OpenGLCall
 	public void useVSync(boolean vSync) {
 		glfwSwapInterval(vSync ? 1 : 0);
 	}
 
+	/**
+	 * Finish the frame when rendering has been done on the back buffer of the <code>GLFWWindow</code>. 
+	 * Also process all pending GLFW events causing associated callbacks to be called.
+	 */
 	@Override
+	@OpenGLCall
 	public void finishFrame() {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
+	/**
+	 * Destroy the <code>GLFWWindow</code> and its associated context when the {@link Application}
+	 * is closing or restarting.
+	 * <p>
+	 * The method also restores any modified gamma ramps and frees any other allocated resources.
+	 */
 	@Override
+	@OpenGLCall
 	public void destroy() {
 		try {
 			if (window != NULL) {
