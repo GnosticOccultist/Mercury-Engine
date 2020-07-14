@@ -17,6 +17,10 @@ public class VertexAttribute {
 	 */
 	private String name;
 	/**
+	 * The type of VBO storing the attribute data.
+	 */
+	private String bufferType;
+	/**
 	 * The location of the attribute.
 	 */
 	private int location = UNKNOWN_LOCATION;
@@ -31,11 +35,12 @@ public class VertexAttribute {
 	private int span = 1;
 	
 	public VertexAttribute(String name, int location) {
-		this(name, location, 0, 1);
+		this(name, null, location, 0, 1);
 	}
 	
-	public VertexAttribute(String name, int location, int divisor, int span) {
+	public VertexAttribute(String name, String bufferType, int location, int divisor, int span) {
 		this.name = name;
+		this.bufferType = bufferType;
 		this.location = location;
 		this.divisor = divisor;
 		this.span = span;
@@ -76,8 +81,11 @@ public class VertexAttribute {
 				GL33C.glVertexAttribDivisor(location + i, divisor);
 			}
 		} else {
-			GL20C.glVertexAttribPointer(location, size, VertexBufferType.getOpenGLFormat(format), 
-					normalized, 0, 0);
+			// TODO: Check for stride and offset from material file as well.
+			var stride = buffer.getStride();
+			var offset = buffer.getOffset();
+			
+			GL20C.glVertexAttribPointer(location, size, VertexBufferType.getOpenGLFormat(format), normalized, stride, offset);
 			GL33C.glVertexAttribDivisor(location, divisor);
 		}
 	}
@@ -105,6 +113,10 @@ public class VertexAttribute {
 	
 	public int getLocation() {
 		return location;
+	}
+	
+	public String getBufferType() {
+		return bufferType;
 	}
 	
 	@Override

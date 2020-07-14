@@ -93,7 +93,8 @@ public class Material {
 			
 			for(var attrib : attributes) {
 				
-				var key = attrib.getName();
+				var type = attrib.getBufferType();
+				var key = (type != null && !type.isEmpty()) ? type : attrib.getName();
 				var buffer = mesh.getBuffer(key);
 				
 				if(buffer == null) {
