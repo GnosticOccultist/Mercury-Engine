@@ -189,12 +189,16 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 			var location = attribObj.getOptional("location").map(JSONValue::asInt).orElse(-1);
 			// Retrieve also the location of the attribute, if declared.
 			var bufferType = attribObj.getOptional("bufferType").map(JSONValue::asString).orElse(null);
+			// Retrieve also the stride of the attribute, if declared.
+			var stride = attribObj.getOptional("stride").map(JSONValue::asInt).orElse(0);
+			// Retrieve also the offset of the attribute, if declared.
+			var offset = attribObj.getOptional("offset").map(JSONValue::asInt).orElse(0);
 			// Retrieve also the divisor of the attribute, if declared.
 			var divisor = attribObj.getOptional("divisor").map(JSONValue::asInt).orElse(0);
 			// Retrieve also the span of the attribute, if declared.
 			var span = attribObj.getOptional("span").map(JSONValue::asInt).orElse(1);
 			
-			var attrib = new VertexAttribute(name, bufferType, location, divisor, span);
+			var attrib = new VertexAttribute(name, bufferType, location, stride, offset, divisor, span);
 			mat.addAttribute(attrib);
 		}
 	}
