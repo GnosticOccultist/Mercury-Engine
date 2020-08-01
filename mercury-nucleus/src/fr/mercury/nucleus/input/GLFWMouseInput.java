@@ -20,6 +20,7 @@ import static org.lwjgl.glfw.GLFW.glfwSetScrollCallback;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 
 import org.lwjgl.glfw.GLFWCursorPosCallback;
@@ -57,7 +58,7 @@ public final class GLFWMouseInput {
 	/**
 	 * The table containing the click time of each mouse button.
 	 */
-	private final HashMap<Integer, Long> lastClickTime = new HashMap<>();
+	private final Map<Integer, Long> lastClickTime = new HashMap<>();
 	/**
 	 * The last event which was queued up.
 	 */
@@ -152,9 +153,16 @@ public final class GLFWMouseInput {
         
         // Keep track of the last pressed button to allow for dragging gesture.
         final int button = lastEvent != null && (lastEvent.getType().equals(MouseEvent.MOUSE_PRESSED) 
-        		|| lastEvent.getType().equals(MouseEvent.MOUSE_MOVED)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
+        		|| lastEvent.getType().equals(MouseEvent.MOUSE_MOVED)
+        		|| lastEvent.getType().equals(MouseEvent.MOUSE_DRAGGED)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
+        		
+        MouseEvent event = null;
+        if(button == GLFW_MOUSE_BUTTON_LEFT) {
+        	event = new MouseEvent(MouseEvent.MOUSE_DRAGGED, button, 0, x, y, dx, dy, 0);
+        } else {
+        	event = new MouseEvent(MouseEvent.MOUSE_MOVED, button, 0, x, y, dx, dy, 0);
+        }
         
-        final var event = new MouseEvent(MouseEvent.MOUSE_MOVED, button, 0, x, y, dx, dy, 0);
         event.setTime(inputTime());
         queueUpEvent(event);
 	}
@@ -174,9 +182,7 @@ public final class GLFWMouseInput {
 	        queueUpEvent(event);
 		}
 		
-		if(type.equals(MouseEvent.MOUSE_PRESSED)) {
-			lastClickTime.put(buttonCode, System.currentTimeMillis());
-		}
+		lastClickTime.put(buttonCode, System.currentTimeMillis());
 		
 		final var event = new MouseEvent(type, button(button), mods, x, y, 0, 0, 0);
         event.setTime(inputTime());

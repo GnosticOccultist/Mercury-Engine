@@ -8,7 +8,6 @@ import java.util.List;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
-import fr.alchemy.utilities.logging.LoggerLevel;
 import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
 import fr.mercury.nucleus.utils.data.Allocator;
@@ -49,10 +48,6 @@ public final class NativeObjectCleaner {
 	 * The list of registered native objects.
 	 */
 	private static final List<NativeObject> NATIVE_OBJECTS = new ArrayList<>();
-
-	static {
-		logger.setActive(LoggerLevel.DEBUG, true);
-	}
 
 	/**
 	 * Private constructor to inhibit instantiation of <code>NativeObjectCleaner</code>.

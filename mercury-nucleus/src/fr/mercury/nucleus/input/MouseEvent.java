@@ -32,6 +32,12 @@ public class MouseEvent extends InputEvent implements Input {
 	public static final EventType<MouseEvent> MOUSE_RELEASED = 
 			EventType.create("MOUSE_RELEASED", MouseEvent.class);
 	/**
+	 * The event type returned whenever a mouse is dragged meaning mouse 
+	 * is moving while the left-button is pressed.
+	 */
+	public static final EventType<MouseEvent> MOUSE_DRAGGED = 
+			EventType.create("MOUSE_DRAGGED", MouseEvent.class);
+	/**
 	 * The event type returned whenever a mouse button is being clicked 
 	 * (pressed and released in a small time interval). 
 	 */

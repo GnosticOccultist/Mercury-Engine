@@ -16,7 +16,6 @@ import org.lwjgl.system.MemoryUtil;
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
-import fr.alchemy.utilities.logging.LoggerLevel;
 import fr.mercury.nucleus.utils.gc.NativeObjectCleaner;
 
 /**
@@ -35,10 +34,6 @@ public final class Allocator {
 	 * The default allocation type to use (native heap).
 	 */
 	private static final Type DEFAULT_ALLOC_TYPE = Type.NATIVE_HEAP;
-
-	static {
-		logger.setActive(LoggerLevel.DEBUG, true);
-	}
 
 	/**
 	 * Private constructor to inhibit instantiation of <code>Allocator</code>.
