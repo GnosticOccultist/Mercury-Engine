@@ -80,7 +80,7 @@ public final class Allocator {
 				break;
 			case NATIVE_STACK:
 				MemoryStack stack = MemoryStack.stackPush();
-				buffer = stack.calloc(size);
+				buffer = stack.malloc(size);
 				break;
 		}
 
@@ -128,7 +128,7 @@ public final class Allocator {
 				break;
 			case NATIVE_STACK:
 				MemoryStack stack = MemoryStack.stackPush();
-				buffer = stack.callocShort(size);
+				buffer = stack.mallocShort(size);
 				break;
 		}
 
@@ -176,7 +176,7 @@ public final class Allocator {
 				break;
 			case NATIVE_STACK:
 				MemoryStack stack = MemoryStack.stackPush();
-				buffer = stack.callocInt(size);
+				buffer = stack.mallocInt(size);
 				break;
 		}
 
@@ -224,7 +224,7 @@ public final class Allocator {
 				break;
 			case NATIVE_STACK:
 				MemoryStack stack = MemoryStack.stackPush();
-				buffer = stack.callocFloat(size);
+				buffer = stack.mallocFloat(size);
 				break;
 		}
 
@@ -261,7 +261,7 @@ public final class Allocator {
 				break;
 			case NATIVE_STACK:
 				MemoryStack stack = MemoryStack.stackPush();
-				buffer = stack.callocLong(size);
+				buffer = stack.mallocLong(size);
 				break;
 		}
 
@@ -298,7 +298,7 @@ public final class Allocator {
 				break;
 			case NATIVE_STACK:
 				MemoryStack stack = MemoryStack.stackPush();
-				buffer = stack.callocDouble(size);
+				buffer = stack.mallocDouble(size);
 				break;
 		}
 

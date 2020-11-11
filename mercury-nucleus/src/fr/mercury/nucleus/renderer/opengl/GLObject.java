@@ -21,8 +21,8 @@ import fr.mercury.nucleus.utils.gc.NativeObjectCleaner;
  * a common point to every <code>GLObjects</code>, it just defines the function 
  * to create and destroy the object.
  * <p>
- * Once every parameters for an object are set and you want to use it, you can simply
- * call {@link #upload()} to send the data to the GPU.
+ * Once every parameters for an object are set and you want to use it, you can simply call {@link #upload()} 
+ * to send the data to the GPU. The renderer will also lazily upload the data to the GPU when it does need it.
  * 
  * @author GnosticOccultist
  */
