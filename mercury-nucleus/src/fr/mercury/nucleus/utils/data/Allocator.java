@@ -8,6 +8,7 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
@@ -322,6 +323,27 @@ public final class Allocator {
 		}
 
 		assert stackFrameIndex() == count;
+	}
+	
+	/**
+	 * Performs safely the provided action using a pushed {@link MemoryStack}.
+	 * <p>
+	 * Once the action has been executed the stack is popped.
+	 * 
+	 * @param stackAction The action to perform using the pushed stack (not null).
+	 */
+	public static <R> R stackSafe(Function<MemoryStack, R> stackAction) {
+		Validator.nonNull(stackAction, "The stack action can't be null!");
+
+		int count = stackFrameIndex();
+		R result = null;
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			result = stackAction.apply(stack);
+		}
+
+		assert stackFrameIndex() == count;
+		assert result != null;
+		return result;
 	}
 
 	/**

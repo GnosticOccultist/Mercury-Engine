@@ -7,6 +7,7 @@ import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.collections.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.readable.ReadableMatrix3f;
+import fr.mercury.nucleus.math.readable.ReadableMatrix4f;
 import fr.mercury.nucleus.math.readable.ReadableQuaternion;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
@@ -124,6 +125,18 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 		this.identity = other.isIdentity();
 		this.rotationMatrix = other.isRotationMatrix();
 		this.uniformScale = other.isUniformScale();
+		return this;
+	}
+	
+	public Transform set(ReadableMatrix4f matrix) {
+		this.translation.set(matrix.m03(), matrix.m13(), matrix.m23());
+		this.rotation.set(
+				matrix.m00(), matrix.m01(), matrix.m02(), 
+				matrix.m10(), matrix.m11(), matrix.m12(), 
+				matrix.m20(), matrix.m21(), matrix.m22()
+		);
+		
+		update(false);
 		return this;
 	}
 	

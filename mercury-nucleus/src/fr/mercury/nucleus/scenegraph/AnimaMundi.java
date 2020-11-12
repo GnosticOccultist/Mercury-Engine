@@ -283,6 +283,21 @@ public abstract class AnimaMundi {
 	}
 	
 	/**
+	 * Sets the transform of this <code>AnimaMundi</code> to the provided {@link Transform} in  the local 
+	 * coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * 
+	 * @param transform The local transform to apply to the anima-mundi (not null).
+	 * @return			The changed anima-mundi.
+	 */
+	public AnimaMundi setTransform(ReadableTransform transform) {
+		localTransform.set(transform);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
+	}
+	
+	/**
 	 * Sets the translation of this <code>AnimaMundi</code> to the provided {@link Vector3f} in
 	 * the local coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
 	 * be updated until {@link #updateGeometricState()} has been called.
