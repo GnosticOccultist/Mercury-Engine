@@ -156,8 +156,7 @@ public final class Camera {
 		this.width = width;
 		this.height = height;
 		
-		dirtyFields.add(CameraDirtyFields.PROJECTION_MATRIX);
-		
+		setFrustumPerspective((float) width / height, frustumNear, frustumFar);
 		return true;
 	}
 	
@@ -215,6 +214,7 @@ public final class Camera {
 	public void updateViewMatrix() {
 		viewMatrix.view(location, left, up, direction);
 		
+		dirtyFields.remove(CameraDirtyFields.VIEW_MATRIX);
 		dirtyFields.add(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
 	}
 	
@@ -233,6 +233,7 @@ public final class Camera {
 				throw new IllegalStateException("Unknown projection mode for camera " + projectionMode);
 		}
 		
+		dirtyFields.remove(CameraDirtyFields.PROJECTION_MATRIX);
 		dirtyFields.add(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
 	}
 	
@@ -319,6 +320,7 @@ public final class Camera {
 		if(dirtyFields.contains(CameraDirtyFields.VIEW_PROJECTION_MATRIX)) {
 			// Recompute the view-projection matrix after.
 			viewProjectionMatrix.set(viewMatrix).mult(projectionMatrix, viewProjectionMatrix);
+			dirtyFields.remove(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
 			renderer.setMatrix(MatrixType.VIEW_PROJECTION, getViewProjectionMatrix());
 		}
 	}
@@ -426,10 +428,9 @@ public final class Camera {
 	/**
 	 * Return the readable-only left-axis vector of this <code>Camera</code>.
 	 * 
-	 * @param store The store for the result.
-	 * @return		The left-axis vector of the camera (readable-only).
+	 * @return The left-axis vector of the camera (readable-only).
 	 */
-	public ReadableVector3f getLeft(Vector3f store) {
+	public ReadableVector3f getLeft() {
 		return left;
 	}
 	
@@ -451,10 +452,9 @@ public final class Camera {
 	/**
 	 * Return the readable-only up-axis vector of this <code>Camera</code>.
 	 * 
-	 * @param store The store for the result.
-	 * @return		The up-axis vector of the camera (readable-only).
+	 * @return The up-axis vector of the camera (readable-only).
 	 */
-	public ReadableVector3f getUp(Vector3f store) {
+	public ReadableVector3f getUp() {
 		return up;
 	}
 	
@@ -476,10 +476,9 @@ public final class Camera {
 	/**
 	 * Return the readable-only direction vector of this <code>Camera</code>.
 	 * 
-	 * @param store The store for the result.
-	 * @return		The direction vector of the camera (readable-only).
+	 * @return The direction vector of the camera (readable-only).
 	 */
-	public ReadableVector3f getDirection(Vector3f store) {
+	public ReadableVector3f getDirection() {
 		return direction;
 	}
 	
@@ -493,6 +492,16 @@ public final class Camera {
 	 */
 	public Camera setDirection(ReadableVector3f direction) {
 		this.direction.set(direction);
+		dirtyFields.add(CameraDirtyFields.VIEW_MATRIX);
+		
+		return this;
+	}
+	
+	public Camera normalize() {
+		this.left.normalize();
+		this.direction.normalize();
+		this.up.normalize();
+		
 		dirtyFields.add(CameraDirtyFields.VIEW_MATRIX);
 		
 		return this;
@@ -552,6 +561,7 @@ public final class Camera {
 	 * @return The view-projection matrix.
 	 */
 	public Matrix4f getViewProjectionMatrix() {
+		assert !dirtyFields.contains(CameraDirtyFields.VIEW_PROJECTION_MATRIX);
 		return viewProjectionMatrix;
 	}
 	
@@ -561,6 +571,7 @@ public final class Camera {
 	 * @return The projection matrix.
 	 */
 	public Matrix4f getProjectionMatrix() {
+		assert !dirtyFields.contains(CameraDirtyFields.PROJECTION_MATRIX);
 		return projectionMatrix;
 	}
 	
@@ -570,6 +581,7 @@ public final class Camera {
 	 * @return The view matrix.
 	 */
 	public Matrix4f getViewMatrix() {
+		assert !dirtyFields.contains(CameraDirtyFields.VIEW_MATRIX);
 		return viewMatrix;
 	}
 	

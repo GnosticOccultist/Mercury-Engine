@@ -68,6 +68,7 @@ public class Material {
 	
 	public void setupUniforms(ShaderProgram program) {
 		if(texture != null) {
+			program.use();
 			program.register(texture);
 			texture.upload();
 			texture.bindToUnit(0);
@@ -174,12 +175,19 @@ public class Material {
 		}
 	}
 	
-	public Material copy() {
+	public Material copy(Texture texture) {
 		Material copy = new Material(name, description);
 		copy.prefabUniforms.addAll(prefabUniforms);
 		copy.shaders.putAll(shaders);
+		copy.attributes.addAll(attributes);
+		
+		copy.texture = texture;
 		
 		return copy;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
 	}
 	
 	@Override

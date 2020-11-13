@@ -43,7 +43,7 @@
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE"] }
 		],
 		"uniforms": {
-			"prefabs": ["VIEW_PROJECTION_MODEL"]
+			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
 		}
 	},
 	
@@ -81,11 +81,11 @@
 	},
 	
 	"Unlit_no_fog_interleaved": {
-		"description": "Simple default material used for rendering animae without any lighting or fog but using mesh instancing.",
+		"description": "Simple default material used for rendering animae without any lighting or fog but using only one VBO.",
 		"attributes": [
-			{ "name": "position", "location": 0, "bufferType": "interleaved" },
-			{ "name": "texCoord", "location": 1, "bufferType": "interleaved" },
-			{ "name": "normal", "location": 2, "bufferType": "interleaved" }
+			{ "name": "position", "location": 0, "stride": 32, "offset": 0 },
+			{ "name": "texCoord", "location": 1, "stride": 32, "offset": 12 },
+			{ "name": "normal", "location": 2, "stride": 32, "offset": 20 }
 		],
 		"shaders": [ 
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_TEXTURE"] },

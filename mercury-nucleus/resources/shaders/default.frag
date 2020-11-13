@@ -32,6 +32,10 @@ void main() {
 		baseColor = diffuseColor;
 	#endif
 	
+	if(baseColor.a < 0.4) {
+		discard;
+	}
+	
 	#ifdef USE_FOG
 		frag_Color = mixFogColor(baseColor, fog.color, fog.density, abs(viewPos.z / viewPos.w));
 	#else

@@ -52,7 +52,9 @@ public interface ReadableVector3f {
 	 * @return Whether the vector is a unit vector.
 	 */
 	default boolean isUnitVector() {
-		return length() == 1;
+		var length = length();
+		// Add a tolerance range, otherwise it will never pass.
+		return length > 0.99F && length < 1.01F;
 	}
 	
 	/**

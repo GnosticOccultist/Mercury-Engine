@@ -543,8 +543,8 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 				var projection = (Matrix4f) matrixMap.get(MatrixType.PROJECTION);
 				var view = (Matrix4f) matrixMap.get(MatrixType.VIEW);
 				
-				store.set(projection);
-				store.mult(view, store);
+				store.set(view);
+				store.mult(projection, store);
 				break;
 			case NORMAL:
 				// TODO: 

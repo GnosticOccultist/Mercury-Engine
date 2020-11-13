@@ -401,29 +401,31 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 			return result;
 		}
 		
+		result.identity();
+		
 		result.m30 = 0.0F;
 		result.m31 = 0.0F;
 		result.m32 = 0.0F;
 		
 		if(rotationMatrix) {
 			result.m00 = scale.x() * rotation.m00;
-			result.m10 = scale.x() * rotation.m10;
-			result.m20 = scale.x() * rotation.m20;
-			result.m01 = scale.y() * rotation.m01;
+			result.m01 = scale.x() * rotation.m01;
+			result.m02 = scale.x() * rotation.m02;
+			result.m10 = scale.y() * rotation.m10;
 			result.m11 = scale.y() * rotation.m11;
-			result.m21 = scale.y() * rotation.m21;
-			result.m02 = scale.z() * rotation.m02;
-			result.m12 = scale.z() * rotation.m12;
+			result.m12 = scale.y() * rotation.m12;
+			result.m20 = scale.z() * rotation.m20;
+			result.m21 = scale.z() * rotation.m21;
 			result.m22 = scale.z() * rotation.m22;
 		} else {
 			result.m00 = rotation.m00;
-			result.m10 = rotation.m10;
-			result.m20 = rotation.m20;
 			result.m01 = rotation.m01;
-			result.m11 = rotation.m11;
-			result.m21 = rotation.m21;
 			result.m02 = rotation.m02;
+			result.m10 = rotation.m10;
+			result.m11 = rotation.m11;
 			result.m12 = rotation.m12;
+			result.m20 = rotation.m20;
+			result.m21 = rotation.m21;
 			result.m22 = rotation.m22;
 		}
 		
@@ -452,7 +454,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	@Override
 	public FloatBuffer populate(FloatBuffer store) {
 		Validator.nonNull(store, "The float buffer can't be null!");
-
+		
 		if (rotationMatrix) {
 			store.put(scale.x() * rotation.m00);
 			store.put(scale.x() * rotation.m10);
@@ -485,7 +487,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 		store.put(translation.y());
 		store.put(translation.z());
 		store.put(1.0F);
-
+		
 		return store;
 	}
 	

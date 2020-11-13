@@ -300,7 +300,7 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
 	@Override
 	public FloatBuffer populate(FloatBuffer store) {
 		Validator.nonNull(store, "The float buffer can't be null!");
-		return populate(store, true);
+		return populate(store, false);
 	}
 	
 	/**
@@ -474,7 +474,7 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
 	 * @param store The matrix to store the result.
 	 * @return		The resulting matrix.
 	 */
-    public Matrix4f mult(Matrix4f in2, Matrix4f store) {
+    public Matrix4f mult(Matrix4f other, Matrix4f store) {
         if (store == null) {
             store = new Matrix4f();
         }
@@ -484,73 +484,73 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
         float temp20, temp21, temp22, temp23;
         float temp30, temp31, temp32, temp33;
 
-        temp00 = m00 * in2.m00
-                 + m01 * in2.m10
-                 + m02 * in2.m20
-                 + m03 * in2.m30;
-        temp01 = m00 * in2.m01
-                 + m01 * in2.m11
-                 + m02 * in2.m21
-                 + m03 * in2.m31;
-        temp02 = m00 * in2.m02
-                 + m01 * in2.m12
-                 + m02 * in2.m22
-                 + m03 * in2.m32;
-        temp03 = m00 * in2.m03
-                 + m01 * in2.m13
-                 + m02 * in2.m23
-                 + m03 * in2.m33;
+        temp00 = m00 * other.m00
+                 + m01 * other.m10
+                 + m02 * other.m20
+                 + m03 * other.m30;
+        temp01 = m00 * other.m01
+                 + m01 * other.m11
+                 + m02 * other.m21
+                 + m03 * other.m31;
+        temp02 = m00 * other.m02
+                 + m01 * other.m12
+                 + m02 * other.m22
+                 + m03 * other.m32;
+        temp03 = m00 * other.m03
+                 + m01 * other.m13
+                 + m02 * other.m23
+                 + m03 * other.m33;
 
-        temp10 = m10 * in2.m00
-                 + m11 * in2.m10
-                 + m12 * in2.m20
-                 + m13 * in2.m30;
-        temp11 = m10 * in2.m01
-                 + m11 * in2.m11
-                 + m12 * in2.m21
-                 + m13 * in2.m31;
-        temp12 = m10 * in2.m02
-                 + m11 * in2.m12
-                 + m12 * in2.m22
-                 + m13 * in2.m32;
-        temp13 = m10 * in2.m03
-                 + m11 * in2.m13
-                 + m12 * in2.m23
-                 + m13 * in2.m33;
+        temp10 = m10 * other.m00
+                 + m11 * other.m10
+                 + m12 * other.m20
+                 + m13 * other.m30;
+        temp11 = m10 * other.m01
+                 + m11 * other.m11
+                 + m12 * other.m21
+                 + m13 * other.m31;
+        temp12 = m10 * other.m02
+                 + m11 * other.m12
+                 + m12 * other.m22
+                 + m13 * other.m32;
+        temp13 = m10 * other.m03
+                 + m11 * other.m13
+                 + m12 * other.m23
+                 + m13 * other.m33;
 
-        temp20 = m20 * in2.m00
-                 + m21 * in2.m10
-                 + m22 * in2.m20
-                 + m23 * in2.m30;
-        temp21 = m20 * in2.m01
-                 + m21 * in2.m11
-                 + m22 * in2.m21
-                 + m23 * in2.m31;
-        temp22 = m20 * in2.m02
-                 + m21 * in2.m12
-                 + m22 * in2.m22
-                 + m23 * in2.m32;
-        temp23 = m20 * in2.m03
-                 + m21 * in2.m13
-                 + m22 * in2.m23
-                 + m23 * in2.m33;
+        temp20 = m20 * other.m00
+                 + m21 * other.m10
+                 + m22 * other.m20
+                 + m23 * other.m30;
+        temp21 = m20 * other.m01
+                 + m21 * other.m11
+                 + m22 * other.m21
+                 + m23 * other.m31;
+        temp22 = m20 * other.m02
+                 + m21 * other.m12
+                 + m22 * other.m22
+                 + m23 * other.m32;
+        temp23 = m20 * other.m03
+                 + m21 * other.m13
+                 + m22 * other.m23
+                 + m23 * other.m33;
 
-        temp30 = m30 * in2.m00
-                 + m31 * in2.m10
-                 + m32 * in2.m20
-                 + m33 * in2.m30;
-        temp31 = m30 * in2.m01
-                 + m31 * in2.m11
-                 + m32 * in2.m21
-                 + m33 * in2.m31;
-        temp32 = m30 * in2.m02
-                 + m31 * in2.m12
-                 + m32 * in2.m22
-                 + m33 * in2.m32;
-        temp33 = m30 * in2.m03
-                 + m31 * in2.m13
-                 + m32 * in2.m23
-                 + m33 * in2.m33;
+        temp30 = m30 * other.m00
+                 + m31 * other.m10
+                 + m32 * other.m20
+                 + m33 * other.m30;
+        temp31 = m30 * other.m01
+                 + m31 * other.m11
+                 + m32 * other.m21
+                 + m33 * other.m31;
+        temp32 = m30 * other.m02
+                 + m31 * other.m12
+                 + m32 * other.m22
+                 + m33 * other.m32;
+        temp33 = m30 * other.m03
+                 + m31 * other.m13
+                 + m32 * other.m23
+                 + m33 * other.m33;
 
         store.m00 = temp00;
         store.m01 = temp01;

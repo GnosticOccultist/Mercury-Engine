@@ -62,7 +62,9 @@ public class AssetManager extends AbstractApplicationService {
 	}
 	
 	public AnimaMundi loadAssimp(String path, int configFlags) {
-		return new AssimpLoader().load(path, configFlags);
+		var loader = new AssimpLoader();
+		loader.registerAssetManager(this);
+		return loader.load(path, configFlags);
 	}
 	
 	public Material[] loadMaterial(String path) {

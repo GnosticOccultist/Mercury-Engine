@@ -296,7 +296,7 @@ public class Uniform {
 				} else {
 					buffer.clear();
 				}
-				matrix4.populate(buffer);
+				matrix4.populate(buffer, false);
 				buffer.flip();
 				if(this.value == null) {
 					this.value = new Matrix4f(matrix4);

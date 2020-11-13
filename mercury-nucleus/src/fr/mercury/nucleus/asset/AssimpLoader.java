@@ -1,43 +1,65 @@
 package fr.mercury.nucleus.asset;
 
+import java.io.File;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.function.Consumer;
 
 import org.lwjgl.assimp.AIFace;
 import org.lwjgl.assimp.AIFile;
 import org.lwjgl.assimp.AIFileIO;
 import org.lwjgl.assimp.AIFileOpenProc;
+import org.lwjgl.assimp.AIMaterial;
 import org.lwjgl.assimp.AIMatrix4x4;
 import org.lwjgl.assimp.AIMesh;
+import org.lwjgl.assimp.AINode;
 import org.lwjgl.assimp.AIScene;
+import org.lwjgl.assimp.AIString;
 import org.lwjgl.assimp.AIVector3D;
 import org.lwjgl.assimp.Assimp;
 import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.collections.array.Array;
 import fr.alchemy.utilities.file.FileUtils;
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
+import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.Mesh;
 import fr.mercury.nucleus.scenegraph.Mesh.Mode;
 import fr.mercury.nucleus.scenegraph.NucleusMundi;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
+import fr.mercury.nucleus.texture.Texture2D;
+import fr.mercury.nucleus.texture.TextureState.MagFilter;
+import fr.mercury.nucleus.texture.TextureState.MinFilter;
+import fr.mercury.nucleus.texture.TextureState.WrapMode;
 import fr.mercury.nucleus.utils.MercuryException;
+import fr.mercury.nucleus.utils.SceneUtils;
+import fr.mercury.nucleus.utils.data.Allocator;
 import fr.mercury.nucleus.utils.data.BufferUtils;
 
 public class AssimpLoader implements AssetLoader<AnimaMundi> {
 	
 	/**
+	 * The logger of the Assimp loader.
+	 */
+	private static final Logger logger = FactoryLogger.getLogger("mercury.asset.assimp");
+	/**
 	 * The Assimp flags that the loader uses by default.
 	 */
 	private static final int DEFAULT_ASSIMP_FLAGS = Assimp.aiProcess_JoinIdenticalVertices
-			| Assimp.aiProcess_Triangulate | Assimp.aiProcess_GenSmoothNormals;
+			| Assimp.aiProcess_Triangulate | Assimp.aiProcess_GenSmoothNormals | Assimp.aiProcess_SortByPType
+			| Assimp.aiProcess_PreTransformVertices | Assimp.aiProcess_FlipUVs;
 
+	private AssetManager assetManager = null;
+	
 	@Override
 	public AnimaMundi load(String path) {
 		return load(path, 0);
@@ -93,12 +115,20 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		}, MemoryUtil.NULL);
 
 		// TODO: Allow the user to choose its own tags.
-		AIScene scene = Assimp.aiImportFileEx(path, DEFAULT_ASSIMP_FLAGS, io);
+		AIScene scene = Assimp.aiImportFile(path, DEFAULT_ASSIMP_FLAGS);
 		if(scene == null) {
 			throw new MercuryException("Error while loading model '" + path + "': " + Assimp.aiGetErrorString());
 		}
+		
+		scene.mRootNode().mTransformation(AIMatrix4x4.create().set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
 
 		AnimaMundi result = readScene(scene, configFlags);
+		
+		// TODO: Define textures according to geometries instead of material.
+		Material[] materials = assetManager.loadMaterial("/materials/unlit.json");
+		assert materials[2] != null;
+		materials[2].getFirstShader();
+		SceneUtils.applyMaterial(result, materials[2]);
 
 		/*
 		 * Release the imported scene when finished.
@@ -110,7 +140,14 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 
 	private AnimaMundi readScene(AIScene scene, int configFlags) {
 		var ignore = ConfigFlag.hasFlag(ConfigFlag.IGNORE_ROOT_NODE, configFlags);
-
+		
+		var materialCount = scene.mNumMaterials();
+		var surfaces = Array.ofType(Surface.class, materialCount);
+		for(var i = 0; i < materialCount; ++i) {
+			var material = AIMaterial.create(scene.mMaterials().get(i));
+			surfaces.add(processMaterial(material));
+		}
+		
 		var aiMeshes = scene.mMeshes();
 		var meshCount = scene.mNumMeshes();
 
@@ -120,20 +157,70 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		 */
 		if(ignore && meshCount == 1) {
 			var aiMesh = AIMesh.create(aiMeshes.get(0));
-			return processMesh(aiMesh);
+			return processMesh(aiMesh, surfaces);
 		}
 
 		var rootNode = scene.mRootNode();
-		var rootNucleus = new NucleusMundi(rootNode.mName().dataString());
-		var nodeMeshes = rootNode.mMeshes();
-		for(int i = 0, count = rootNode.mNumMeshes(); i < count; i++) {
-			AIMesh mesh = AIMesh.create(scene.mMeshes().get(nodeMeshes.get(i)));
-			rootNucleus.attach(processMesh(mesh));
-		}
-
-		// TODO: Handle root-node children
+		var rootNucleus = processNode(rootNode, scene, surfaces);
 
 		return rootNucleus;
+	}
+
+	private Surface processMaterial(AIMaterial material) {
+		
+		var result = Allocator.stackSafe(stack -> {
+			var aiName = AIString.create();
+			Assimp.aiGetMaterialString(material, Assimp.AI_MATKEY_NAME, Assimp.aiTextureType_NONE, 0, aiName);
+			
+			var name = aiName.dataString();
+			logger.info("Loading material '" + name + "' using Assimp...");
+			
+			var aiTexturePath = AIString.callocStack(stack);
+			Assimp.aiGetMaterialTexture(material, Assimp.aiTextureType_DIFFUSE, 0, aiTexturePath, (IntBuffer) null,
+					null, null, null, null, null);
+			
+			var texturePath = aiTexturePath.dataString();
+            if (texturePath != null && texturePath.length() > 0) {
+                texturePath = "model/sponza" + File.separator + new File(texturePath).getName();
+            }
+    		
+            var surface = new Surface();
+            if(texturePath != null && !texturePath.isEmpty()) {
+            	Texture2D texture = assetManager.loadTexture2D(texturePath)
+     					.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
+     					.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
+            	texture.upload();
+            	surface.diffuse = texture;
+            }
+            
+            return surface;
+		});
+		
+		return result;
+	}
+	
+	private NucleusMundi processNode(AINode node, AIScene scene, Array<Surface> materials) {
+		NucleusMundi nucleus = new NucleusMundi(node.mName().dataString());
+		logger.info("Processing node: " + nucleus);
+		
+		var transform = new Transform();
+		transform.set(convertMatrix(node.mTransformation(), new Matrix4f()));
+		nucleus.setTransform(transform);
+		
+		// Handle the meshes of the node.
+		var nodeMeshes = node.mMeshes();
+		for(int i = 0, count = node.mNumMeshes(); i < count; ++i) {
+			var index = nodeMeshes.get(i);
+			var mesh = AIMesh.create(scene.mMeshes().get(index));
+			nucleus.attach(processMesh(mesh, materials));
+		}
+		
+		// Handle the children of the node.
+		for(int i = 0, count = node.mNumChildren(); i < count; ++i) {
+			nucleus.attach(processNode(AINode.create(node.mChildren().get(i)), scene, materials));
+		}
+		
+		return nucleus;
 	}
 
 	/**
@@ -144,7 +231,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 	 * @return A new anima-mundi with a mesh matching the one loaded with assimp
 	 *         (not null).
 	 */
-	private AnimaMundi processMesh(AIMesh aiMesh) {
+	private AnimaMundi processMesh(AIMesh aiMesh, Array<Surface> materials) {
 		Validator.nonNull(aiMesh, "The Assimp mesh data can't be null!");
 		var mesh = new Mesh();
 
@@ -160,7 +247,18 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		mesh.setMode(mode);
 		
 		// The mesh should be uploaded by the Renderer only.
-		return new PhysicaMundi(aiMesh.mName().dataString(), mesh);
+		var physica = new PhysicaMundi(aiMesh.mName().dataString(), mesh);
+		logger.info("Processing geometry " + physica);
+		
+		var matIndex = aiMesh.mMaterialIndex();
+		if(matIndex >= 0 && matIndex < materials.size()) {
+			var material = new Material();
+			var texture = materials.get(matIndex).diffuse;
+			material.texture = texture;
+			physica.setMaterial(material);
+		}
+		
+		return physica;
 	}
 
 	/**
@@ -237,8 +335,20 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 			}
 		}
 		buffer.flip();
-
+		
 		consumer.accept(buffer);
+	}
+	
+	@Override
+	public void registerAssetManager(AssetManager assetManager) {
+		this.assetManager = assetManager;
+	}
+	
+	public class Surface {
+		
+		Texture2D diffuse;
+		
+		public Surface() {}
 	}
 
 	/**

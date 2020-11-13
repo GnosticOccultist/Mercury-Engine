@@ -1,4 +1,4 @@
-#version 330
+#version 330 core
 
 #import "/shaders/Transform.glsl"
 
@@ -26,7 +26,10 @@ layout (location = 3) in mat4 instanceMatrix;
 #endif
 
 void main() {
-
+	
+	vec4 worldPos = modelMatrix * vec4(position, 1.0);
+	vec4 viewPos = viewMatrix * worldPos;
+	
 	#ifdef USE_FOG
 		viewPos = viewMatrix * modelMatrix * vec4(position, 1.0);
 	#endif
@@ -45,6 +48,6 @@ void main() {
 	#ifdef INSTANCING
 		gl_Position = computeInstancePosition(position, instanceMatrix);
 	#else
-		gl_Position = computePosition(position);
+		gl_Position = projectionMatrix * viewPos;
 	#endif
 }
