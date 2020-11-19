@@ -468,6 +468,17 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 			}
 		}
 	}
+
+	/**
+	 * Return the stored {@link ReadableMatrix4f} under the given {@link MatrixType}, or null
+	 * if none is stored.
+	 * 
+	 * @param type The type of the rendering matrix.
+	 * @return	   The stored rendering matrix, or null if none.
+	 */
+	public ReadableMatrix4f getMatrix(MatrixType type) {
+		return (ReadableMatrix4f) matrixMap.get(type);
+	}
 	
 	/**
 	 * Stores the provided {@link ReadableMatrix4f} for the given usage {@link MatrixType}.
@@ -524,24 +535,24 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 		switch (type) {
 			case VIEW_PROJECTION_MODEL:
 				var store = (Matrix4f) buffer;
-				var viewProj = (Matrix4f) matrixMap.get(MatrixType.VIEW_PROJECTION);
+				var viewProj = getMatrix(MatrixType.VIEW_PROJECTION);
 				
 				// First compute the view projection if not already present.
 				if(viewProj == null) {
 					computeMatrix(MatrixType.VIEW_PROJECTION);
-					viewProj = (Matrix4f) matrixMap.get(MatrixType.VIEW_PROJECTION);
+					viewProj = getMatrix(MatrixType.VIEW_PROJECTION);
 				}
 				
 				store.set(viewProj);
 				
-				var model = (Matrix4f) matrixMap.get(MatrixType.MODEL);
+				var model = getMatrix(MatrixType.MODEL);
 				store.mult(model, store);
 				break;
 			case VIEW_PROJECTION:
 				store = (Matrix4f) buffer;
 				
-				var projection = (Matrix4f) matrixMap.get(MatrixType.PROJECTION);
-				var view = (Matrix4f) matrixMap.get(MatrixType.VIEW);
+				var projection = getMatrix(MatrixType.PROJECTION);
+				var view = getMatrix(MatrixType.VIEW);
 				
 				store.set(view);
 				store.mult(projection, store);

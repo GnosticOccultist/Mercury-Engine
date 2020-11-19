@@ -403,9 +403,9 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 		
 		result.identity();
 		
-		result.m30 = 0.0F;
-		result.m31 = 0.0F;
-		result.m32 = 0.0F;
+		result.m03 = 0.0F;
+		result.m13 = 0.0F;
+		result.m23 = 0.0F;
 		
 		if(rotationMatrix) {
 			result.m00 = scale.x() * rotation.m00;
@@ -429,9 +429,9 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 			result.m22 = rotation.m22;
 		}
 		
-		result.m03 = translation.x();
-		result.m13 = translation.y();
-		result.m23 = translation.z();
+		result.m30 = translation.x();
+		result.m31 = translation.y();
+		result.m32 = translation.z();
 		result.m33 = 1.0F;
 		
 		return result;
@@ -527,8 +527,10 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
     	}
     	
     	// In all remaining cases, the matrix cannot be written as R*S*X+T.
+    	var tmp = MercuryMath.getMatrix3f();
+    	tmp.reuse();
     	var matrixA = isRotationMatrix()
-    			? rotation.multiplyDiagonalPost(scale, MercuryMath.getMatrix3f())
+    			? rotation.multiplyDiagonalPost(scale, tmp)
     			: rotation;
     			
     	var	matrixB = parent.isRotationMatrix()
@@ -665,5 +667,10 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 		return translation.equals(other.getTranslation())
 			&& rotation.equals(other.getRotation())
 			&& scale.equals(other.getScale());
+	}
+	
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + " [\nT= " + translation + ",\nR= " + rotation + ", \nS= " + scale + "]";
 	}
 }	

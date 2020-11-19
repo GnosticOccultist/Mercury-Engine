@@ -15,16 +15,15 @@ import fr.mercury.nucleus.renderer.Camera.GraphicalProjectionMode;
  * <code>Matrix4f</code> defines a 4x4 matrix, which is mainly used to store translation or rotational informations. The matrix can therefore 
  * be create from multiple ways and transformed into multiple mathematical object or {@link Buffer}.
  * The storage pattern is the following:
- * <p>
- * For example, according to <code>OpenGL</code> translation components occupy the 13th, 14th, and 15th elements of the 
- * 16-element matrix. In our case this is m03, m13 and m23 since we follow a column-major order (circulating top to bottom).
- * 
  * <pre> 
- * | R | R | Tx |
- * | R | R | Ty |
- * | R | R | Tz |
- * | 0 | 0 | 1  |
+ * | Lx | Mx | Nx | 0 |
+ * | Ly | My | Ny | 0 |
+ * | Lz | Mz | Nz | 0 |
+ * | Tx | Ty | Tz | 1 |
  * </pre>
+ * <p>
+ * For example, the translation component is stored in the 30, 31 and 32 slots, whereas rotation along the X, Y and Z axis is stored respectly
+ * in 00, 10, 20; 01, 11, 21 and 02, 12, 22. The 33th component is called the homogeneous coordinate.
  * 
  * @author GnosticOccultist
  */
@@ -474,7 +473,7 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
 	 * @param store The matrix to store the result.
 	 * @return		The resulting matrix.
 	 */
-    public Matrix4f mult(Matrix4f other, Matrix4f store) {
+    public Matrix4f mult(ReadableMatrix4f other, Matrix4f store) {
         if (store == null) {
             store = new Matrix4f();
         }
@@ -484,73 +483,73 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
         float temp20, temp21, temp22, temp23;
         float temp30, temp31, temp32, temp33;
 
-        temp00 = m00 * other.m00
-                 + m01 * other.m10
-                 + m02 * other.m20
-                 + m03 * other.m30;
-        temp01 = m00 * other.m01
-                 + m01 * other.m11
-                 + m02 * other.m21
-                 + m03 * other.m31;
-        temp02 = m00 * other.m02
-                 + m01 * other.m12
-                 + m02 * other.m22
-                 + m03 * other.m32;
-        temp03 = m00 * other.m03
-                 + m01 * other.m13
-                 + m02 * other.m23
-                 + m03 * other.m33;
+        temp00 = m00 * other.m00()
+                 + m01 * other.m10()
+                 + m02 * other.m20()
+                 + m03 * other.m30();
+        temp01 = m00 * other.m01()
+                 + m01 * other.m11()
+                 + m02 * other.m21()
+                 + m03 * other.m31();
+        temp02 = m00 * other.m02()
+                 + m01 * other.m12()
+                 + m02 * other.m22()
+                 + m03 * other.m32();
+        temp03 = m00 * other.m03()
+                 + m01 * other.m13()
+                 + m02 * other.m23()
+                 + m03 * other.m33();
 
-        temp10 = m10 * other.m00
-                 + m11 * other.m10
-                 + m12 * other.m20
-                 + m13 * other.m30;
-        temp11 = m10 * other.m01
-                 + m11 * other.m11
-                 + m12 * other.m21
-                 + m13 * other.m31;
-        temp12 = m10 * other.m02
-                 + m11 * other.m12
-                 + m12 * other.m22
-                 + m13 * other.m32;
-        temp13 = m10 * other.m03
-                 + m11 * other.m13
-                 + m12 * other.m23
-                 + m13 * other.m33;
+        temp10 = m10 * other.m00()
+                 + m11 * other.m10()
+                 + m12 * other.m20()
+                 + m13 * other.m30();
+        temp11 = m10 * other.m01()
+                 + m11 * other.m11()
+                 + m12 * other.m21()
+                 + m13 * other.m31();
+        temp12 = m10 * other.m02()
+                 + m11 * other.m12()
+                 + m12 * other.m22()
+                 + m13 * other.m32();
+        temp13 = m10 * other.m03()
+                 + m11 * other.m13()
+                 + m12 * other.m23()
+                 + m13 * other.m33();
 
-        temp20 = m20 * other.m00
-                 + m21 * other.m10
-                 + m22 * other.m20
-                 + m23 * other.m30;
-        temp21 = m20 * other.m01
-                 + m21 * other.m11
-                 + m22 * other.m21
-                 + m23 * other.m31;
-        temp22 = m20 * other.m02
-                 + m21 * other.m12
-                 + m22 * other.m22
-                 + m23 * other.m32;
-        temp23 = m20 * other.m03
-                 + m21 * other.m13
-                 + m22 * other.m23
-                 + m23 * other.m33;
+        temp20 = m20 * other.m00()
+                 + m21 * other.m10()
+                 + m22 * other.m20()
+                 + m23 * other.m30();
+        temp21 = m20 * other.m01()
+                 + m21 * other.m11()
+                 + m22 * other.m21()
+                 + m23 * other.m31();
+        temp22 = m20 * other.m02()
+                 + m21 * other.m12()
+                 + m22 * other.m22()
+                 + m23 * other.m32();
+        temp23 = m20 * other.m03()
+                 + m21 * other.m13()
+                 + m22 * other.m23()
+                 + m23 * other.m33();
 
-        temp30 = m30 * other.m00
-                 + m31 * other.m10
-                 + m32 * other.m20
-                 + m33 * other.m30;
-        temp31 = m30 * other.m01
-                 + m31 * other.m11
-                 + m32 * other.m21
-                 + m33 * other.m31;
-        temp32 = m30 * other.m02
-                 + m31 * other.m12
-                 + m32 * other.m22
-                 + m33 * other.m32;
-        temp33 = m30 * other.m03
-                 + m31 * other.m13
-                 + m32 * other.m23
-                 + m33 * other.m33;
+        temp30 = m30 * other.m00()
+                 + m31 * other.m10()
+                 + m32 * other.m20()
+                 + m33 * other.m30();
+        temp31 = m30 * other.m01()
+                 + m31 * other.m11()
+                 + m32 * other.m21()
+                 + m33 * other.m31();
+        temp32 = m30 * other.m02()
+                 + m31 * other.m12()
+                 + m32 * other.m22()
+                 + m33 * other.m32();
+        temp33 = m30 * other.m03()
+                 + m31 * other.m13()
+                 + m32 * other.m23()
+                 + m33 * other.m33();
 
         store.m00 = temp00;
         store.m01 = temp01;
@@ -700,6 +699,86 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
     	return result;
     }
     
+    @Override
+	public float m00() {
+		return m00;
+	}
+
+	@Override
+	public float m01() {
+		return m01;
+	}
+
+	@Override
+	public float m02() {
+		return m02;
+	}
+
+	@Override
+	public float m03() {
+		return m03;
+	}
+
+	@Override
+	public float m10() {
+		return m10;
+	}
+
+	@Override
+	public float m11() {
+		return m11;
+	}
+
+	@Override
+	public float m12() {
+		return m12;
+	}
+
+	@Override
+	public float m13() {
+		return m13;
+	}
+
+	@Override
+	public float m20() {
+		return m20;
+	}
+
+	@Override
+	public float m21() {
+		return m21;
+	}
+
+	@Override
+	public float m22() {
+		return m22;
+	}
+
+	@Override
+	public float m23() {
+		return m23;
+	}
+
+	@Override
+	public float m30() {
+		return m30;
+	}
+
+	@Override
+	public float m31() {
+		return m31;
+	}
+
+	@Override
+	public float m32() {
+		return m32;
+	}
+
+	@Override
+	public float m33() {
+		return m33;
+	}
+    
     /**
    	 * Sets all the components of the <code>Matrix4f</code> to the {@link #identity()},
    	 * before retrieving it from a pool.
@@ -784,84 +863,51 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
 
         return true;
     }
+    
+    @Override
+	public String toString() {
+		var result = new StringBuffer(getClass().getSimpleName() + "\n[\n");
+	    result.append(' ');
+	    result.append(m00);
+	    result.append(' ');
+	    result.append(m01);
+	    result.append(' ');
+	    result.append(m02);
+	    result.append(' ');
+	    result.append(m03);
+	    result.append(" \n");
 
-	@Override
-	public float m00() {
-		return m00;
-	}
+	    result.append(' ');
+	    result.append(m10);
+	    result.append(' ');
+	    result.append(m11);
+	    result.append(' ');
+	    result.append(m12);
+	    result.append(' ');
+	    result.append(m13);
+	    result.append(" \n");
 
-	@Override
-	public float m01() {
-		return m01;
-	}
+	    result.append(' ');
+	    result.append(m20);
+	    result.append(' ');
+	    result.append(m21);
+	    result.append(' ');
+	    result.append(m22);
+	    result.append(' ');
+	    result.append(m23);
+	    result.append(" \n");
+	    
+	    result.append(' ');
+	    result.append(m30);
+	    result.append(' ');
+	    result.append(m31);
+	    result.append(' ');
+	    result.append(m32);
+	    result.append(' ');
+	    result.append(m33);
+	    result.append(" \n");
 
-	@Override
-	public float m02() {
-		return m02;
-	}
-
-	@Override
-	public float m03() {
-		return m03;
-	}
-
-	@Override
-	public float m10() {
-		return m10;
-	}
-
-	@Override
-	public float m11() {
-		return m11;
-	}
-
-	@Override
-	public float m12() {
-		return m12;
-	}
-
-	@Override
-	public float m13() {
-		return m13;
-	}
-
-	@Override
-	public float m20() {
-		return m20;
-	}
-
-	@Override
-	public float m21() {
-		return m21;
-	}
-
-	@Override
-	public float m22() {
-		return m22;
-	}
-
-	@Override
-	public float m23() {
-		return m23;
-	}
-
-	@Override
-	public float m30() {
-		return m30;
-	}
-
-	@Override
-	public float m31() {
-		return m31;
-	}
-
-	@Override
-	public float m32() {
-		return m32;
-	}
-
-	@Override
-	public float m33() {
-		return m33;
+	    result.append(']');
+	    return result.toString();
 	}
 }
