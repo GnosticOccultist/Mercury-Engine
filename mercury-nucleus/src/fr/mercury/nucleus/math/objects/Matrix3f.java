@@ -490,4 +490,35 @@ public class Matrix3f implements ReadableMatrix3f, Reusable, Comparable<Matrix3f
 
         return true;
     }
+	
+	@Override
+	public String toString() {
+		var result = new StringBuffer(getClass().getSimpleName() + "\n[\n");
+	    result.append(' ');
+	    result.append(m00);
+	    result.append(' ');
+	    result.append(m01);
+	    result.append(' ');
+	    result.append(m02);
+	    result.append(" \n");
+
+	    result.append(' ');
+	    result.append(m10);
+	    result.append(' ');
+	    result.append(m11);
+	    result.append(' ');
+	    result.append(m12);
+	    result.append(" \n");
+
+	    result.append(' ');
+	    result.append(m20);
+	    result.append(' ');
+	    result.append(m21);
+	    result.append(' ');
+	    result.append(m22);
+	    result.append(" \n");
+
+	    result.append(']');
+	    return result.toString();
+	}
 }

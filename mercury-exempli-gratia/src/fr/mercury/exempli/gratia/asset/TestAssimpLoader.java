@@ -41,7 +41,7 @@ public class TestAssimpLoader extends MercuryApplication {
 		// Load and prepare the cube in the scene.
 		sponza = assetManager.loadAssimp("resources/model/sponza/sponza.gltf", ConfigFlag.IGNORE_ROOT_NODE);
 		sponza.setName("sponza");
-		sponza.setTranslation(0.0f, 0.0F, 0.0F).setScale(1f, 1f, 1f);
+		sponza.setTranslation(0.0f, 0.3F, 0.0F).setScale(1f, 1f, 1f);
 		
 		camera.setLocation(5.0f, 2.0f, 0.0f);
 		
@@ -54,5 +54,6 @@ public class TestAssimpLoader extends MercuryApplication {
 	@Override
 	@OpenGLCall
 	protected void update(ReadableTimer timer) {
+		
 	}
 }

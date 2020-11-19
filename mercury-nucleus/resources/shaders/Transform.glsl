@@ -21,7 +21,7 @@ vec4 computeProjPosition(vec3 position) {
 }
 
 vec4 computeInstancePosition(vec3 position, mat4 instanceMatrix) {
-	return viewProjectionModelMatrix * instanceMatrix * vec4(position, 1.0);
+	return instanceMatrix * vec4(position, 1.0);
 }
 
 vec4 computePosition(vec2 position) {

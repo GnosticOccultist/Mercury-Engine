@@ -46,7 +46,7 @@ void main() {
 	#endif
 	
 	#ifdef INSTANCING
-		gl_Position = computeInstancePosition(position, instanceMatrix);
+		gl_Position = projectionMatrix * viewPos * computeInstancePosition(position, instanceMatrix);
 	#else
 		gl_Position = projectionMatrix * viewPos;
 	#endif

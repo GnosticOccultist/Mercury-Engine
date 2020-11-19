@@ -11,7 +11,7 @@
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": [] }
 		],
 		"uniforms": {
-			"prefabs": ["VIEW_PROJECTION_MODEL"]
+			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
 		}
 	},
 	
@@ -27,7 +27,7 @@
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_FOG", "USE_TEXTURE"] }
 		],
 		"uniforms": {
-			"prefabs": ["FOG", "MODEL", "VIEW", "VIEW_PROJECTION_MODEL"]
+			"prefabs": ["FOG", "MODEL", "VIEW", "PROJECTION"]
 		}
 	},
 	
@@ -59,7 +59,7 @@
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_FOG", "USE_ATLAS", "USE_TEXTURE"] }
 		],
 		"uniforms": {
-			"prefabs": ["FOG", "MODEL", "VIEW", "VIEW_PROJECTION_MODEL"]
+			"prefabs": ["FOG", "MODEL", "VIEW", "PROJECTION"]
 		}
 	},
 	
@@ -76,7 +76,7 @@
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE", "INSTANCING"] }
 		],
 		"uniforms": {
-			"prefabs": ["VIEW_PROJECTION_MODEL"]
+			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
 		}
 	},
 	
@@ -92,7 +92,7 @@
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE"] }
 		],
 		"uniforms": {
-			"prefabs": ["VIEW_PROJECTION_MODEL"]
+			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
 		}
 	}
 }

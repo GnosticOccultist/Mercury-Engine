@@ -2,6 +2,10 @@ package fr.mercury.exempli.gratia.asset;
 
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.asset.OBJLoader;
+import fr.mercury.nucleus.renderer.logic.state.BlendState;
+import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
+import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.TextureAtlas;
@@ -84,6 +88,8 @@ public class TestOBJLoader extends MercuryApplication {
 		capricorn.setMaterial(materials[3]);
 		// Set the texture of the capricorn to the loaded texture atlas.
 		capricorn.getMaterial().texture = atlas;
+		
+		scene.setRenderStates(new DepthBufferState(), new BlendState(), new FaceCullingState().setFace(Face.BACK).enable());
 		
 		// Finally, attach the cube, teapot and capricorn to the main scene.
 		scene.attachAll(cube, teapot, capricorn);
