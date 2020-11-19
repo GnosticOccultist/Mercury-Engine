@@ -41,9 +41,7 @@ public class TestAssimpLoader extends MercuryApplication {
 		// Load and prepare the cube in the scene.
 		sponza = assetManager.loadAssimp("resources/model/sponza/sponza.gltf", ConfigFlag.IGNORE_ROOT_NODE);
 		sponza.setName("sponza");
-		sponza.setTranslation(0.0f, 0.3F, 0.0F).setScale(1f, 1f, 1f);
-		
-		camera.setLocation(5.0f, 2.0f, 0.0f);
+		sponza.setTranslation(5.0f, -2.3F, 0.0F).setScale(1f, 1f, 1f);
 		
 		scene.setRenderStates(new DepthBufferState().enable(), new BlendState().enable(), new FaceCullingState().setFace(Face.BACK).enable());
 		

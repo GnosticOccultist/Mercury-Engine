@@ -3,7 +3,6 @@ package fr.mercury.exempli.gratia.renderer.instancing;
 import java.util.Random;
 
 import fr.mercury.nucleus.application.MercuryApplication;
-import fr.mercury.nucleus.asset.AssimpLoader.ConfigFlag;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState.WindingOrder;
@@ -13,7 +12,6 @@ import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.Mesh;
-import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.TextureAtlas;
 import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
@@ -59,14 +57,14 @@ public class TestMeshInstancing extends MercuryApplication {
 
 		// Select the first index of the atlas.
 		atlas.setIndex(0);
-
+		
 		/*
 		 * Load and prepare the cube in the scene. Its transform will be used as a
 		 * reference to all other instances, but with a delta applied.
 		 */
-		var cube = (PhysicaMundi) assetManager.loadAssimp("/model/cube.obj", ConfigFlag.IGNORE_ROOT_NODE);
+		var cube = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube.setName("cube");
-		cube.setTranslation(0.0f, 0.0f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
+		cube.setTranslation(0.0f, 0.0f, -7.0f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 
 		/*
 		 * Select the fifth material which is "Unlit_no_fog_instanced" to render the

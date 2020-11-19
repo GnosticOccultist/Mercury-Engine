@@ -113,7 +113,7 @@ public abstract class MercuryApplication implements Application {
 			
 			// Initialize the camera.
 			camera = new Camera(settings.getWidth(), settings.getHeight());
-			camera.setLocation(0f, 0f, 8f);
+			camera.setLocation(0f, 0f, 0f);
 			camera.setFrustumPerspective(45F, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
 						
 			// Try initializing the renderer from settings.
