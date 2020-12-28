@@ -2,8 +2,8 @@ package fr.mercury.nucleus.scenegraph;
 
 import fr.alchemy.utilities.ReadOnlyException;
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.array.Array;
-import fr.alchemy.utilities.array.ReadOnlyArray;
+import fr.alchemy.utilities.collections.array.Array;
+import fr.alchemy.utilities.collections.array.ReadOnlyArray;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;

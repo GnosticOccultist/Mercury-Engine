@@ -44,17 +44,16 @@ public class NanoTimer implements Timer {
 	 * Updates the <code>NanoTimer</code> by updating its {@link #getTimePerFrame()}, {@link #getFrameRate()} values
 	 * and refreshing its previous update time.
 	 */
-	@Override
 	public void update() {
-		tpf = (getTime() - previousTime) * (1.0f / TIMER_RESOLUTION);
+		long time = getTime();
+		tpf = (time - previousTime) * (1.0f / TIMER_RESOLUTION);
 		fps = 1.0f / tpf;
-		previousTime = getTime();
+		previousTime = time;
 	}
 
 	/**
 	 * Resets the <code>NanoTimer</code> by setting the current time as its starting time.
 	 */
-	@Override
 	public void reset() {
 		startTime = System.nanoTime();
 		previousTime = getTime();
@@ -110,5 +109,15 @@ public class NanoTimer implements Timer {
 	@Override
 	public float getSpeed() {
 		return 1F;
+	}
+	
+	/**
+	 * Return the resolution of the <code>NanoTimer</code>, converting from seconds to nanoseconds.
+	 * 
+	 * @return The resolution used by the nano timer (1_000_000_000).
+	 */
+	@Override
+	public long getResolution() {
+		return TIMER_RESOLUTION;
 	}
 }

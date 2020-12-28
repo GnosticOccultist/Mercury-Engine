@@ -1,7 +1,10 @@
 package fr.mercury.nucleus.math.objects;
 
+import java.nio.BufferOverflowException;
+import java.nio.FloatBuffer;
+
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.pool.Reusable;
+import fr.alchemy.utilities.collections.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.readable.ReadableMatrix3f;
 import fr.mercury.nucleus.math.readable.ReadableQuaternion;
@@ -284,6 +287,72 @@ public class Matrix3f implements ReadableMatrix3f, Reusable, Comparable<Matrix3f
         
         return true;
     }
+    
+    /**
+	 * Populates the given {@link FloatBuffer} with the data from the <code>Matrix3f</code> in column 
+	 * major order.
+	 * <p>
+	 * The method is using relative put method, meaning the float data is written at the current 
+	 * buffer's position and the position is incremented by 9.
+	 * <p>
+	 * The populated buffer can be used safely to transfer data to shaders as mat3 uniforms.
+	 * 
+	 * @param store The buffer to populate with the data (not null). 
+	 * @return 		The given store populated with the matrix data.
+	 * 
+	 * @throws BufferOverflowException Thrown if there isn't enough space to write all 9 floats.
+	 * 
+	 * @see #populate(FloatBuffer, boolean)
+	 */
+    @Override
+    public FloatBuffer populate(FloatBuffer store) {
+    	Validator.nonNull(store, "The float buffer can't be null!");
+    	return populate(store, true);
+    }
+    
+    /**
+	 * Populates the given {@link FloatBuffer} with the data from the <code>Matrix3f</code>.
+	 * <p>
+	 * The method is using relative put method, meaning the float data is written at the current 
+	 * buffer's position and the position is incremented by 9.
+	 * <p>
+	 * The populated buffer can be used safely to transfer data to shaders as mat3 uniforms.
+	 * 
+	 * @param store 	  The buffer to populate with the data (not null). 
+	 * @param columnMajor Whether to write the data in column or row major order.
+	 * @return 			  The given store populated with the matrix data.
+	 * 
+	 * @throws BufferOverflowException Thrown if there isn't enough space to write all 9 floats.
+	 * 
+	 * @see #populate(FloatBuffer)
+	 */
+    public FloatBuffer populate(FloatBuffer store, boolean columnMajor) {
+    	Validator.nonNull(store, "The float buffer can't be null!");
+    	
+    	if(columnMajor) {
+    		store.put(m00);
+			store.put(m10);
+			store.put(m20);
+			store.put(m01);
+			store.put(m11);
+			store.put(m21);
+			store.put(m02);
+			store.put(m12);
+			store.put(m22);
+		} else {
+			store.put(m00);
+			store.put(m01);
+			store.put(m02);
+			store.put(m10);
+			store.put(m11);
+			store.put(m12);
+			store.put(m20);
+			store.put(m21);
+			store.put(m22);
+		}
+    	
+    	return store;
+    }
 
 	@Override
 	public float m00() {
@@ -384,41 +453,72 @@ public class Matrix3f implements ReadableMatrix3f, Reusable, Comparable<Matrix3f
             return true;
         }
         
-        if (!(o instanceof Matrix3f)) {
+        if (!(o instanceof ReadableMatrix3f)) {
             return false;
         }
 
-        Matrix3f comp = (Matrix3f) o;
-        if (Float.compare(m00, comp.m00) != 0) {
+        var comp = (ReadableMatrix3f) o;
+        if (Float.compare(m00, comp.m00()) != 0) {
             return false;
         }
-        if (Float.compare(m01, comp.m01) != 0) {
+        if (Float.compare(m01, comp.m01()) != 0) {
             return false;
         }
-        if (Float.compare(m02, comp.m02) != 0) {
-            return false;
-        }
-
-        if (Float.compare(m10, comp.m10) != 0) {
-            return false;
-        }
-        if (Float.compare(m11, comp.m11) != 0) {
-            return false;
-        }
-        if (Float.compare(m12, comp.m12) != 0) {
+        if (Float.compare(m02, comp.m02()) != 0) {
             return false;
         }
 
-        if (Float.compare(m20, comp.m20) != 0) {
+        if (Float.compare(m10, comp.m10()) != 0) {
             return false;
         }
-        if (Float.compare(m21, comp.m21) != 0) {
+        if (Float.compare(m11, comp.m11()) != 0) {
             return false;
         }
-        if (Float.compare(m22, comp.m22) != 0) {
+        if (Float.compare(m12, comp.m12()) != 0) {
+            return false;
+        }
+
+        if (Float.compare(m20, comp.m20()) != 0) {
+            return false;
+        }
+        if (Float.compare(m21, comp.m21()) != 0) {
+            return false;
+        }
+        if (Float.compare(m22, comp.m22()) != 0) {
             return false;
         }
 
         return true;
     }
+	
+	@Override
+	public String toString() {
+		var result = new StringBuffer(getClass().getSimpleName() + "\n[\n");
+	    result.append(' ');
+	    result.append(m00);
+	    result.append(' ');
+	    result.append(m01);
+	    result.append(' ');
+	    result.append(m02);
+	    result.append(" \n");
+
+	    result.append(' ');
+	    result.append(m10);
+	    result.append(' ');
+	    result.append(m11);
+	    result.append(' ');
+	    result.append(m12);
+	    result.append(" \n");
+
+	    result.append(' ');
+	    result.append(m20);
+	    result.append(' ');
+	    result.append(m21);
+	    result.append(' ');
+	    result.append(m22);
+	    result.append(" \n");
+
+	    result.append(']');
+	    return result.toString();
+	}
 }

@@ -16,10 +16,6 @@ import fr.mercury.nucleus.scenegraph.AnimaMundi;
 public final class FaceCullingState extends RenderState {
 
 	/**
-	 * Whether the face culling is activated (default&rarr;false).
-	 */
-	private boolean enabled = false;
-	/**
 	 * The face to cull triangles from (default&rarr;BACK).
 	 */
 	private Face face = Face.BACK;
@@ -30,6 +26,16 @@ public final class FaceCullingState extends RenderState {
 	private WindingOrder windingOrder = WindingOrder.COUNTER_CLOCKWISE;
 	
 	/**
+	 * Instantiates a new disabled <code>FaceCullingState</code> with the culling face set to {@link Face#BACK}
+	 * and the winding order to {@link WindingOrder#COUNTER_CLOCKWISE}.
+	 * 
+	 * @see #reset()
+	 */
+	public FaceCullingState() {
+		reset();
+	}
+	
+	/**
 	 * Enable the <code>FaceCullingState</code>. When applied as a render state for an {@link AnimaMundi},
 	 * it will enable the culling of the specified {@link Face} using the set {@link WindingOrder}.
 	 * 
@@ -38,7 +44,7 @@ public final class FaceCullingState extends RenderState {
 	 */
 	@Override
 	public FaceCullingState enable() {
-		this.enabled = true;
+		super.enable();
 		return this;
 	}
 
@@ -53,17 +59,8 @@ public final class FaceCullingState extends RenderState {
 	 */
 	@Override
 	public FaceCullingState disable() {
-		this.enabled = false;
+		super.disable();
 		return this;
-	}
-	
-	/**
-	 * Return whether the <code>FaceCullingState</code> is enabled.
-	 * 
-	 * @return Whether the face culling state is enabled.
-	 */
-	public boolean isEnabled() {
-		return enabled;
 	}
 	
 	/**
@@ -99,6 +96,8 @@ public final class FaceCullingState extends RenderState {
 	public FaceCullingState setFace(Face face) {
 		Validator.nonNull(face, "The face to cull can't be null!");
 		this.face = face;
+		
+		setNeedsUpdate(true);
 		return this;
 	}
 	
@@ -113,6 +112,8 @@ public final class FaceCullingState extends RenderState {
 	public FaceCullingState setWindingOrder(WindingOrder windingOrder) {
 		Validator.nonNull(windingOrder, "The winding order for face culling can't be null!");
 		this.windingOrder = windingOrder;
+		
+		setNeedsUpdate(true);
 		return this;
 	}
 	
@@ -125,6 +126,8 @@ public final class FaceCullingState extends RenderState {
 		this.enabled = false;
 		this.face = Face.BACK;
 		this.windingOrder = WindingOrder.COUNTER_CLOCKWISE;
+		
+		setNeedsUpdate(true);
 	}
 	
 	/**
@@ -135,26 +138,6 @@ public final class FaceCullingState extends RenderState {
 	@Override
 	public Type type() {
 		return Type.FACE_CULLING;
-	}
-	
-	/**
-	 * <code>Face</code> is an enumeration of all possible faces to be culled by the {@link FaceCullingState}.
-	 * 
-	 * @author GnosticOccultist
-	 */
-	public enum Face {
-		/**
-		 * The front face of a geometry.
-		 */
-		FRONT,
-		/**
-		 * The back face of a geometry.
-		 */
-		BACK,
-		/**
-		 * The front and back faces of a geometry.
-		 */
-		FRONT_AND_BACK;
 	}
 	
 	/**

@@ -1,56 +1,23 @@
 package fr.mercury.nucleus.utils;
 
 /**
- * <code>Timer</code> is an agnostic-resolution interface to create timer based on different time units.
+ * <code>Timer</code> is an non-read-only implementation of the {@link ReadableTimer} interface and provide a way to {@link #update()}
+ * or {@link #reset()} any implementations without knowing its resolution.
  * 
  * @author GnosticOccultist
  */
-public interface Timer {
-
+public interface Timer extends ReadableTimer {
+	
 	/**
-	 * Updates the <code>Timer</code> by updating its {@link #getTimePerFrame()} and {@link #getFrameRate()} values.
+	 * Update the <code>Timer</code> by updating the value returned by {@link #getTimePerFrame()} and {@link #getFrameRate()}
+	 * and refreshing the last update time of the timer.
+	 * <p>
+	 * Note that if the implementation of this interface is pausable, then the timer shouldn't update if that's the case.
 	 */
 	void update();
 	
 	/**
-	 * Resets the <code>Timer</code> by setting the current time as its starting time.
+	 * Reset the <code>Timer</code> so the starting time correspond to this call.
 	 */
 	void reset();
-	
-	/**
-	 * Return the current time in seconds per frame of the <code>Timer</code>.
-	 * 
-	 * @return The current time in seconds per frame.
-	 */
-	float getTimePerFrame();
-	
-	/**
-	 * Return the frame the current frame-rate or frame per second of the <code>Timer</code>.
-	 * 
-	 * @return The current frame-rate in frames per second.
-	 */
-	float getFrameRate();
-	
-	/**
-	 * Return the speed at which the <code>Timer</code> should run. It can be applied to {@link #getTimePerFrame()}
-	 * in order to accelerate time dependent actions in the game-loop.
-	 * 
-	 * @return The speed of the timer.
-	 */
-	float getSpeed();
-	
-	/**
-	 * Return whether the <code>Timer</code> is paused. If this is the case, then {@link #update()} shouldn't perform.
-	 * 
-	 * @return Whether the timer is paused.
-	 */
-	boolean isPaused();
-	
-	/**
-	 * Return the amount of time since the timer has started to run or since the last reset in the
-	 * <code>Timer</code> units.
-	 * 
-	 * @return The amount of timer since the timer has (re)started in timer units.
-	 */
-	long getTime();
 }

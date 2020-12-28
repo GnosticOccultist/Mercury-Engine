@@ -1,7 +1,8 @@
 package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.pool.Reusable;
+import fr.alchemy.utilities.collections.pool.Reusable;
+import fr.mercury.nucleus.math.readable.ReadableVector4f;
 
 /**
  * <code>Vector4f</code> is a mathematical utility class representing a vector with
@@ -15,7 +16,7 @@ import fr.alchemy.utilities.pool.Reusable;
  * 
  * @author GnosticOccultist
  */
-public final class Vector4f implements Comparable<Vector4f>, Reusable {
+public final class Vector4f implements ReadableVector4f, Comparable<Vector4f>, Reusable {
 	
 	/**
 	 * The X-component of the vector.
@@ -247,40 +248,6 @@ public final class Vector4f implements Comparable<Vector4f>, Reusable {
         this.w /= other.w;
         return this;
     }
-    
-    /**
-     * Calculates the dot product of the <code>Vector4f</code> with the provided one.
-     * If dot product = 0, the vectors are orthogonal.
-     * <p>
-	 * The provided vector cannot be null.
-     * 
-     * @param other The vector to get the dot product with.
-     * @return		The resulting scalar from the dot product.
-     */
-    public float dot(Vector4f other) {
-    	Validator.nonNull(other, "The vector cannot be null!");
-    	
-    	return x * other.x + y * other.y + z * other.z + w * other.w;
-    }
-	
-	/**
-	 * Return the length of the <code>Vector4f</code>.
-	 * 
-	 * @return The length of the vector.
-	 */
-	public float length() {
-		return (float) Math.sqrt(x * x + y * y + z * z + w * w);
-	}
-	
-	/**
-	 * Return whether the <code>Vector4f</code> is a unit vector, 
-	 * meaning its norm ({@link #length()}) is equal to 1.
-	 * 
-	 * @return Whether the vector is a unit vector.
-	 */
-	public boolean isUnitVector() {
-		return length() == 1;
-	}
 	
 	/**
 	 * Normalizes the <code>Vector4f</code>. It will will divide
@@ -299,6 +266,90 @@ public final class Vector4f implements Comparable<Vector4f>, Reusable {
             w *= length;
         }
         return this;
+	}
+	
+	/**
+	 * Return the X-component of the <code>Vector4f</code>, as a single-precision float.
+	 * 
+	 * @return The X-coordinate value of the vector.
+	 */
+    @Override
+    public float x() {
+    	return x;
+    }
+    
+    /**
+     * Sets the X-component of the <code>Vector4f</code>.
+     * 
+     * @param x The X-coordinate value of the vector.
+     * @return	The vector for chaining purposes.
+     */
+    public Vector4f setX(float x) {
+		this.x = x;
+		return this;
+	}
+    
+    /**
+	 * Return the Y-component of the <code>Vector4f</code>, as a single-precision float.
+	 * 
+	 * @return The Y-coordinate value of the vector.
+	 */
+    @Override
+    public float y() {
+    	return y;
+    }
+    
+    /**
+     * Sets the Y-component of the <code>Vector4f</code>.
+     * 
+     * @param y The Y-coordinate value of the vector.
+     * @return	The vector for chaining purposes.
+     */
+    public Vector4f setY(float y) {
+		this.y = y;
+		return this;
+	}
+
+    /**
+	 * Return the Z-component of the <code>Vector4f</code>, as a single-precision float.
+	 * 
+	 * @return The Z-coordinate value of the vector.
+	 */
+    @Override
+    public float z() {
+    	return z;
+    }
+    
+    /**
+     * Sets the Z-component of the <code>Vector4f</code>.
+     * 
+     * @param z The Z-coordinate value of the vector.
+     * @return	The vector for chaining purposes.
+     */
+    public Vector4f setZ(float z) {
+		this.z = z;
+		return this;
+	}
+    
+    /**
+	 * Return the W-component of the <code>Vector4f</code>, as a single-precision float.
+	 * 
+	 * @return The W-coordinate value of the vector.
+	 */
+    @Override
+    public float w() {
+    	return z;
+    }
+    
+    /**
+     * Sets the W-component of the <code>Vector4f</code>.
+     * 
+     * @param w The W-coordinate value of the vector.
+     * @return	The vector for chaining purposes.
+     */
+    public Vector4f setW(float w) {
+		this.z = w;
+		return this;
 	}
 	
 	/**
@@ -389,22 +440,22 @@ public final class Vector4f implements Comparable<Vector4f>, Reusable {
 			return true;
 		}
 		
-		if(!(o instanceof Vector4f)) {
+		if(!(o instanceof ReadableVector4f)) {
 			return false;
 		}
 		
-		Vector4f other = (Vector4f) o;
-		if (Float.compare(x, other.x) != 0) {
+		var other = (ReadableVector4f) o;
+		if (Float.compare(x, other.x()) != 0) {
 			return false;
 		}
-		if (Float.compare(y, other.y) != 0) {
+		if (Float.compare(y, other.y()) != 0) {
 			return false;
 		}
-		if (Float.compare(z, other.z) != 0) {
+		if (Float.compare(z, other.z()) != 0) {
 			return false;
 		}
 		
-		return Float.compare(w, other.w) == 0;
+		return Float.compare(w, other.w()) == 0;
 	}
 	
 	/**

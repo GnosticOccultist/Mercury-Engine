@@ -1,75 +1,59 @@
 package fr.mercury.nucleus.application;
 
-import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
-import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
-import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
-import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
-import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
-import static org.lwjgl.glfw.GLFW.GLFW_REFRESH_RATE;
-import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
-import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
-import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
-import static org.lwjgl.glfw.GLFW.glfwDefaultWindowHints;
-import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
-import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
-import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
-import static org.lwjgl.glfw.GLFW.glfwInit;
-import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
-import static org.lwjgl.glfw.GLFW.glfwPollEvents;
-import static org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
-import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
-import static org.lwjgl.glfw.GLFW.glfwShowWindow;
-import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
-import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
-import static org.lwjgl.glfw.GLFW.glfwTerminate;
-import static org.lwjgl.glfw.GLFW.glfwWindowHint;
-import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
-import static org.lwjgl.opengl.GL11.GL_FALSE;
-import static org.lwjgl.opengl.GL11.GL_TRUE;
-import static org.lwjgl.system.MemoryUtil.NULL;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
-import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL13C;
+import org.lwjgl.opengl.GL30C;
+import org.lwjgl.opengl.GLCapabilities;
 
+import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.application.service.GLFWWindow;
+import fr.mercury.nucleus.application.service.Window;
+import fr.mercury.nucleus.input.BaseInputProcessor;
 import fr.mercury.nucleus.input.GLFWKeyInput;
 import fr.mercury.nucleus.input.GLFWMouseInput;
-import fr.mercury.nucleus.utils.GLException;
+import fr.mercury.nucleus.renderer.device.PhysicalDevice;
+import fr.mercury.nucleus.renderer.device.Vendor;
+import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.NanoTimer;
 import fr.mercury.nucleus.utils.Timer;
 
 /**
- * <code>GLFWContext</code> is a wrapper class to handle the creation of 
- * GLFW context and LWJGL initialization.
+ * <code>MercuryContext</code> represent the core layer of an {@link Application}. It contains the main-loop within which the
+ * update and render logic take place. The usage of a context is defined by its {@link Type}, for example some context type 
+ * can't display a window, handle inputs or play sounds.
  * <p>
- * It also contains the <code>Application</code> main-loop with update and render methods.
+ * 
  * 
  * @author GnosticOccultist
  */
 public class MercuryContext implements Runnable {
-	
+
 	/**
 	 * The application logger.
 	 */
 	private static final Logger logger = FactoryLogger.getLogger("mercury.app");
 	/**
-	 * A reference of the rendering thread.
+	 * The name of the rendering thread or main thread.
 	 */
-	protected static final String GL_THREAD_NAME = "OpenGL Render Thread";
-	
+	protected static final String MAIN_THREAD_NAME = "Main/Render Thread";
+	/**
+	 * A reference of the rendering thread or main thread.
+	 */
+	protected static Thread MAIN_THREAD_REFERENCE;
+
 	/**
 	 * The application which manages the context.
 	 */
 	private Application application;
+	/**
+	 * The type of context.
+	 */
+	private Type type;
 	/**
 	 * The general settings.
 	 */
@@ -83,14 +67,6 @@ public class MercuryContext implements Runnable {
 	 */
 	private final AtomicBoolean needRestart = new AtomicBoolean(false);
 	/**
-	 * Whether the context window is focused or maximized/minimized.
-	 */
-	private boolean focused;
-	/**
-	 * The window handle value.
-	 */
-	private long window = NULL;
-	/**
 	 * The timer using to calculate the sleeping time.
 	 */
 	private Timer timer;
@@ -103,331 +79,313 @@ public class MercuryContext implements Runnable {
 	 */
 	private double frameSleepTime;
 	/**
-	 * The mouse input handler.
+	 * The physical device used for rendering, or null for headless context.
 	 */
-	private GLFWMouseInput mouseInput;
+	private PhysicalDevice physicalDevice;
 	/**
-	 * The mouse input handler.
+	 * The window used by the context, or null for headless context.
 	 */
-	private GLFWKeyInput keyInput;
+	private Window window;
 
 	/**
-	 * Instantiates and return the <code>MercuryContext</code> bound to the provided application
-	 * and using the provided <code>MercurySettings</code>.
+	 * Instantiates and return a new <code>MercuryContext</code> bound to the provided {@link Application}.
+	 * The context is created accordingly to the given {@link MercurySettings}.
 	 * 
-	 * @param application The application to bound to.
-	 * @param settings	  The settings.
-	 * @return			  The new context.
+	 * @param application The application to bound the context to (not null).
+	 * @param settings    The settings to use for creation (not null).
+	 * @return 			  A new context instance (not null).
 	 */
 	public static MercuryContext newContext(Application application, MercurySettings settings) {
+		Validator.nonNull(application, "The application can't be null!");
+		Validator.nonNull(settings, "The settings can't be null!");
 		
-		MercuryContext context = new MercuryContext();
+		var context = new MercuryContext();
 		context.setSettings(settings);
 		context.setApplication(application);
 		
+		var type = settings.getContextType();
+		context.type = type;
+		switch (type) {
+			case HEADLESS:
+				// No need for window.
+				break;
+			case WINDOW:
+				context.window = new GLFWWindow();
+				application.linkService(context.window);
+				break;
+			default:
+				break;
+		}
+		
 		return context;
 	}
-	
+
 	/**
 	 * Internal use only.
 	 * <p>
-	 * Please use {@link #newContext(Application, MercurySettings)} to create 
-	 * the <code>MercuryContext</code>.
+	 * Please use {@link #newContext(Application, MercurySettings)} to create the
+	 * <code>MercuryContext</code>.
 	 */
 	private MercuryContext() {}
-	
+
+	/**
+	 * Initialize the <code>MercuryContext</code> if it hasn't been already.
+	 * The method will start the main-loop of the application.
+	 * 
+	 * @see #restart()
+	 */
 	public void initialize() {
-		if(initialized.get()) {
+		if (initialized.get()) {
 			logger.warning("The context is already initialized!");
 			return;
 		}
-		
+
 		run();
 	}
-	
+
 	/**
-	 * Restart the context to apply new settings. The context should first
-	 * be initialized.
+	 * Restart the <code>MercuryContext</code> to apply new {@link MercurySettings}. 
+	 * The context should first be initialized.
+	 * 
+	 * @see #initialize()
+	 * @see #setSettings(MercurySettings)
 	 */
 	public void restart() {
-		if(initialized.get()) {
+		if (initialized.get()) {
 			needRestart.set(true);
 		} else {
 			logger.warning("The context isn't initialized, cannot restart!");
 		}
 	}
-	
+
 	@Override
 	public void run() {
-		
-		// Set the correct name for the thread.
-		Thread.currentThread().setName(GL_THREAD_NAME);
-		
-		if(application == null) {
+
+		// Set the correct name for the thread and keep a reference for checking
+		// purposes.
+		Thread.currentThread().setName(MAIN_THREAD_NAME);
+		MAIN_THREAD_REFERENCE = Thread.currentThread();
+
+		if (application == null) {
 			throw new IllegalArgumentException("The bounded application cannot be null !");
 		}
-		
-		if(!initializeInMercury()) {
+
+		if (!initializeInMercury()) {
 			logger.error("The context initialization failed. Stopping...");
 			return;
 		}
-		
+
 		while (true) {
 			
 			runLoop();
-			
-			if(glfwWindowShouldClose(window)) {
+
+			if (application.checkService(GLFWWindow.class, 
+					w -> w.shouldClose())) {
 				break;
 			}
 		}
-		
+
 		cleanup();
+		/*
+		 * Wait until all GL commands are executed.
+		 */
+		ifRenderable(GL11C::glFinish);
 	}
-	
+
 	/**
-	 * Execute a single iteration over the rendering and updating logic inside
-	 * the OpenGL Thread.
+	 * Execute a single iteration over the rendering and updating logic inside the
+	 * OpenGL Thread.
 	 */
 	private void runLoop() {
-    	// If a restart is required, recreate the context.
-    	if(needRestart.getAndSet(false)) {
-    		try {
-    			logger.info("Restarting the application: " + application.getClass().getSimpleName());
-    			destroyContext();
-    			createContext(settings);
-    		} catch (Exception ex) {
-    			logger.error("Failed to set display settings!", ex);
-    		}
-    	}
-		
-		if(!initialized.get()) {
+		// If a restart is required, recreate the context.
+		if (needRestart.getAndSet(false)) {
+			try {
+				logger.info("Restarting the application: " + application.getClass().getSimpleName());
+				application.service(GLFWWindow.class, GLFWWindow::destroy);
+				createContext(settings);
+			} catch (Exception ex) {
+				logger.error("Failed to set display settings!", ex);
+			}
+		}
+
+		if (!initialized.get()) {
 			throw new IllegalStateException();
 		}
 		
 		application.internalUpdate();
 		
-		GL11C.glFlush();
-		
-		glfwSwapBuffers(window);
-		
-		if(frameRateLimit != settings.getFrameRate()) {
+		// Try flushing all previous GL commands before swapping buffers.
+		ifRenderable(GL11C::glFlush);
+
+		application.service(GLFWWindow.class, GLFWWindow::finishFrame);
+
+		application.postFrame();
+
+		if (frameRateLimit != settings.getFrameRate()) {
 			setFrameRateLimit(settings.getFrameRate());
 		}
 		
-		if(frameRateLimit > 0) {
-    		var sleep = frameSleepTime - (timer.getTimePerFrame() / 1000.0);
-    		var sleepMillis = (long) sleep;
-    		var additionalNanos = (int) ((sleep - sleepMillis) * 1000000.0);
-    		
-    		if(sleepMillis >= 0 && additionalNanos >= 0) {
-    			try {
-    				Thread.sleep(sleepMillis, additionalNanos);
-    			} catch (InterruptedException ignored) {
-    				// Just ignore...
-    			}
-    		}
+		if (frameRateLimit > 0) {
+			var sleep = frameSleepTime - (timer.getTimePerFrame() / 1000.0);
+			var sleepMillis = (long) sleep;
+			var additionalNanos = (int) ((sleep - sleepMillis) * 1000000.0);
+
+			if (sleepMillis >= 0 && additionalNanos >= 0) {
+				try {
+					Thread.sleep(sleepMillis, additionalNanos);
+				} catch (InterruptedException ignored) {
+					// Just ignore...
+				}
+			}
 		}
-		
-		glfwPollEvents();
 	}
 
 	/**
-	 * Initialize the LWJGL display in OpenGL Thread.
+	 * Initialize the <code>MercuryContext</code> inside the main {@link Thread} to handle
+	 * graphics related actions.
 	 * 
-	 * @return
-	 * @throws Exception
+	 * @return Whether the context has been successfully initialized.
+	 * 
+	 * @throws Exception Thrown if the initialization failed.
 	 */
 	private boolean initializeInMercury() {
 		try {
-			
+
 			timer = new NanoTimer();
-			
+
 			createContext(settings);
-			
-			mouseInput = new GLFWMouseInput(this);
-			mouseInput.initialize();
-			
-			keyInput = new GLFWKeyInput(this);
-			keyInput.initialize();
-			
+
 			initialized.set(true);
-			
+
 		} catch (Exception ex) {
-			
-			// Creation failed destroying the context 
-			// and stopping there.
-			destroyContext();
+			/*
+			 * Creation failed destroying the window and input 
+			 * processor and stopping there.
+			 */
+			application.service(GLFWWindow.class, GLFWWindow::destroy);
+			application.service(BaseInputProcessor.class, BaseInputProcessor::cleanup);
 			ex.printStackTrace();
 			return false;
 		}
-		
+
 		application.internalInitialize();
 		return true;
 	}
-	
+
 	private void createContext(MercurySettings settings) {
-		
-		// Setup an error callback. The default implementation
-        // will print the error message in System.err.
-        GLFWErrorCallback.createPrint(System.err).set();
-		
-		if(!glfwInit()) {
-			throw new IllegalStateException("Unable to initialize GLFW context!");
+		// The context doesn't need a window, nor a renderer, nor input.
+		if(window == null) {
+			return;
 		}
 		
-		// Optional, the current window hints are already the default
-		glfwDefaultWindowHints();
-		
-		// The window will stay hidden after creation.
-		glfwWindowHint(GLFW_VISIBLE, GL_FALSE); 		    
-		// Whether the window is going to be resizable or not based on the configs.
-		glfwWindowHint(GLFW_RESIZABLE, settings.isResizable() ? GL_TRUE : GL_FALSE);
-		// Set the refresh rate of the window (frequency).
-		glfwWindowHint(GLFW_REFRESH_RATE, 60);
-		
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-		
-		// This allow to use OpenGL 3.x and 4.x contexts on OSX.
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-		
-		long monitor = NULL;
-		
-		if(settings.isFullscreen()) {
-			monitor = glfwGetPrimaryMonitor();
-		}
-		
-		// Getting the resolution of the primary monitor.
-		final GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-		
-		// Make sure the width and the height is superior than 0.
-		if(settings.getWidth() <= 0 || settings.getHeight() <= 0) {
-			settings.setResolution(videoMode.width(), videoMode.height());
-		}
-		
-		// Create the window.
-		window = glfwCreateWindow(settings.getWidth(), 
-				settings.getHeight(), settings.getTitle(), monitor, NULL);
-		
-		if(window == NULL) {
-			throw new RuntimeException("Failed to create the GLFW window");
-		}
-		
-		// Setup window size callback to update framebuffers resolutions, view or projection matrix.
-		glfwSetWindowSizeCallback(window, (window, width, height) -> {
-			settings.setResolution(width, height);
-			application.resize(width, height);
-		});
-		
-		// Setup window focus callback to stop updating or rendering when minimized.
-		glfwSetWindowFocusCallback(window, (window, focus) -> {
-			if(focused != focus) {
-				if(!focused) {
-					application.gainFocus();
-					timer.reset();
-				} else {
-					application.looseFocus();
-				}
-				focused = !focused;
-			}
-		});
-		
-		// Center the window
-		if(!settings.isFullscreen()) {
-			glfwSetWindowPos(window,  
-					(videoMode.width() - settings.getWidth()) / 2, 
-					(videoMode.height() - settings.getHeight()) / 2);
-		}
-		
+		window.initialize(settings);
+
 		// Make the OpenGL context current.
-        glfwMakeContextCurrent(window);
-        
-        GL.createCapabilities();
-        
-        if(settings.getInteger("Samples") != 0) {
-        	GL11.glEnable(GL13.GL_MULTISAMPLE);
-        }
-        
-        // Enabling V-Sync.
-        glfwSwapInterval(settings.isVSync() ? 1 : 0);
-        
-        // Enable depth testing.
-        GL11C.glEnable(GL11C.GL_DEPTH_TEST);
-        GL11C.glDepthFunc(GL11C.GL_LEQUAL);
-//        GL11C.glEnable(GL11C.GL_CULL_FACE);
-//        GL11C.glCullFace(GL11C.GL_BACK);
-//        // TODO: This isn't default context value, modify obj file.
-//        GL11C.glFrontFace(GL11C.GL_CW);
-        
-        // Finally show the window when finished.
-        showWindow();
+		window.makeContextCurrent();
+		
+		// Once the OpenGL context is set, change vSync if needed.
+		window.useVSync(settings.isVSync());
+		
+		GLCapabilities capabilities = GL.createCapabilities();
+
+		/*
+		 * Once we have set the current OpenGL context we can access informations about
+		 * our device.
+		 */
+		physicalDevice = createPhysicalDevice(capabilities);
+
+		logger.info("Using physical device: \n" + physicalDevice);
+		physicalDevice.check(settings);
+
+		if (settings.getInteger("Samples") > 1) {
+			GL11C.glEnable(GL13C.GL_MULTISAMPLE);
+		}
+
+		// Finally show the window when finished.
+		window.show();
+		
+		var glfwWindow = (GLFWWindow) window;
+		
+		var mouseInput = new GLFWMouseInput(glfwWindow);
+		mouseInput.initialize();
+
+		var keyInput = new GLFWKeyInput(glfwWindow);
+		keyInput.initialize();
+		
+		// Initialize input processor with window input handlers.
+		var inputProcessor = new BaseInputProcessor(mouseInput, keyInput);
+		application.linkService(inputProcessor);
 	}
-	
+
+	/**
+	 * Creates a new {@link PhysicalDevice} for the current
+	 * <code>MercuryContext</code>.
+	 * 
+	 * @param capabilites The OpenGL context capabilities (not null).
+	 * @return A new physical instance containing device and renderer infos (not
+	 *         null).
+	 */
+	private PhysicalDevice createPhysicalDevice(GLCapabilities capabilites) {
+		Validator.nonNull(capabilites, "The capabilities of the OpenGL context can't be null!");
+
+		Vendor vendor = Vendor.fromGLVendor(GL11C.glGetString(GL11C.GL_VENDOR));
+		String device = GL11C.glGetString(GL11C.GL_RENDERER);
+		String version = GL11C.glGetString(GL11C.GL_VERSION);
+
+		int count = GL11C.glGetInteger(GL30C.GL_NUM_EXTENSIONS);
+		String[] extensions = new String[count];
+		for (int i = 0; i < count; i++) {
+			extensions[i] = GL30C.glGetStringi(GL11C.GL_EXTENSIONS, i);
+		}
+
+		return new PhysicalDevice(vendor, device, version, extensions, capabilites);
+	}
+
 	private void cleanup() {
 		application.cleanup();
-		destroyContext();
-		
+		application.service(GLFWWindow.class, GLFWWindow::destroy);
+
 		// Reset the state of variables.
 		timer = null;
 		initialized.set(false);
 	}
-	
+
 	/**
-	 * Destroy the GLFW context.
+	 * Check that the currently used {@link Thread} is the main one, usually
+	 * the one where rendering needs to occur.
+	 * 
+	 * @throws MercuryException Thrown if the current thread isn't the main one.
 	 */
-	private void destroyContext() {
-		try {
-			if(window != NULL) {
-				glfwDestroyWindow(window);
-				window = NULL;
-				glfwTerminate();
-			}
-		} catch (Exception ex) {
-			logger.error("Failed to destroy context !", ex);
+	public static void checkMainThread() {
+		if (MAIN_THREAD_REFERENCE != Thread.currentThread()) {
+			throw new MercuryException("The method should only be called from '" + MAIN_THREAD_REFERENCE + "'!");
 		}
 	}
-	
+
 	/**
-	 * Show the window.
-	 */
-	private void showWindow() {
-		glfwShowWindow(window);
-	}
-	
-	/**
-	 * Return the <code>MercuryContext</code> window handle.
+	 * Return whether the currently used {@link Thread} is the main one, usually
+	 * the one where rendering needs to occur.
 	 * 
-	 * @return The window handle of the current context.
+	 * @return Whether the current thread is the main one.
 	 */
-	public long getWindow() {
-		return window;
+	public static boolean isMainThread() {
+		return MAIN_THREAD_REFERENCE == Thread.currentThread();
 	}
-	
+
 	/**
-	 * Check that the currently used thread is the one used by the <code>OpenGL</code> context for rendering.
-	 * 
-	 * @throws GLException Thrown if the current thread isn't the rendering one.
-	 */
-	public static void checkGLThread() {
-		if(!GL_THREAD_NAME.equals(Thread.currentThread().getName())) {
-			throw new GLException("The method should only be called from '" + GL_THREAD_NAME + "'!");
-		}
-	}
-	
-	/**
-	 * Set the settings used by the context to the provided ones. It copies the settings
-	 * without altering the provided instance of <code>MercurySettings</code>.
+	 * Set the settings used by the context to the provided ones. It copies the
+	 * settings without altering the provided instance of
+	 * <code>MercurySettings</code>.
 	 * <p>
-	 * Note that the settings won't be applied until you {@link #restart()}
-	 * the <code>MercuryContext</code>.
+	 * Note that the settings won't be applied until you {@link #restart()} the
+	 * <code>MercuryContext</code>.
 	 * 
-	 * @param settings The settings to use. 
+	 * @param settings The settings to use.
 	 */
 	public void setSettings(MercurySettings settings) {
 		this.settings.copyFrom(settings);
 	}
-	
+
 	/**
 	 * Sets the frame-rate limit and determine the frame sleep time
 	 * 
@@ -437,7 +395,7 @@ public class MercuryContext implements Runnable {
 		this.frameRateLimit = frameRateLimit;
 		this.frameSleepTime = 1000.0 / this.frameRateLimit;
 	}
-	
+
 	/**
 	 * Bind the context to the specified application.
 	 * <p>
@@ -450,50 +408,71 @@ public class MercuryContext implements Runnable {
 	}
 	
 	/**
-	 * Set the title of the window's context.
-	 * Note that it is only visible when windowed.
+	 * Return the {@link Type} of the <code>MercuryContext</code>.
 	 * 
-	 * @param title The title of the window.
+	 * @return The type of context (not null).
 	 */
-	public void setTitle(String title) {
-		if(initialized.get() && window != NULL) {
-			glfwSetWindowTitle(window, title);
+	public Type getType() {
+		return type;
+	}
+	
+	/**
+	 * Execute the provided {@link Runnable} if the <code>MercuryContext</code> is renderable.
+	 * 
+	 * @param action The action to execute (not null).
+	 * 
+	 * @see Type#isRenderable()
+	 */
+	public void ifRenderable(Runnable action) {
+		Validator.nonNull(action, "The action can't be null!");
+		
+		var renderable = type.isRenderable();
+		if(renderable) {
+			action.run();
 		}
 	}
 	
 	/**
-	 * Return the width of the <code>MercuryContext</code>'s window.
+	 * <code>Type</code> enumerates the different context which can be created along the {@link Application}.
 	 * 
-	 * @return The width of the context window.
+	 * @author GnosticOccultist
 	 */
-	public int getWidth() {
-		return settings.getWidth();
-	}
-	
-	/**
-	 * Return the height of the <code>MercuryContext</code>'s window.
-	 * 
-	 * @return The height of the context window.
-	 */
-	public int getHeight() {
-		return settings.getHeight();
-	}
-	
-	/**
-	 * Return the {@link GLFWMouseInput} for the <code>MercuryContext</code>.
-	 * 
-	 * @return The GLFW mouse input.
-	 */
-	public GLFWMouseInput getMouseInput() {
-		return mouseInput;
-	}
-	
-	/**
-	 * Return the {@link GLFWKeyInput} for the <code>MercuryContext</code>.
-	 * 
-	 * @return The GLFW key input.
-	 */
-	public GLFWKeyInput getKeyInput() {
-		return keyInput;
+	public enum Type {
+		
+		/**
+		 * The window context supports displaying a window in fullscreen or windowed mode,
+		 * and render graphics onto it. The window is created using native operating system.
+		 * <p>
+		 * This type also supports an event-based input system (mouse and keyboard), as well
+		 * as sound playing and streaming.
+		 */
+		WINDOW,
+		/**
+		 * The headless context doesn't define any renderable surface and doesn't provide
+		 * any window, input or sound playing or streaming.
+		 * <p>
+		 * Generally used to create a server.
+		 */
+		HEADLESS {
+			
+			/**
+			 * Return false, headless context shouldn't be renderable.
+			 * 
+			 * @return Always false.
+			 */
+			@Override
+			protected boolean isRenderable() {
+				return false;
+			}
+		};
+		
+		/**
+		 * Return whether the <code>Type</code> of context support rendering on a surface.
+		 * 
+		 * @return Whether the context supports rendering.
+		 */
+		protected boolean isRenderable() {
+			return true;
+		}
 	}
 }

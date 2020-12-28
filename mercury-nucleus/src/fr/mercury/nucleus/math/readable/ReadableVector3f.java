@@ -1,10 +1,11 @@
 package fr.mercury.nucleus.math.readable;
 
+import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Vector3f;
 
 /**
- * <code>ReadableTransform</code> is an interface to implement a readable-only
- * 3-dimensional vector of single-precision floats, meaning its fields can be accessed but not modified.
+ * <code>ReadableVector3f</code> is an interface to implement a readable-only 3-dimensional vector of single-precision floats, 
+ * meaning its fields can be accessed but not modified.
  * The actual implementation of this interface is the {@link Vector3f} class.
  * 
  * @author GnosticOccultist
@@ -36,6 +37,69 @@ public interface ReadableVector3f {
 	float z();
 	
 	/**
+	 * Return the length of the <code>ReadableVector3f</code>.
+	 * 
+	 * @return The length of the vector.
+	 */
+	default float length() {
+		return (float) Math.sqrt(x() * x() + y() * y() + z() * z());
+	}
+	
+	/**
+	 * Return whether the <code>ReadableVector3f</code> is a unit vector, 
+	 * meaning its norm ({@link #length()}) is equal to 1.
+	 * 
+	 * @return Whether the vector is a unit vector.
+	 */
+	default boolean isUnitVector() {
+		var length = length();
+		// Add a tolerance range, otherwise it will never pass.
+		return length > 0.99F && length < 1.01F;
+	}
+	
+	/**
+     * Calculates the dot product of the <code>ReadableVector3f</code> with the provided one.
+     * If dot product = 0, the vectors are orthogonal.
+     * 
+     * @param other The vector to get the dot product with (not null).
+     * @return		The resulting scalar from the dot product.
+     */
+	default float dot(ReadableVector3f other) {
+    	Validator.nonNull(other, "The vector cannot be null!");
+    	
+    	return x() * other.x() + y() * other.y() + z() * other.z();
+    }
+	
+	/**
+     * Calculates the squared distance between the <code>ReadableVector3f</code> and 
+     * the provided one.
+     *
+     * @param other The vector to determine the distance squared from (not null).
+     * @return 		The distance squared between the two vectors.
+     */
+	default float distanceSquared(ReadableVector3f other) {
+		Validator.nonNull(other, "The vector cannot be null!");
+		
+        double dx = x() - other.x();
+        double dy = y() - other.y();
+        double dz = z() - other.z();
+        return (float) (dx * dx + dy * dy + dz * dz);
+    }
+    
+    /**
+     * Calculates the distance between the <code>ReadableVector3f</code> and 
+     * the provided one.
+     *
+     * @param other The vector to determine the distance from (not null).
+     * @return 		The distance between the two vectors.
+     */
+    default double distance(ReadableVector3f other) {
+    	Validator.nonNull(other, "The vector cannot be null!");
+    	
+        return Math.sqrt(distanceSquared(other));
+    }
+	
+	/**
 	 * Return whether all 3 single-precision components of the <code>ReadableVector3f</code> 
 	 * are equal, meaning this vector is uniformized.
 	 * 
@@ -64,13 +128,4 @@ public interface ReadableVector3f {
 	default boolean isIdentity() {
 		return x() == 1 && y() == 1 && z() == 1;
 	}
-
-	/**
-     * Calculates the distance between the <code>ReadableVector3f</code> and 
-     * the provided one.
-     *
-     * @param other The vector to determine the distance from.
-     * @return 		The distance between the two vectors.
-     */
-	double distance(ReadableVector3f translation);
 }

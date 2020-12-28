@@ -20,6 +20,7 @@ import static org.lwjgl.glfw.GLFW.glfwSetScrollCallback;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 
 import org.lwjgl.glfw.GLFWCursorPosCallback;
@@ -32,6 +33,7 @@ import fr.alchemy.utilities.event.EventType;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.MercuryContext;
+import fr.mercury.nucleus.application.service.GLFWWindow;
 
 public final class GLFWMouseInput {
 	
@@ -40,7 +42,7 @@ public final class GLFWMouseInput {
 	/**
 	 * The context handling the mouse input.
 	 */
-	private final MercuryContext context;
+	private final GLFWWindow window;
 	/**
 	 * The input processor to dispatch the mouse events to.
 	 */
@@ -56,7 +58,7 @@ public final class GLFWMouseInput {
 	/**
 	 * The table containing the click time of each mouse button.
 	 */
-	private final HashMap<Integer, Long> lastClickTime = new HashMap<>();
+	private final Map<Integer, Long> lastClickTime = new HashMap<>();
 	/**
 	 * The last event which was queued up.
 	 */
@@ -68,13 +70,13 @@ public final class GLFWMouseInput {
 	private GLFWDropCallback dropCallback;
 	
 	/**
-	 * Instantiates a new <code>GLFWMouseInput</code> for the provided {@link MercuryContext}.
+	 * Instantiates a new <code>GLFWMouseInput</code> using the provided {@link GLFWWindow}.
 	 * 
-	 * @param context The context to create the mouse input for.
+	 * @param window The window to create the mouse input with.
 	 */
-	public GLFWMouseInput(MercuryContext context) {
-		Validator.nonNull(context);
-		this.context = context;
+	public GLFWMouseInput(GLFWWindow window) {
+		Validator.nonNull(window);
+		this.window = window;
 		
 		lastClickTime.put(BUTTON_LEFT, 0L);
 		lastClickTime.put(BUTTON_RIGHT, 0L);
@@ -87,30 +89,30 @@ public final class GLFWMouseInput {
 	 */
 	public void initialize() {
 		
-		final long window = context.getWindow();
+		final var id = window.getID();
 		
-		glfwSetCursorPosCallback(window, cursorPosCallback = new GLFWCursorPosCallback() {
+		glfwSetCursorPosCallback(id, cursorPosCallback = new GLFWCursorPosCallback() {
 			@Override
 			public void invoke(long window, double xPos, double yPos) {
 				onMouseMoved(window, xPos, yPos);
 			}
 		});
 		
-		glfwSetMouseButtonCallback(window, mouseButtonCallback = new GLFWMouseButtonCallback() {
+		glfwSetMouseButtonCallback(id, mouseButtonCallback = new GLFWMouseButtonCallback() {
 			@Override
 			public void invoke(long window, int button, int action, int mods) {
 				onMouseButtonPressed(window, button, action, mods);
 			}
 		});
 
-        glfwSetScrollCallback(window, scrollCallback = new GLFWScrollCallback() {
+        glfwSetScrollCallback(id, scrollCallback = new GLFWScrollCallback() {
             @Override
             public void invoke(final long window, final double xOffset, final double yOffset) {
                 onWheelScroll(window, xOffset, yOffset * 120);
             }
         });
         
-		glfwSetDropCallback(window, dropCallback = new GLFWDropCallback() {
+		glfwSetDropCallback(id, dropCallback = new GLFWDropCallback() {
 			@Override
 			public void invoke(long window, int count, long names) {
 				final String[] files = new String[count];
@@ -142,42 +144,47 @@ public final class GLFWMouseInput {
         }
 	}
 	
-	private void onMouseMoved(long window, double xPos, double yPos) {
+	private void onMouseMoved(long id, double xPos, double yPos) {
         final int x = (int) Math.round(xPos);
-        final int y = context.getHeight() - (int) Math.round(yPos);
+        final int y = window.getHeight() - (int) Math.round(yPos);
         
         final int dx = lastEvent != null ? x - lastEvent.getX() : 0;
         final int dy = lastEvent != null ? y - lastEvent.getY() : 0;
         
         // Keep track of the last pressed button to allow for dragging gesture.
         final int button = lastEvent != null && (lastEvent.getType().equals(MouseEvent.MOUSE_PRESSED) 
-        		|| lastEvent.getType().equals(MouseEvent.MOUSE_MOVED)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
+        		|| lastEvent.getType().equals(MouseEvent.MOUSE_MOVED)
+        		|| lastEvent.getType().equals(MouseEvent.MOUSE_DRAGGED)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
+        		
+        MouseEvent event = null;
+        if(button == GLFW_MOUSE_BUTTON_LEFT) {
+        	event = new MouseEvent(MouseEvent.MOUSE_DRAGGED, button, 0, x, y, dx, dy, 0);
+        } else {
+        	event = new MouseEvent(MouseEvent.MOUSE_MOVED, button, 0, x, y, dx, dy, 0);
+        }
         
-        final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_MOVED, button, 0, x, y, dx, dy, 0);
         event.setTime(inputTime());
         queueUpEvent(event);
 	}
 	
 	private void onMouseButtonPressed(long window, int button, int action, int mods) {
 		
-		final int x = lastEvent != null ? lastEvent.getX() : 0;
+		final var x = lastEvent != null ? lastEvent.getX() : 0;
 		final int y = lastEvent != null ? lastEvent.getY() : 0;
 		
 		EventType<MouseEvent> type = action == GLFW_PRESS ? MouseEvent.MOUSE_PRESSED : MouseEvent.MOUSE_RELEASED;
-		final int buttonCode = button(button);
+		final var buttonCode = button(button);
 		
 		// This looks like a clicked event so queue up a mouse event of this type in addition to the pressed/released event.
 		if(type.equals(MouseEvent.MOUSE_RELEASED) && System.currentTimeMillis() - lastClickTime.get(buttonCode) < 500L) {
-			final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_CLICKED, button(button), x, y, 0, 0);
+			final var event = new MouseEvent(MouseEvent.MOUSE_CLICKED, button(button), x, y, 0, 0);
 	        event.setTime((long) (glfwGetTime() * 1_000_000_000));
 	        queueUpEvent(event);
 		}
 		
-		if(type.equals(MouseEvent.MOUSE_PRESSED)) {
-			lastClickTime.put(buttonCode, System.currentTimeMillis());
-		}
+		lastClickTime.put(buttonCode, System.currentTimeMillis());
 		
-		final MouseEvent event = new MouseEvent(type, button(button), mods, x, y, 0, 0, 0);
+		final var event = new MouseEvent(type, button(button), mods, x, y, 0, 0, 0);
         event.setTime(inputTime());
         queueUpEvent(event);
 	}
@@ -198,7 +205,7 @@ public final class GLFWMouseInput {
         final int button = lastEvent != null && (lastEvent.getType().equals(MouseEvent.MOUSE_PRESSED) || lastEvent.getType().equals(MouseEvent.MOUSE_MOVED) 
         		|| lastEvent.getType().equals(MouseEvent.MOUSE_SCROLL)) ? lastEvent.getButton() : BUTTON_UNDEFINED;
 		
-		final MouseEvent event = new MouseEvent(MouseEvent.MOUSE_SCROLL, button(button), 0, x, y, 0, 0, dw);
+		final var event = new MouseEvent(MouseEvent.MOUSE_SCROLL, button(button), 0, x, y, 0, 0, dw);
         event.setTime(inputTime());
         queueUpEvent(event);
 	}
@@ -254,9 +261,9 @@ public final class GLFWMouseInput {
 		this.cursorVisible = cursorVisible;
 		
 		if(cursorVisible) {
-			glfwSetInputMode(context.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			glfwSetInputMode(window.getID(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		} else {
-			glfwSetInputMode(context.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			glfwSetInputMode(window.getID(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
 	}
 	

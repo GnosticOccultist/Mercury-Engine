@@ -9,7 +9,10 @@ import java.util.function.Supplier;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexAttribute;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
 import fr.mercury.nucleus.texture.Texture;
+import fr.mercury.nucleus.utils.MercuryException;
 
 public class Material {
 	
@@ -25,6 +28,10 @@ public class Material {
 	 * The prefab uniforms needed by the material, set during material-file reading.
 	 */
 	private final List<String> prefabUniforms = new ArrayList<>();
+	/**
+	 * The attributes used to pass vertex data through the shader.
+	 */
+	private final List<VertexAttribute> attributes = new ArrayList<>();
 	/**
 	 * The set of the shader sources for the material.
 	 */
@@ -49,11 +56,11 @@ public class Material {
 	 * In order for the material to be correctly used, {@link #addShaderSource(ShaderSource) add}
 	 * {@link ShaderSource} to it.
 	 * 
-	 * @param name 		  The name of the material.
+	 * @param name 		  The name of the material (not null).
 	 * @param description The description of the material.
 	 */
 	public Material(String name, String description) {
-		Validator.nonNull(name);
+		Validator.nonNull(name, "The material's name can't be null!");
 		
 		this.name = name;
 		this.description = description;
@@ -61,7 +68,43 @@ public class Material {
 	
 	public void setupUniforms(ShaderProgram program) {
 		if(texture != null) {
+			program.use();
 			program.register(texture);
+			texture.upload();
+			texture.bindToUnit(0);
+		}
+	}
+	
+	/**
+	 * Prepare and binds the {@link VertexAttribute} of the <code>Material</code> to the {@link VertexBuffer}
+	 * defined in the {@link Mesh} of the provided {@link PhysicaMundi}.
+	 * <p>
+	 * The method will only setup the attributes if one of the VBO is dirty.
+	 * 
+	 * @param physica The physica-mundi to bind attributes to.
+	 */
+	public void bindAttributes(PhysicaMundi physica) {
+		var mesh = physica.getMesh();
+		
+		// If one of the buffer is dirty re-bind all the attributes.
+		if(mesh.isDirty()) {
+			
+			// Upload the VAO and VBOs of the mesh.
+			mesh.upload();
+			
+			for(var attrib : attributes) {
+				
+				var type = attrib.getBufferType();
+				var key = (type != null && !type.isEmpty()) ? type : attrib.getName();
+				var buffer = mesh.getBuffer(key);
+				
+				if(buffer == null) {
+					throw new MercuryException("No VertexBuffer setup in " + 
+							physica + " for attribute '" + key + "'!");
+				}
+				
+				attrib.bindAttribute(buffer);
+			}
 		}
 	}
 	
@@ -102,6 +145,15 @@ public class Material {
 		return prefabUniforms;
 	}
 	
+	public List<VertexAttribute> getAttributes() {
+		return attributes;
+	}
+	
+	public void addAttribute(VertexAttribute attribute) {
+		Validator.nonNull(attribute, "The vertex attribute can't be null!");
+		this.attributes.add(attribute);
+	}
+	
 	public String getName() {
 		return name;
 	}
@@ -121,6 +173,21 @@ public class Material {
 		if(texture != null) {
 			texture.cleanup();
 		}
+	}
+	
+	public Material copy(Texture texture) {
+		Material copy = new Material(name, description);
+		copy.prefabUniforms.addAll(prefabUniforms);
+		copy.shaders.putAll(shaders);
+		copy.attributes.addAll(attributes);
+		
+		copy.texture = texture;
+		
+		return copy;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
 	}
 	
 	@Override

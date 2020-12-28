@@ -1,8 +1,10 @@
 package fr.mercury.nucleus.input;
 
 import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.application.AbstractApplicationService;
+import fr.mercury.nucleus.utils.ReadableTimer;
 
-public class BaseInputProcessor implements InputProcessor {
+public class BaseInputProcessor extends AbstractApplicationService implements InputProcessor {
 
 	/**
 	 * The mouse input used by the processor.
@@ -24,11 +26,13 @@ public class BaseInputProcessor implements InputProcessor {
 		this.keyInput.setProcessor(this);
 	}
 	
-	public void update() {
+	@Override
+	public void update(ReadableTimer timer) {
+		super.update(timer);
 		
 		// Dispatch the pending mouse events. 
 		mouseInput.dispatch();
-		
+				
 		// Dispatch the pending key events.
 		keyInput.dispatch();
 	}
@@ -51,8 +55,14 @@ public class BaseInputProcessor implements InputProcessor {
 	/**
 	 * Destroy the <code>BaseInputProcessor</code>.
 	 */
-	public void destroy() {
+	@Override
+	public void cleanup() {
+		super.cleanup();
+		
 		mouseInput.destroy();
 		mouseInput.setProcessor(null);
+		
+		keyInput.destroy();
+		keyInput.setProcessor(null);
 	}
 }

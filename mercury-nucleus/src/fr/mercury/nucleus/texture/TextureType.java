@@ -1,9 +1,9 @@
 package fr.mercury.nucleus.texture;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL32.GL_TEXTURE_2D_MULTISAMPLE;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_3D;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
+import static org.lwjgl.opengl.GL32.GL_TEXTURE_2D_MULTISAMPLE;
 
 /**
  * <code>TextureType</code> represents the nature of a <code>Texture</code>, followed

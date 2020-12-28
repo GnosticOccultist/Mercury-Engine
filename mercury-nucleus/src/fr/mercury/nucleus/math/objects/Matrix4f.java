@@ -1,31 +1,38 @@
 package fr.mercury.nucleus.math.objects;
 
+import java.nio.Buffer;
+import java.nio.BufferOverflowException;
 import java.nio.FloatBuffer;
 
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.pool.Reusable;
+import fr.alchemy.utilities.collections.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
+import fr.mercury.nucleus.math.readable.ReadableMatrix4f;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Camera.GraphicalProjectionMode;
 
 /**
- * <code>Matrix4f</code> defines a 4x4 matrix, which is mainly used to store
- * translation or rotational informations. The matrix can therefore be create 
- * from multiple ways and transformed into multiple mathematical object or buffer.
+ * <code>Matrix4f</code> defines a 4x4 matrix, which is mainly used to store translation or rotational informations. The matrix can therefore 
+ * be create from multiple ways and transformed into multiple mathematical object or {@link Buffer}.
  * The storage pattern is the following:
  * <pre> 
- * For example m13 is the zeroth row and third column corresponding to 
- * the "y" translation vector part. The storage is then in column major.
+ * | Lx | Mx | Nx | 0 |
+ * | Ly | My | Ny | 0 |
+ * | Lz | Mz | Nz | 0 |
+ * | Tx | Ty | Tz | 1 |
  * </pre>
+ * <p>
+ * For example, the translation component is stored in the 30, 31 and 32 slots, whereas rotation along the X, Y and Z axis is stored respectly
+ * in 00, 10, 20; 01, 11, 21 and 02, 12, 22. The 33th component is called the homogeneous coordinate.
  * 
  * @author GnosticOccultist
  */
-public final class Matrix4f implements Reusable {
+public final class Matrix4f implements ReadableMatrix4f, Reusable {
 	
 	/**
-	 * The <code>Matrix4f</code> identity &rarr; {@link #identity()}
+	 * The <code>Matrix4f</code> identity &rarr; {@link #identity()}.
 	 */
-	public static final Matrix4f IDENTITY_MATRIX = new Matrix4f();
+	public static final ReadableMatrix4f IDENTITY_MATRIX = new Matrix4f();
 	
     public float m00, m01, m02, m03;
     public float m10, m11, m12, m13;
@@ -46,7 +53,7 @@ public final class Matrix4f implements Reusable {
 	 * 
 	 * @param other The other matrix to get the components.
 	 */
-    public Matrix4f(Matrix4f other) {
+    public Matrix4f(ReadableMatrix4f other) {
 		set(other);
 	}
 
@@ -58,13 +65,46 @@ public final class Matrix4f implements Reusable {
 	 * 
 	 * @param other The other matrix to copy from.
 	 */
-	public Matrix4f set(Matrix4f other) {
+	public Matrix4f set(ReadableMatrix4f other) {
 		Validator.nonNull(other, "The matrix cannot be null!");
 		
-		m00 = other.m00; m01 = other.m01; m02 = other.m02; m03 = other.m03;
-		m10 = other.m10; m11 = other.m11; m12 = other.m12; m13 = other.m13;
-		m20 = other.m20; m21 = other.m21; m22 = other.m22; m23 = other.m23;
-		m30 = other.m30; m31 = other.m31; m32 = other.m32; m33 = other.m33;
+		m00 = other.m00(); m01 = other.m01(); m02 = other.m02(); m03 = other.m03();
+		m10 = other.m10(); m11 = other.m11(); m12 = other.m12(); m13 = other.m13();
+		m20 = other.m20(); m21 = other.m21(); m22 = other.m22(); m23 = other.m23();
+		m30 = other.m30(); m31 = other.m31(); m32 = other.m32(); m33 = other.m33();
+		
+		return this;
+	}
+	
+	/**
+	 * Set the components values of the provided matrix to this 
+	 * <code>Matrix4f</code> components.
+	 * <p>
+	 * The provided matrix cannot be null.
+	 * 
+	 * @param other The other matrix to copy from.
+	 */
+	public Matrix4f set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, 
+			float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33) {
+		this.m00 = m00;
+		this.m01 = m01;
+		this.m02 = m02;
+		this.m03 = m03;
+		
+		this.m10 = m10;
+		this.m11 = m11;
+		this.m12 = m12;
+		this.m13 = m13;
+		
+		this.m20 = m20;
+		this.m21 = m21;
+		this.m22 = m22;
+		this.m23 = m23;
+		
+		this.m30 = m30;
+		this.m31 = m31;
+		this.m32 = m32;
+		this.m33 = m33;
 		
 		return this;
 	}
@@ -213,7 +253,7 @@ public final class Matrix4f implements Reusable {
 		m22 = -(far + near) / (far - near);
 		m23 = -1.0F;
 		m32 = -(2.0F * far * near) / (far - near);
-		m33 = -0.0F;
+		m33 = 0.0F;
 	}
 	
 	/**
@@ -239,21 +279,85 @@ public final class Matrix4f implements Reusable {
         m31 = -((top + bottom) / (top - bottom));
         m32 = -((far + near) / (far - near));
 	}
-
+	
 	/**
-	 * Fill the provided {@link FloatBuffer} with the <code>Matrix4f</code> values.
-	 * It can be ordered in column major order or row major ordered.
+	 * Populates the given {@link FloatBuffer} with the data from the <code>Matrix4f</code> in column 
+	 * major order.
+	 * <p>
+	 * The method is using relative put method, meaning the float data is written at the current 
+	 * buffer's position and the position is incremented by 16.
+	 * <p>
+	 * The populated buffer can be used safely to transfer data to shaders as mat4 uniforms.
 	 * 
-	 * @param fb		  The float buffer to fill with the matrix (space left &ge;16).
-	 * @param columnMajor Whether to fill in column major order or in row major order.
-	 * @return			  The filled float buffer.
+	 * @param store The buffer to populate with the data (not null). 
+	 * @return 		The given store populated with the matrix data.
+	 * 
+	 * @throws BufferOverflowException Thrown if there isn't enough space to write all 16 floats.
+	 * 
+	 * @see #populate(FloatBuffer, boolean)
 	 */
-	public FloatBuffer fillFloatBuffer(FloatBuffer fb, boolean columnMajor) {
-		float[] matrix = new float[16];
-		fillFloatArray(matrix, columnMajor);
-		fb.put(matrix, 0, 16);
+	@Override
+	public FloatBuffer populate(FloatBuffer store) {
+		Validator.nonNull(store, "The float buffer can't be null!");
+		return populate(store, false);
+	}
+	
+	/**
+	 * Populates the given {@link FloatBuffer} with the data from the <code>Matrix4f</code>.
+	 * <p>
+	 * The method is using relative put method, meaning the float data is written at the current 
+	 * buffer's position and the position is incremented by 16.
+	 * <p>
+	 * The populated buffer can be used safely to transfer data to shaders as mat4 uniforms.
+	 * 
+	 * @param store 	  The buffer to populate with the data (not null). 
+	 * @param columnMajor Whether to write the data in column or row major order.
+	 * @return 			  The given store populated with the matrix data.
+	 * 
+	 * @throws BufferOverflowException Thrown if there isn't enough space to write all 16 floats.
+	 * 
+	 * @see #populate(FloatBuffer)
+	 */
+	public FloatBuffer populate(FloatBuffer store, boolean columnMajor) {
+		Validator.nonNull(store, "The float buffer can't be null!");
 		
-		return fb;
+		if(columnMajor) {
+			store.put(m00);
+			store.put(m10);
+			store.put(m20);
+			store.put(m30);
+			store.put(m01);
+			store.put(m11);
+			store.put(m21);
+			store.put(m31);
+			store.put(m02);
+			store.put(m12);
+			store.put(m22);
+			store.put(m32);
+			store.put(m03);
+			store.put(m13);
+			store.put(m23);
+			store.put(m33);
+		} else {
+			store.put(m00);
+			store.put(m01);
+			store.put(m02);
+			store.put(m03);
+			store.put(m10);
+			store.put(m11);
+			store.put(m12);
+			store.put(m13);
+			store.put(m20);
+			store.put(m21);
+			store.put(m22);
+			store.put(m23);
+			store.put(m30);
+			store.put(m31);
+			store.put(m32);
+			store.put(m33);
+		}
+		
+		return store;
 	}
 
 	/**
@@ -369,7 +473,7 @@ public final class Matrix4f implements Reusable {
 	 * @param store The matrix to store the result.
 	 * @return		The resulting matrix.
 	 */
-    public Matrix4f mult(Matrix4f in2, Matrix4f store) {
+    public Matrix4f mult(ReadableMatrix4f other, Matrix4f store) {
         if (store == null) {
             store = new Matrix4f();
         }
@@ -379,73 +483,73 @@ public final class Matrix4f implements Reusable {
         float temp20, temp21, temp22, temp23;
         float temp30, temp31, temp32, temp33;
 
-        temp00 = m00 * in2.m00
-                 + m01 * in2.m10
-                 + m02 * in2.m20
-                 + m03 * in2.m30;
-        temp01 = m00 * in2.m01
-                 + m01 * in2.m11
-                 + m02 * in2.m21
-                 + m03 * in2.m31;
-        temp02 = m00 * in2.m02
-                 + m01 * in2.m12
-                 + m02 * in2.m22
-                 + m03 * in2.m32;
-        temp03 = m00 * in2.m03
-                 + m01 * in2.m13
-                 + m02 * in2.m23
-                 + m03 * in2.m33;
+        temp00 = m00 * other.m00()
+                 + m01 * other.m10()
+                 + m02 * other.m20()
+                 + m03 * other.m30();
+        temp01 = m00 * other.m01()
+                 + m01 * other.m11()
+                 + m02 * other.m21()
+                 + m03 * other.m31();
+        temp02 = m00 * other.m02()
+                 + m01 * other.m12()
+                 + m02 * other.m22()
+                 + m03 * other.m32();
+        temp03 = m00 * other.m03()
+                 + m01 * other.m13()
+                 + m02 * other.m23()
+                 + m03 * other.m33();
 
-        temp10 = m10 * in2.m00
-                 + m11 * in2.m10
-                 + m12 * in2.m20
-                 + m13 * in2.m30;
-        temp11 = m10 * in2.m01
-                 + m11 * in2.m11
-                 + m12 * in2.m21
-                 + m13 * in2.m31;
-        temp12 = m10 * in2.m02
-                 + m11 * in2.m12
-                 + m12 * in2.m22
-                 + m13 * in2.m32;
-        temp13 = m10 * in2.m03
-                 + m11 * in2.m13
-                 + m12 * in2.m23
-                 + m13 * in2.m33;
+        temp10 = m10 * other.m00()
+                 + m11 * other.m10()
+                 + m12 * other.m20()
+                 + m13 * other.m30();
+        temp11 = m10 * other.m01()
+                 + m11 * other.m11()
+                 + m12 * other.m21()
+                 + m13 * other.m31();
+        temp12 = m10 * other.m02()
+                 + m11 * other.m12()
+                 + m12 * other.m22()
+                 + m13 * other.m32();
+        temp13 = m10 * other.m03()
+                 + m11 * other.m13()
+                 + m12 * other.m23()
+                 + m13 * other.m33();
 
-        temp20 = m20 * in2.m00
-                 + m21 * in2.m10
-                 + m22 * in2.m20
-                 + m23 * in2.m30;
-        temp21 = m20 * in2.m01
-                 + m21 * in2.m11
-                 + m22 * in2.m21
-                 + m23 * in2.m31;
-        temp22 = m20 * in2.m02
-                 + m21 * in2.m12
-                 + m22 * in2.m22
-                 + m23 * in2.m32;
-        temp23 = m20 * in2.m03
-                 + m21 * in2.m13
-                 + m22 * in2.m23
-                 + m23 * in2.m33;
+        temp20 = m20 * other.m00()
+                 + m21 * other.m10()
+                 + m22 * other.m20()
+                 + m23 * other.m30();
+        temp21 = m20 * other.m01()
+                 + m21 * other.m11()
+                 + m22 * other.m21()
+                 + m23 * other.m31();
+        temp22 = m20 * other.m02()
+                 + m21 * other.m12()
+                 + m22 * other.m22()
+                 + m23 * other.m32();
+        temp23 = m20 * other.m03()
+                 + m21 * other.m13()
+                 + m22 * other.m23()
+                 + m23 * other.m33();
 
-        temp30 = m30 * in2.m00
-                 + m31 * in2.m10
-                 + m32 * in2.m20
-                 + m33 * in2.m30;
-        temp31 = m30 * in2.m01
-                 + m31 * in2.m11
-                 + m32 * in2.m21
-                 + m33 * in2.m31;
-        temp32 = m30 * in2.m02
-                 + m31 * in2.m12
-                 + m32 * in2.m22
-                 + m33 * in2.m32;
-        temp33 = m30 * in2.m03
-                 + m31 * in2.m13
-                 + m32 * in2.m23
-                 + m33 * in2.m33;
+        temp30 = m30 * other.m00()
+                 + m31 * other.m10()
+                 + m32 * other.m20()
+                 + m33 * other.m30();
+        temp31 = m30 * other.m01()
+                 + m31 * other.m11()
+                 + m32 * other.m21()
+                 + m33 * other.m31();
+        temp32 = m30 * other.m02()
+                 + m31 * other.m12()
+                 + m32 * other.m22()
+                 + m33 * other.m32();
+        temp33 = m30 * other.m03()
+                 + m31 * other.m13()
+                 + m32 * other.m23()
+                 + m33 * other.m33();
 
         store.m00 = temp00;
         store.m01 = temp01;
@@ -579,6 +683,102 @@ public final class Matrix4f implements Reusable {
         return store;
     }
     
+    public Matrix3f toMatrix3f(Matrix3f store) {
+    	var result = store == null ? new Matrix3f() : store;
+    	
+    	result.m00 = m00;
+    	result.m01 = m01;
+    	result.m02 = m02;
+    	result.m10 = m10;
+    	result.m11 = m11;
+    	result.m12 = m12;
+    	result.m20 = m20;
+    	result.m21 = m21;
+    	result.m22 = m22;
+    	
+    	return result;
+    }
+    
+    @Override
+	public float m00() {
+		return m00;
+	}
+
+	@Override
+	public float m01() {
+		return m01;
+	}
+
+	@Override
+	public float m02() {
+		return m02;
+	}
+
+	@Override
+	public float m03() {
+		return m03;
+	}
+
+	@Override
+	public float m10() {
+		return m10;
+	}
+
+	@Override
+	public float m11() {
+		return m11;
+	}
+
+	@Override
+	public float m12() {
+		return m12;
+	}
+
+	@Override
+	public float m13() {
+		return m13;
+	}
+
+	@Override
+	public float m20() {
+		return m20;
+	}
+
+	@Override
+	public float m21() {
+		return m21;
+	}
+
+	@Override
+	public float m22() {
+		return m22;
+	}
+
+	@Override
+	public float m23() {
+		return m23;
+	}
+
+	@Override
+	public float m30() {
+		return m30;
+	}
+
+	@Override
+	public float m31() {
+		return m31;
+	}
+
+	@Override
+	public float m32() {
+		return m32;
+	}
+
+	@Override
+	public float m33() {
+		return m33;
+	}
+    
     /**
    	 * Sets all the components of the <code>Matrix4f</code> to the {@link #identity()},
    	 * before retrieving it from a pool.
@@ -604,63 +804,110 @@ public final class Matrix4f implements Reusable {
             return true;
         }
         
-        if (!(o instanceof Matrix4f)) {
+        if (!(o instanceof ReadableMatrix4f)) {
             return false;
         }
 
-        Matrix4f comp = (Matrix4f) o;
-        if (Float.compare(m00, comp.m00) != 0) {
+        var comp = (ReadableMatrix4f) o;
+        if (Float.compare(m00, comp.m00()) != 0) {
             return false;
         }
-        if (Float.compare(m01, comp.m01) != 0) {
+        if (Float.compare(m01, comp.m01()) != 0) {
             return false;
         }
-        if (Float.compare(m02, comp.m02) != 0) {
+        if (Float.compare(m02, comp.m02()) != 0) {
             return false;
         }
-        if (Float.compare(m03, comp.m03) != 0) {
-            return false;
-        }
-
-        if (Float.compare(m10, comp.m10) != 0) {
-            return false;
-        }
-        if (Float.compare(m11, comp.m11) != 0) {
-            return false;
-        }
-        if (Float.compare(m12, comp.m12) != 0) {
-            return false;
-        }
-        if (Float.compare(m13, comp.m13) != 0) {
+        if (Float.compare(m03, comp.m03()) != 0) {
             return false;
         }
 
-        if (Float.compare(m20, comp.m20) != 0) {
+        if (Float.compare(m10, comp.m10()) != 0) {
             return false;
         }
-        if (Float.compare(m21, comp.m21) != 0) {
+        if (Float.compare(m11, comp.m11()) != 0) {
             return false;
         }
-        if (Float.compare(m22, comp.m22) != 0) {
+        if (Float.compare(m12, comp.m12()) != 0) {
             return false;
         }
-        if (Float.compare(m23, comp.m23) != 0) {
+        if (Float.compare(m13, comp.m13()) != 0) {
             return false;
         }
 
-        if (Float.compare(m30, comp.m30) != 0) {
+        if (Float.compare(m20, comp.m20()) != 0) {
             return false;
         }
-        if (Float.compare(m31, comp.m31) != 0) {
+        if (Float.compare(m21, comp.m21()) != 0) {
             return false;
         }
-        if (Float.compare(m32, comp.m32) != 0) {
+        if (Float.compare(m22, comp.m22()) != 0) {
             return false;
         }
-        if (Float.compare(m33, comp.m33) != 0) {
+        if (Float.compare(m23, comp.m23()) != 0) {
+            return false;
+        }
+
+        if (Float.compare(m30, comp.m30()) != 0) {
+            return false;
+        }
+        if (Float.compare(m31, comp.m31()) != 0) {
+            return false;
+        }
+        if (Float.compare(m32, comp.m32()) != 0) {
+            return false;
+        }
+        if (Float.compare(m33, comp.m33()) != 0) {
             return false;
         }
 
         return true;
     }
+    
+    @Override
+	public String toString() {
+		var result = new StringBuffer(getClass().getSimpleName() + "\n[\n");
+	    result.append(' ');
+	    result.append(m00);
+	    result.append(' ');
+	    result.append(m01);
+	    result.append(' ');
+	    result.append(m02);
+	    result.append(' ');
+	    result.append(m03);
+	    result.append(" \n");
+
+	    result.append(' ');
+	    result.append(m10);
+	    result.append(' ');
+	    result.append(m11);
+	    result.append(' ');
+	    result.append(m12);
+	    result.append(' ');
+	    result.append(m13);
+	    result.append(" \n");
+
+	    result.append(' ');
+	    result.append(m20);
+	    result.append(' ');
+	    result.append(m21);
+	    result.append(' ');
+	    result.append(m22);
+	    result.append(' ');
+	    result.append(m23);
+	    result.append(" \n");
+	    
+	    result.append(' ');
+	    result.append(m30);
+	    result.append(' ');
+	    result.append(m31);
+	    result.append(' ');
+	    result.append(m32);
+	    result.append(' ');
+	    result.append(m33);
+	    result.append(" \n");
+
+	    result.append(']');
+	    return result.toString();
+	}
 }

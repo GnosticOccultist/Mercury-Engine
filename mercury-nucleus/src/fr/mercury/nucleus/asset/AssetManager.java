@@ -9,10 +9,12 @@ import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
+import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.Image;
@@ -27,7 +29,7 @@ import fr.mercury.nucleus.utils.MercuryException;
  * 
  * @author GnosticOccultist
  */
-public class AssetManager {
+public class AssetManager extends AbstractApplicationService {
 	
 	/**
 	 * The logger of the asset manager.
@@ -59,10 +61,26 @@ public class AssetManager {
 		throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
 	}
 	
+	public AnimaMundi loadAssimp(String path, int configFlags) {
+		var loader = new AssimpLoader();
+		loader.registerAssetManager(this);
+		return loader.load(path, configFlags);
+	}
+	
 	public Material[] loadMaterial(String path) {
 		AssetLoader<Material[]> loader = acquireLoader(path);
 		if(loader != null) {
 			return loader.load(path);
+		}
+		
+		throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
+	}
+	
+	public Image loadImage(String path) {
+		AssetLoader<Image> loader = acquireLoader(path);
+		if(loader != null) {
+			Image image = loader.load(path);
+			return image;
 		}
 		
 		throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");

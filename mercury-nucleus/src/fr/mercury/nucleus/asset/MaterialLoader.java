@@ -11,10 +11,12 @@ import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.file.json.AlchemyJSON;
 import fr.alchemy.utilities.file.json.JSONArray;
 import fr.alchemy.utilities.file.json.JSONObject;
+import fr.alchemy.utilities.file.json.JSONValue;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexAttribute;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.utils.MercuryException;
 
@@ -82,6 +84,9 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 			
 			// Load the possibly declared uniforms.
 			loadUniforms(mat, matObj);
+			
+			// Load the attributes used in the shaders.
+			loadAttributes(mat, matObj);
 			
 			logger.info("Successfully loaded material '" + name + "' !");
 			materials[i] = mat;
@@ -161,6 +166,40 @@ public class MaterialLoader implements AssetLoader<Material[]> {
 			for(int i = 0; i < prefabs.size(); i++) {
 				mat.getPrefabUniforms().add(prefabs.get(i).asString());
 			}
+		}
+	}
+	
+	/**
+	 * Loads the declared attributes, from the provided material {@link JSONObject} and
+	 * add them to the given {@link Material}.
+	 * 
+	 * @param mat	 The material to add the attributes to.
+	 * @param matObj The material JSON object that contains the attributes.
+	 */
+	private void loadAttributes(Material mat, JSONObject matObj) throws IOException {
+		// Try accessing the attributes or throw an exception.
+		var attributes = matObj.getOptional("attributes").orElseThrow(IOException::new).asArray();
+		
+		for(int i = 0; i < attributes.size(); i++) {
+			var attribObj = attributes.get(i).asObject();
+			
+			// Retrieve the name used by the attribute in the shader.
+			var name = attribObj.get("name").asString();
+			// Retrieve also the location of the attribute, if declared.
+			var location = attribObj.getOptional("location").map(JSONValue::asInt).orElse(-1);
+			// Retrieve also the location of the attribute, if declared.
+			var bufferType = attribObj.getOptional("bufferType").map(JSONValue::asString).orElse(null);
+			// Retrieve also the stride of the attribute, if declared.
+			var stride = attribObj.getOptional("stride").map(JSONValue::asInt).orElse(0);
+			// Retrieve also the offset of the attribute, if declared.
+			var offset = attribObj.getOptional("offset").map(JSONValue::asInt).orElse(0);
+			// Retrieve also the divisor of the attribute, if declared.
+			var divisor = attribObj.getOptional("divisor").map(JSONValue::asInt).orElse(0);
+			// Retrieve also the span of the attribute, if declared.
+			var span = attribObj.getOptional("span").map(JSONValue::asInt).orElse(1);
+			
+			var attrib = new VertexAttribute(name, bufferType, location, stride, offset, divisor, span);
+			mat.addAttribute(attrib);
 		}
 	}
 

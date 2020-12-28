@@ -17,8 +17,8 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
-import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformField;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
+import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformField;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
@@ -306,7 +306,12 @@ public final class ShaderProgram extends GLObject {
 	}
 	
 	@Override
+	@OpenGLCall
 	public void cleanup() {
+		if(CURRENT == this) {
+			CURRENT = null;
+		}
+		
 		uniforms.values().forEach(Uniform::cleanup);
 		uniforms.clear();
 		for(int i = 0; i < sources.size(); i++) {
@@ -315,7 +320,21 @@ public final class ShaderProgram extends GLObject {
 			source.cleanup();
 		}
 		sources.clear();
+		
 		super.cleanup();
+	}
+	
+	@Override
+	protected void restart() {
+		this.needsUpdate = true;
+		
+		super.restart();
+	}
+	
+	@Override
+	@OpenGLCall
+	public Runnable onDestroy(int id) {
+		return () -> GL20.glDeleteProgram(id);
 	}
 	
 	@Override

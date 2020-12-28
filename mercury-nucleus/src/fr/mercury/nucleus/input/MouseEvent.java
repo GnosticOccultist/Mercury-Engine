@@ -1,7 +1,11 @@
 package fr.mercury.nucleus.input;
 
-import static fr.mercury.nucleus.input.Input.Modifiers.*;
-import static fr.mercury.nucleus.input.Input.Buttons.*;
+import static fr.mercury.nucleus.input.Input.Buttons.BUTTON_UNDEFINED;
+import static fr.mercury.nucleus.input.Input.Modifiers.ALT_DOWN;
+import static fr.mercury.nucleus.input.Input.Modifiers.CONTROL_DOWN;
+import static fr.mercury.nucleus.input.Input.Modifiers.SHIFT_DOWN;
+import static fr.mercury.nucleus.input.Input.Modifiers.hasModifiers;
+
 import fr.alchemy.utilities.event.EventType;
 
 /**
@@ -27,6 +31,12 @@ public class MouseEvent extends InputEvent implements Input {
 	 */
 	public static final EventType<MouseEvent> MOUSE_RELEASED = 
 			EventType.create("MOUSE_RELEASED", MouseEvent.class);
+	/**
+	 * The event type returned whenever a mouse is dragged meaning mouse 
+	 * is moving while the left-button is pressed.
+	 */
+	public static final EventType<MouseEvent> MOUSE_DRAGGED = 
+			EventType.create("MOUSE_DRAGGED", MouseEvent.class);
 	/**
 	 * The event type returned whenever a mouse button is being clicked 
 	 * (pressed and released in a small time interval). 

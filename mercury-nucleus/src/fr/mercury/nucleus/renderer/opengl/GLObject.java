@@ -4,11 +4,14 @@ import java.util.function.Consumer;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.alchemy.utilities.logging.LoggerLevel;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexArray;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
+import fr.mercury.nucleus.utils.gc.NativeObject;
+import fr.mercury.nucleus.utils.gc.NativeObjectCleaner;
 
 /**
  * <code>GLObject</code> represents an abstraction layer for every OpenGL objects 
@@ -18,17 +21,21 @@ import fr.mercury.nucleus.utils.OpenGLCall;
  * a common point to every <code>GLObjects</code>, it just defines the function 
  * to create and destroy the object.
  * <p>
- * Once every parameters for an object are set and you want to use it, you can simply
- * call {@link #upload()} to send the data to the GPU.
+ * Once every parameters for an object are set and you want to use it, you can simply call {@link #upload()} 
+ * to send the data to the GPU. The renderer will also lazily upload the data to the GPU when it does need it.
  * 
  * @author GnosticOccultist
  */
-public abstract class GLObject implements Comparable<GLObject> {
+public abstract class GLObject extends NativeObject implements Comparable<GLObject> {
 	
 	/**
 	 * The logger of the OpenGL context.
 	 */
 	protected static final Logger logger = FactoryLogger.getLogger("mercury.opengl");
+	
+	static {
+		logger.setActive(LoggerLevel.DEBUG, true);
+	}
 	
 	/*
 	 * The invalid ID for an object, usually if the object
@@ -49,15 +56,20 @@ public abstract class GLObject implements Comparable<GLObject> {
 	protected abstract void upload();
 	
 	/**
-	 * Create the object by assigning it an ID using the
+	 * Create the <code>GLObject</code> by assigning it the ID of a native reference using the 
 	 * OpenGL context.
 	 * <p>
-	 * Should be leaved untouched, use {@link #acquireID()} to return 
-	 * the appropriate ID from the OpenGL context.
+	 * Should be leaved untouched, use {@link #acquireID()} to return the appropriate 
+	 * ID from the OpenGL context.
+	 * <p>
+	 * The method is also registering the object to the {@link NativeObjectCleaner} to be later
+	 * destroyed when no longer needed.
 	 */
 	@OpenGLCall
-	protected void create() {
-		if(id == INVALID_ID) {
+	protected boolean create() {
+		var newNative = id == INVALID_ID;
+		
+		if(newNative) {
 			var id = acquireID();
 			if(id == 0) {
 				throw new GLException("Failed to create " + 
@@ -65,7 +77,10 @@ public abstract class GLObject implements Comparable<GLObject> {
 			}
 			
 			setID(id);
+			onAssigned(id);
 		}
+		
+		return newNative;
 	}
 	
 	/**
@@ -83,17 +98,28 @@ public abstract class GLObject implements Comparable<GLObject> {
 	 * Should be leaved untouched, use {@link #deleteAction()} to return 
 	 * the appropriate action for destroying the object from the OpenGL context.
 	 */
+	@Override
 	@OpenGLCall
 	public void cleanup() {
-		if(getID() == INVALID_ID) {
+		if(id == INVALID_ID) {
 			logger.error(getClass().getSimpleName() + 
 					" not yet uploaded to GPU, cannot delete.");
 			return;
 		}
 		
-		deleteAction().accept(getID());
+		deleteAction().accept(id);
 		
-		setID(-1);
+		logger.debug("Cleanup " + this + ".");
+		
+		setID(INVALID_ID);
+	}
+	
+	@Override
+	@OpenGLCall
+	protected void restart() {
+		super.restart();
+		
+		create();
 	}
 	
 	/**
@@ -114,12 +140,12 @@ public abstract class GLObject implements Comparable<GLObject> {
 	}
 	
 	/**
-	 * Set the ID of the object, usually assigned by the OpenGL contex
+	 * Set the ID of the object, usually assigned by the OpenGL context
 	 * so you won't need to call this method.
 	 * 
 	 * @param id The object's ID.
 	 */
-	public void setID(int id) {
+	protected void setID(int id) {
 		this.id = id;
 	}
 	
@@ -139,7 +165,7 @@ public abstract class GLObject implements Comparable<GLObject> {
 			return true;
 		}
 		
-		if(getClass().equals(obj.getClass())) {
+		if(obj != null && getClass().equals(obj.getClass())) {
 			return compareTo((GLObject) obj) == 0;
 		}
 		

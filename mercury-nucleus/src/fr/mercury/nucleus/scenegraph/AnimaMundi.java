@@ -2,12 +2,15 @@ package fr.mercury.nucleus.scenegraph;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Stack;
 
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.array.Array;
-import fr.alchemy.utilities.array.ReadOnlyArray;
+import fr.alchemy.utilities.collections.array.Array;
+import fr.alchemy.utilities.collections.array.ReadOnlyArray;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Matrix3f;
@@ -29,7 +32,7 @@ import fr.mercury.nucleus.scenegraph.visitor.AbstractVisitor;
 import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
 import fr.mercury.nucleus.scenegraph.visitor.Visitor;
-import fr.mercury.nucleus.utils.Timer;
+import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
  * <code>AnimaMundi</code> is an abstraction layer for the <code>Tree-Data-Structure</code> representing 
@@ -50,6 +53,8 @@ import fr.mercury.nucleus.utils.Timer;
  * @author GnosticOccultist
  */
 public abstract class AnimaMundi {
+	
+	private static final Map<RenderState.Type, Stack<RenderState>> states = new HashMap<>();
 	
 	/**
 	 * The logger for the scene-graph.
@@ -74,7 +79,8 @@ public abstract class AnimaMundi {
 		
 		@Override
 		public void onVisit(AnimaMundi anima) {
-			
+			anima.collectState(states);
+			anima.applyState(states);
 		}
 	};
 	
@@ -153,7 +159,7 @@ public abstract class AnimaMundi {
 	 * 
 	 * @param timer The timer used by the application (not null).
 	 */
-	public void updateGeometricState(Timer timer) {
+	public void updateGeometricState(ReadableTimer timer) {
 		
 		if(dirtyMarks.isEmpty()) {
 			updateChildren(timer);
@@ -168,7 +174,6 @@ public abstract class AnimaMundi {
 			
 			updateChildren(timer);
 		}
-			
 	}
 	
 	/**
@@ -177,7 +182,7 @@ public abstract class AnimaMundi {
 	 * 
 	 * @param timer The timer used by the application (not null).
 	 */
-	protected void updateChildren(Timer timer) {}
+	protected void updateChildren(ReadableTimer timer) {}
 	
 	/**
 	 * Update the world {@link Transform} by combining the local transform
@@ -199,10 +204,6 @@ public abstract class AnimaMundi {
         }
         
         dirtyMarks.remove(DirtyType.TRANSFORM);
-	}
-	
-	protected void collectRenderStates() {
-		
 	}
 	
 	/**
@@ -240,8 +241,14 @@ public abstract class AnimaMundi {
 		}
 	}
 	
-	
+	/**
+	 * Propagates the {@link DirtyType} down the scenegraph starting from the <code>AnimaMundi</code>.
+	 * If an implementation of this class handles children, it must propagate the dirty marks to its descendants.
+	 * 
+	 * @param type The dirty type to propagate down the scenegraph (not null).
+	 */
 	protected void propagateDown(DirtyType type) {
+		Validator.nonNull(type, "The dirty type can't be null!");
 		dirtyMarks.add(type);
 	}
 	
@@ -273,6 +280,21 @@ public abstract class AnimaMundi {
 		}
 		
 		return worldTransform;
+	}
+	
+	/**
+	 * Sets the transform of this <code>AnimaMundi</code> to the provided {@link Transform} in  the local 
+	 * coordinate space. Note that the {@link #getWorldTransform() world transform} won't 
+	 * be updated until {@link #updateGeometricState()} has been called.
+	 * 
+	 * @param transform The local transform to apply to the anima-mundi (not null).
+	 * @return			The changed anima-mundi.
+	 */
+	public AnimaMundi setTransform(ReadableTransform transform) {
+		localTransform.set(transform);
+		dirty(DirtyType.TRANSFORM);
+		
+		return this;
 	}
 	
 	/**
@@ -774,15 +796,65 @@ public abstract class AnimaMundi {
 	}
 	
 	/**
+	 * Set the {@link RenderState} to use locally for the <code>AnimaMundi</code>.
+	 * 
+	 * @param states The render states to apply locally to the anima-mundi.
+	 */
+	public void setRenderStates(RenderState... states) {
+		for(RenderState state : states) {
+			renderStates.put(state.type(), state);
+		}
+		
+		dirty(DirtyType.RENDER_STATE);
+	}
+	
+	/**
 	 * Set the {@link RenderState} to use locally for the <code>AnimaMundi</code>, and return the 
 	 * previously applied one if any.
 	 * 
-	 * @param state The render state to apply locally.
+	 * @param state The render state to apply locally to the anima-mundi.
 	 * @return		The previously render state applied to the anima-mundi, or null if none.
 	 */
 	public RenderState setRenderState(RenderState state) {
 		var previous = renderStates.put(state.type(), state);
+		dirty(DirtyType.RENDER_STATE);
 		return previous;
+	}
+	
+	/**
+	 * Collects the {@link RenderState} defined in the scenegraph to the given table, to be later applied
+	 * to the <code>AnimaMundi</code>.
+	 * 
+	 * @param states The table to contain the render states (not null).
+	 * 
+	 * @see #applyState(Map)
+	 */
+	protected void collectState(Map<RenderState.Type, Stack<RenderState>> states) {
+		Validator.nonNull(states, "The map to store render states can't be null!");
+		for(var entry : renderStates.entrySet()) {
+			var stack = states.getOrDefault(entry.getKey(), new Stack<RenderState>());
+			stack.push(entry.getValue());
+			states.put(entry.getKey(), stack);
+		}
+	}
+	
+	/**
+	 * Applies all previously collected {@link RenderState} in the scenegraph inside the given table
+	 * to the <code>AnimaMundi</code>.
+	 * 
+	 * @param states The table which contains the render states (not null).
+	 * 
+	 * @see #collectState(Map)
+	 */
+	protected void applyState(Map<RenderState.Type, Stack<RenderState>> states) {
+		Validator.nonNull(states, "The map to apply render states can't be null!");
+		for(var entry : states.entrySet()) {
+			var stack = entry.getValue();
+			if(stack != null) {
+				renderStates.put(entry.getKey(), stack.peek());
+			}
+		}
+		dirtyMarks.remove(DirtyType.RENDER_STATE);
 	}
 	
 	/**
@@ -798,6 +870,6 @@ public abstract class AnimaMundi {
 	
 	@Override
 	public String toString() {
-		return "[" + getClass().getSimpleName() + "]: " + name;
+		return "[" + getClass().getSimpleName() + " {name= " + name + "} ]";
 	}
 }

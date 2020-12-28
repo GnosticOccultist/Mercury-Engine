@@ -117,6 +117,24 @@ public class TextureAtlas extends Texture {
 	}
 	
 	/**
+	 * Creates and return a copy of the <code>TextureAtlas</code>'s implementation. Note that the 
+	 * {@link Image} isn't copied an alias is being created.
+	 * <p>
+	 * To be usable in an OpenGL context, you must call {@link #upload()} to upload 
+	 * it to the GPU.
+	 * 
+	 * @return A copy of the texture, not yet uploaded (not null).
+	 */
+	@Override
+	public TextureAtlas copy() {
+		var copy = new TextureAtlas(numCols, numRows, index);
+		copy.setTextureState(currentState, toApply);
+		copy.setImage(image);
+		
+		return copy;
+	}
+	
+	/**
 	 * Return the {@link TextureType type} of the <code>TextureAtlas</code>:
 	 * {@link TextureType#TEXTURE_2D}.
 	 * 

@@ -3,13 +3,11 @@ package fr.mercury.nucleus.scenegraph;
 import java.nio.Buffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL20C;
 
 import fr.alchemy.utilities.Validator;
-import fr.mercury.nucleus.renderer.opengl.GLBuffer.BufferType;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexArray;
@@ -37,52 +35,68 @@ public class Mesh {
 	/**
 	 * The vertex array which contains the attribute of the buffers.
 	 */
-	private VertexArray vao;
+	public VertexArray vao;
 	/**
 	 * The table of the vertex buffer with its associated type.
 	 */
-	private final Map<VertexBufferType, VertexBuffer> buffers;
+	private final Map<String, VertexBuffer> buffers;
 	/**
 	 * The primitive mode, by default {@link Mode#TRIANGLES}.
 	 */
 	private Mode mode = Mode.TRIANGLES;
+	/**
+	 * The count of instances to draw for the mesh.
+	 */
+	private int instanceCount = 1;
+	/**
+	 * The count of vertices in the mesh.
+	 */
+	private int vertexCount = -1;
 	
 	/**
-	 * Instantiates a new <code>Mesh</code> with no <code>VertexBuffer</code> set.
+	 * Instantiates a new <code>Mesh</code> with no {@link VertexBuffer} set.
 	 * The mode is set by default to {@link Mode#TRIANGLES}.
 	 * <p>
-	 * To setup a buffer for this mesh, use {@link #setupBuffer(VertexBufferType, Usage, float[])}.
+	 * To setup a buffer for this mesh, use {@link #setupBuffer(VertexBufferType, Usage, Buffer)}.
+	 * 
+	 * @see #setupBuffer(VertexBufferType, Usage, Buffer)
+	 * @see #setupIndexBuffer(int[])
 	 */
 	public Mesh() {
 		this.vao = new VertexArray();
 		this.buffers = new HashMap<>();
 	}
 	
-	protected void bind() {
-		vao.upload();
-		
-		buffers.values().forEach(VertexBuffer::upload);
+	/**
+	 * Return whether the <code>Mesh</code> is dirty meaning at least one of its {@link VertexBuffer}
+	 * has unuploaded changes to it.
+	 * 
+	 * @return Wether the mesh is dirty. 
+	 */
+	public boolean isDirty() {
+		return buffers.values().stream()
+				.filter(VertexBuffer::needsUpdate)
+				.findAny().isPresent();
 	}
 	
-	public void bindBeforeRender() {
-		bind();
-		
-		buffers.keySet().forEach(t -> GL20.glEnableVertexAttribArray(t.ordinal()));
+	/**
+	 * Binds the <code>Mesh</code> to be used by the <code>OpenGL</code> context,
+	 * by binding its {@link VertexArray}.
+	 * 
+	 * @see VertexArray#bind()
+	 */
+	public void bind() {
+		vao.bind();
 	}
 	
-	public void unbindAfterRender() {
-		
-		buffers.keySet().forEach(t -> GL20.glDisableVertexAttribArray(t.ordinal()));
-		
-		unbind();
-	}
-	
-	protected void unbind() {
-		
+	/**
+	 * Unbinds the <code>Mesh</code> to be no longer used by the <code>OpenGL</code> 
+	 * context, by unbinding the current {@link VertexArray}.
+	 * 
+	 * @see VertexArray#unbind()
+	 */
+	public void unbind() {
 		VertexArray.unbind();
-		
-		VertexBuffer.unbind(BufferType.VERTEX_DATA);
-		VertexBuffer.unbind(BufferType.VERTEX_INDEXING);
 	}
 	
 	/**
@@ -97,7 +111,7 @@ public class Mesh {
 	 * 
 	 * @param data The array of indices as integer values to store in the buffer.
 	 */
-	public void setupIndexBuffer(int[] data) {
+	public void setupIndexBuffer(Buffer data) {
 		setupBuffer(VertexBufferType.INDEX, Usage.STATIC_DRAW, data);
 	}
 	
@@ -117,11 +131,62 @@ public class Mesh {
 	 * @param data  The buffer containing the vertex data.
 	 */
 	public void setupBuffer(VertexBufferType type, Usage usage, Buffer data) {
-		var vbo = buffers.get(type);
+		setupBuffer(type, usage, data, type == VertexBufferType.POSITION);
+	}
+	
+	/**
+	 * Setup the {@link VertexBuffer} for the specified type and usage and store into
+	 * it the given buffer containing vertex data.
+	 * <p>
+	 * <b>Only one buffer can be set for each {@link VertexBufferType type}</b>, but don't worry this method
+	 * automatically update the stored data for the buffer type if it's already set.
+	 * <p>
+	 * If you want to use the <code>VertexBuffer</code>, you need to upload it to the GPU with the
+	 * OpenGL context using {@link #upload()}. Note that this function will upload all the buffers already
+	 * setup on this <code>Mesh</code>.
+	 * 
+	 * @param type		  The buffer type.
+	 * @param usage 	  The usage for the buffer (how often it will be updated).
+	 * @param data  	  The buffer containing the vertex data.
+	 * @param updateCount Whether to update the count of vertices based on the position or interleaved buffer.
+	 */
+	public void setupBuffer(VertexBufferType type, Usage usage, Buffer data, boolean updateCount) {
+		var key = type.toString();
+		var vbo = buffers.get(key);
 		if(vbo == null) {
-			vbo = new VertexBuffer(type, usage);
+			vbo = new VertexBuffer(type, usage, VertexBufferType.getFormatFromBuffer(data));
 			vbo.storeDataBuffer(data);
-			buffers.put(type, vbo);
+			buffers.put(key, vbo);
+		} else {
+			vbo.storeDataBuffer(data);
+		}
+		
+		if(updateCount) {
+			updateVertexCount();
+		}
+	}
+	
+	/**
+	 * Setup the {@link VertexBuffer} for the specified type and usage and store into
+	 * it the given buffer containing vertex data.
+	 * <p>
+	 * <b>Only one buffer can be set for each {@link VertexBufferType type}</b>, but don't worry this method
+	 * automatically update the stored data for the buffer type if it's already set.
+	 * <p>
+	 * If you want to use the <code>VertexBuffer</code>, you need to upload it to the GPU with the
+	 * OpenGL context using {@link #upload()}. Note that this function will upload all the buffers already
+	 * setup on this <code>Mesh</code>.
+	 * 
+	 * @param size	The size for each vertex data that the buffer will contain.
+	 * @param usage The usage for the buffer (how often it will be updated).
+	 * @param data  The buffer containing the vertex data.
+	 */
+	public void setupBuffer(String key, int size, Usage usage, Buffer data) {
+		var vbo = buffers.get(key);
+		if(vbo == null) {
+			vbo = new VertexBuffer(size, usage, VertexBufferType.getFormatFromBuffer(data));
+			vbo.storeDataBuffer(data);
+			buffers.put(key, vbo);
 		} else {
 			vbo.storeDataBuffer(data);
 		}
@@ -143,13 +208,18 @@ public class Mesh {
 	 * @param data  The array of float values to store in the buffer.
 	 */
 	public void setupBuffer(VertexBufferType type, Usage usage, float[] data) {
-		var vbo = buffers.get(type);
+		var key = type.toString();
+		var vbo = buffers.get(key);
 		if(vbo == null) {
 			vbo = new VertexBuffer(type, usage);
 			vbo.storeData(data);
-			buffers.put(type, vbo);
+			buffers.put(key, vbo);
 		} else {
 			vbo.storeData(data);
+		}
+		
+		if(type == VertexBufferType.POSITION) {
+			updateVertexCount();
 		}
 	}
 	
@@ -169,13 +239,18 @@ public class Mesh {
 	 * @param data  The array of integer values to store in the buffer.
 	 */
 	public void setupBuffer(VertexBufferType type, Usage usage, int[] data) {
-		var vbo = buffers.get(type);
+		var key = type.toString();
+		var vbo = buffers.get(key);
 		if(vbo == null) {
 			vbo = new VertexBuffer(type, usage);
 			vbo.storeData(data);
-			buffers.put(type, vbo);
+			buffers.put(key, vbo);
 		} else {
 			vbo.storeData(data);
+		}
+		
+		if(type == VertexBufferType.POSITION) {
+			updateVertexCount();
 		}
 	}
 	
@@ -193,26 +268,7 @@ public class Mesh {
 	public void upload() {
 		vao.upload();
 		
-		// Sets the vertex attributes and enable it.
-		for(VertexBuffer vertexBuffer : buffers.values()) {
-			
-			vertexBuffer.upload();
-			
-			VertexBufferType type = vertexBuffer.getVertexBufferType();
-			
-			Format format = vertexBuffer.getFormat() == null ? 
-					type.getPreferredFormat() : vertexBuffer.getFormat();
-			// Normalized for floating-point data type isn't possible, disable it.
-			boolean normalized = format.isFloatingPoint() ? false : vertexBuffer.isNormalized();
-			
-			// Creates a vertex attribute pointer for all buffers except for the indices.
-			if(!vertexBuffer.isIndexBuffer()) {
-				// TODO: Attribute class to handle attribs creation and enabling, should I ?
-				
-				GL20C.glVertexAttribPointer(type.ordinal(), type.getSize(), VertexBufferType.getOpenGLFormat(format), 
-						normalized, vertexBuffer.getStride(), vertexBuffer.getOffset());
-			}
-		}
+		buffers.values().forEach(VertexBuffer::upload);
 	}
 	
 	/**
@@ -238,7 +294,15 @@ public class Mesh {
 	 * @return Whether the mesh has an indices buffer setup.
 	 */
 	public boolean hasIndices() {
-		return getBuffer(VertexBufferType.INDEX) != null;
+		return hasBuffer(VertexBufferType.INDEX);
+	}
+	
+	public boolean hasBuffer(VertexBufferType type) {
+		return hasBuffer(type.toString());
+	}
+	
+	public boolean hasBuffer(String key) {
+		return buffers.containsKey(key);
 	}
 	
 	/**
@@ -249,7 +313,28 @@ public class Mesh {
 	 * @return	   The vertex buffer corresponding to the specified type.
 	 */
 	public VertexBuffer getBuffer(VertexBufferType type) {
-		return buffers.get(type);
+		return getBuffer(type.toString());
+	}
+	
+	/**
+	 * Return the {@link VertexBuffer} using the provided key, 
+	 * or null if it isn't present.
+	 * 
+	 * @param type The key of the data.
+	 * @return	   The vertex buffer corresponding to the specified key.
+	 */
+	public VertexBuffer getBuffer(String key) {
+		return buffers.get(key);
+	}
+	
+	/**
+	 * Return the {@link Format} of the index {@link VertexBuffer} of the <code>Mesh</code>, 
+	 * or null if it has no indices buffer defined.
+	 * 
+	 * @return The vertex buffer corresponding to the specified type.
+	 */
+	public Format getIndicesFormat() {
+		return hasIndices() ? getBuffer(VertexBufferType.INDEX).getFormat() : null;
 	}
 	
 	/**
@@ -260,19 +345,35 @@ public class Mesh {
 	 * 
 	 * @return The number of vertices or -1 for undetermined count.
 	 */
-	public int getVertexCount() {
-		
-		var indices = getBuffer(VertexBufferType.INDEX).getData();
-		if(indices != null) {
-			return indices.limit();
+	private void updateVertexCount() {
+		var buffer = getBuffer(VertexBufferType.POSITION);
+		if(buffer == null) {
+			buffer = getBuffer(VertexBufferType.INTERLEAVED);
 		}
 		
-		var vertices = getBuffer(VertexBufferType.POSITION).getData();
+		if(buffer == null) {
+			throw new NoSuchElementException("Can't update vertices count "
+					+ "without position or interleaved buffer!");
+		}
+		
+		var vertices = buffer.getData();
+		var format = buffer.getFormat();
 		if(vertices != null) {
-			return vertices.limit() / VertexBufferType.POSITION.getSize();
+			var result = vertices.limit() / VertexBufferType.POSITION.getSize();
+			if(format == Format.UNSIGNED_BYTE) {
+				result /= VertexBufferType.POSITION.getPreferredFormat().getSizeInByte();
+			}
+			this.vertexCount = result;
 		}
-		
-		return -1;
+	}
+	
+	public int getVertexCount() {
+		return vertexCount;
+	}
+	
+	public int getElementCount() {
+		var result = getBuffer(VertexBufferType.INDEX).getData().limit();
+		return result;
 	}
 	
 	/**
@@ -295,6 +396,31 @@ public class Mesh {
 		Validator.nonNull(mode, "The primitive mode cannot be null!");
 		
 		this.mode = mode;
+	}
+	
+	/**
+	 * Return whether the <code>Mesh</code> is using instanced rendering to be drawn
+	 * multiple times in one draw call.
+	 * 
+	 * @return Whether the mesh is using instanced rendering.
+	 */
+	public boolean isInstanced() {
+		return instanceCount > 1;
+	}
+	
+	/**
+	 * Return the number of instance to drawn for the <code>Mesh</code>. If the value
+	 * is greater than one, then instanced rendering will be used to draw the mesh.
+	 * 
+	 * @return The count of instances to draw for the mesh (default&rarr;1). 
+	 */
+	public int getInstanceCount() {
+		return instanceCount;
+	}
+	
+	public void setInstanceCount(int instanceCount) {
+		Validator.positive(instanceCount, "The count of instances must be strictly positive!");
+		this.instanceCount = instanceCount;
 	}
 	
     /**

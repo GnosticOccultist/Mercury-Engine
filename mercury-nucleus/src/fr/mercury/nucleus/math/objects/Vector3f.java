@@ -1,7 +1,7 @@
 package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.pool.Reusable;
+import fr.alchemy.utilities.collections.pool.Reusable;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
 
 /**
@@ -24,23 +24,23 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 	/**
 	 * The zero components <code>Vector3f</code> &rarr; [0,0,0].
 	 */
-	public static final Vector3f ZERO = new Vector3f(0, 0, 0);
+	public static final ReadableVector3f ZERO = new Vector3f(0, 0, 0);
 	/**
 	 * The unit <code>Vector3f</code> in the X-axis &rarr; [1,0,0].
 	 */
-	public static final Vector3f UNIT_X = new Vector3f(1, 0, 0);
+	public static final ReadableVector3f UNIT_X = new Vector3f(1, 0, 0);
 	/**
 	 * The unit <code>Vector3f</code> in the Y-axis &rarr; [0,1,0].
 	 */
-	public static final Vector3f UNIT_Y = new Vector3f(0, 1, 0);
+	public static final ReadableVector3f UNIT_Y = new Vector3f(0, 1, 0);
 	/**
 	 * The unit <code>Vector3f</code> in the Z-axis &rarr; [0,0,1].
 	 */
-	public static final Vector3f UNIT_Z = new Vector3f(0, 0, 1);
+	public static final ReadableVector3f UNIT_Z = new Vector3f(0, 0, 1);
 	/**
 	 * The one components <code>Vector3f</code> &rarr; [1,1,1].
 	 */
-	public static final Vector3f ONE = new Vector3f(1, 1, 1);
+	public static final ReadableVector3f ONE = new Vector3f(1, 1, 1);
 	
 	/**
 	 * The X-component of the vector.
@@ -81,7 +81,7 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 	 * 
 	 * @param other The other vector to get the components.
 	 */
-	public Vector3f(Vector3f other) {
+	public Vector3f(ReadableVector3f other) {
 		set(other);
 	}
 	
@@ -265,21 +265,6 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
     }
     
     /**
-     * Calculates the dot product of the <code>Vector3f</code> with the provided one.
-     * If dot product = 0, the vectors are orthogonal.
-     * <p>
-	 * The provided vector cannot be null.
-     * 
-     * @param other The vector to get the dot product with.
-     * @return		The resulting scalar from the dot product.
-     */
-    public float dot(Vector3f other) {
-    	Validator.nonNull(other, "The vector cannot be null!");
-    	
-    	return x * other.x + y * other.y + z * other.z;
-    }
-    
-    /**
      * Calculates the cross product of the <code>Vector3f</code> with the provided one.
      * The resulting vector is orthogonal to the plane constitued by the two vectors, meaning
      * it will be orthogonal to the two vectors (normal vector).
@@ -299,25 +284,6 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
     }
 	
 	/**
-	 * Return the length of the <code>Vector3f</code>.
-	 * 
-	 * @return The length of the vector.
-	 */
-	public float length() {
-		return (float) Math.sqrt(x * x + y * y + z * z);
-	}
-	
-	/**
-	 * Return whether the <code>Vector3f</code> is a unit vector, 
-	 * meaning its norm ({@link #length()}) is equal to 1.
-	 * 
-	 * @return Whether the vector is a unit vector.
-	 */
-	public boolean isUnitVector() {
-		return length() == 1;
-	}
-	
-	/**
 	 * Normalizes the <code>Vector3f</code>. It will will divide
      * the vector's components by its {@link #length()}, returning 
      * a unit vector.
@@ -334,32 +300,6 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
         }
         return this;
 	}
-	
-	/**
-     * Calculates the squared distance between the <code>Vector3f</code> and 
-     * the provided one.
-     *
-     * @param other The vector to determine the distance squared from.
-     * @return 		The distance squared between the two vectors.
-     */
-    public float distanceSquared(ReadableVector3f other) {
-        double dx = x - other.x();
-        double dy = y - other.y();
-        double dz = z - other.z();
-        return (float) (dx * dx + dy * dy + dz * dz);
-    }
-    
-    /**
-     * Calculates the distance between the <code>Vector3f</code> and 
-     * the provided one.
-     *
-     * @param other The vector to determine the distance from.
-     * @return 		The distance between the two vectors.
-     */
-    @Override
-    public double distance(ReadableVector3f other) {
-        return Math.sqrt(distanceSquared(other));
-    }
     
 	/**
 	 * Return the X-component of the <code>Vector3f</code>, as a single-precision float.
@@ -521,19 +461,19 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
 			return true;
 		}
 		
-		if(!(o instanceof Vector3f)) {
+		if(!(o instanceof ReadableVector3f)) {
 			return false;
 		}
 		
-		Vector3f other = (Vector3f) o;
-		if (Float.compare(x, other.x) != 0) {
+		var other = (ReadableVector3f) o;
+		if (Float.compare(x, other.x()) != 0) {
 			return false;
 		}
-		if (Float.compare(y, other.y) != 0) {
+		if (Float.compare(y, other.y()) != 0) {
 			return false;
 		}
 		
-		return Float.compare(z, other.z) == 0;
+		return Float.compare(z, other.z()) == 0;
 	}
 	
 	/**

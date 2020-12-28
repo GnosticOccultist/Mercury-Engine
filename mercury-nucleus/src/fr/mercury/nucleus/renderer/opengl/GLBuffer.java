@@ -7,10 +7,12 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL15C;
 import org.lwjgl.opengl.GL30;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
+import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType.Format;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
@@ -28,9 +30,18 @@ import fr.mercury.nucleus.utils.OpenGLCall;
 public abstract class GLBuffer extends GLObject {
 	
 	/**
+	 * The array of currently bound GL buffers to the context, normally one for each buffer type.
+	 */
+	private static final GLBuffer[] CURRENTS = new GLBuffer[BufferType.values().length];
+	
+	/**
 	 * The usage of the buffer.
 	 */
 	protected Usage usage;
+	/**
+	 * The format used for the data.
+	 */
+	protected Format format;
 	/**
 	 * The data contained in the buffer.
 	 */
@@ -58,13 +69,15 @@ public abstract class GLBuffer extends GLObject {
 	 * <p>
 	 * The method has been set static because it can be called from any <code>GLBuffer</code> instance,
 	 * and will only unbind the lastest bind on the <code>OpenGL</code> context matching the provided
-	 * {@link Buffer}.
+	 * {@link BufferType}.
 	 * 
 	 * @param type The buffer type to unbind from the context (not null).
 	 */
 	public static void unbind(BufferType type) {
 		Validator.nonNull(type, "The buffer type can't be null!");
+		
 		GL15.glBindBuffer(GLBuffer.getOpenGLType(type), 0);
+		CURRENTS[type.ordinal()] = null;
 	}
 	
 	/**
@@ -74,11 +87,16 @@ public abstract class GLBuffer extends GLObject {
 	 */
 	@OpenGLCall
 	public void bind() {
+		if(CURRENTS[getType().ordinal()] == this) {
+			return;
+		}
+		
 		if(getID() == INVALID_ID) {
 			throw new GLException("The " + getClass().getSimpleName() + " isn't created yet!");
 		}
 		
 		GL15.glBindBuffer(getOpenGLType(), getID());
+		CURRENTS[getType().ordinal()] = this;
 	}
 	
 	/**
@@ -89,21 +107,29 @@ public abstract class GLBuffer extends GLObject {
 	 * Note that the stored data cannot be null.
 	 */
 	@OpenGLCall
-	protected void storeData() {
+	protected void storeData(boolean newVBO) {
 		
 		if(data == null) {
 			this.needsUpdate = false;
 			return;
 		}
 		
+		// Rewind the buffer to prepare for reading.
+		this.data.rewind();
+		
+		if(newVBO) {
+			var byteSize = data.capacity() * format.getSizeInByte();
+			GL15C.glBufferData(getOpenGLType(), byteSize, getOpenGLUsage());
+		}
+		
 		if(data instanceof FloatBuffer) {
-			GL15.glBufferData(getOpenGLType(), (FloatBuffer) data, getOpenGLUsage());
+			GL15C.glBufferSubData(getOpenGLType(), 0, (FloatBuffer) data);
 		} else if(data instanceof IntBuffer) {
-			GL15.glBufferData(getOpenGLType(), (IntBuffer) data, getOpenGLUsage());
+			GL15C.glBufferSubData(getOpenGLType(), 0, (IntBuffer) data);
 		} else if(data instanceof ShortBuffer) {
-			GL15.glBufferData(getOpenGLType(), (ShortBuffer) data, getOpenGLUsage());
+			GL15C.glBufferSubData(getOpenGLType(), 0, (ShortBuffer) data);
 		} else if(data instanceof ByteBuffer) {
-			GL15.glBufferData(getOpenGLType(), (ByteBuffer) data, getOpenGLUsage());
+			GL15C.glBufferSubData(getOpenGLType(), 0, (ByteBuffer) data);
 		} else {
 			throw new IllegalArgumentException("Can't upload data from buffer type: " + data.getClass().getSimpleName());
 		}
@@ -117,7 +143,7 @@ public abstract class GLBuffer extends GLObject {
 	 * 
 	 * @return Whether the data buffer needs to be reuploaded through the OpenGL context.
 	 */
-	protected boolean needsUpdate() {
+	public boolean needsUpdate() {
 		return needsUpdate;
 	}
 	
@@ -126,19 +152,26 @@ public abstract class GLBuffer extends GLObject {
 	 * <p>
 	 * This methods is mainly used for proper cleaning of the OpenGL context or to avoid errors of
 	 * misbindings, because it doesn't need to be called before binding a new buffer.
-	 * Note that it works even if the currently bound buffer isn't the one invoking this method 
-	 * (<i>maybe it should be static, or handled by a manager?</i>).
+	 * Note that it works even if the currently bound buffer isn't the one invoking this method.
 	 */
 	@OpenGLCall
 	public void unbind() {
-		GL15.glBindBuffer(getOpenGLType(), 0);
+		unbind(getType());
 	}
 	
 	@Override
+	@OpenGLCall
 	public void cleanup() {
 		unbind();
 		
 		super.cleanup();
+	}
+	
+	@Override
+	protected void restart() {
+		this.needsUpdate = true;
+		
+		super.restart();
 	}
 	
 	/**

@@ -1,8 +1,15 @@
 package fr.mercury.nucleus.renderer.opengl.vertex;
 
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
+import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.BufferType;
 
 /**
@@ -20,7 +27,13 @@ public enum VertexBufferType {
 	/**
 	 * Defines the texture coordinates for the vertex with 2 floats component.
 	 */
-	TEX_COORD(BufferType.VERTEX_DATA, 2, Format.FLOAT),
+	TEX_COORD(BufferType.VERTEX_DATA, 2, Format.FLOAT) {
+		
+		@Override
+		public String toString() {
+			return "texCoord";
+		}
+	},
 	/**
 	 * Defines the normal vector for the vertex with 3 floats component.
 	 * It is expected to be normalized as it express a direction.
@@ -47,11 +60,22 @@ public enum VertexBufferType {
 	 * Defines the index for the joint with 4 floats component.
 	 * This is used for an animated mesh.
 	 */
-	JOINT_INDEX(BufferType.VERTEX_DATA, 4, Format.FLOAT),
+	JOINT_INDEX(BufferType.VERTEX_DATA, 4, Format.FLOAT) {
+		
+		@Override
+		public String toString() {
+			return "jointIndex";
+		}
+	},
 	/**
 	 * Defines the index for constructing the vertices with 1 uint component.
 	 */
-	INDEX(BufferType.VERTEX_INDEXING, 1, Format.UNSIGNED_INT);
+	INDEX(BufferType.VERTEX_INDEXING, 1, Format.UNSIGNED_INT),
+	/**
+	 * A custom vertex buffer which uses interleaved data format, if such vertex buffer is defined in a Mesh,
+	 * then it will be used to pass data to vertex attributes.
+	 */
+	INTERLEAVED(BufferType.VERTEX_DATA, Format.UNSIGNED_BYTE);
 	
 	/**
 	 * The buffer type to use either {@link BufferType#VERTEX_DATA} or 
@@ -133,13 +157,19 @@ public enum VertexBufferType {
 		return getOpenGLFormat(format);
 	}
 	
+	@Override
+	public String toString() {
+		return name().toLowerCase();
+	}
+	
 	/**
 	 * Return the OpenGL equivalent format to the specified {@link Format}.
 	 * 
-	 * @param format The format to get the OpenGL equivalent one.
+	 * @param format The format to get the OpenGL equivalent one (not null).
 	 * @return		 The OpenGL equivalent format.
 	 */
 	public static int getOpenGLFormat(Format format) {
+		Validator.nonNull(format, "The format can't be null!");
 		switch (format) {
 			case UNSIGNED_BYTE:
 				return GL11.GL_UNSIGNED_BYTE;
@@ -151,6 +181,27 @@ public enum VertexBufferType {
 				return GL11.GL_UNSIGNED_INT;
 			default:
 				throw new IllegalStateException("Unknown format: " + format);
+		}
+	}
+	
+	/**
+	 * Return a {@link Format} corresponding to the provided {@link Buffer}.
+	 * 
+	 * @param format The buffer to get the format from (not null).
+	 * @return		 The format matching the buffer's type.
+	 */
+	public static Format getFormatFromBuffer(Buffer buffer) {
+		Validator.nonNull(buffer, "The buffer can't be null!");
+		if(buffer instanceof ByteBuffer) {
+			return Format.UNSIGNED_BYTE;
+		} else if(buffer instanceof ShortBuffer) {
+			return Format.UNSIGNED_SHORT;
+		} else if(buffer instanceof IntBuffer) {
+			return Format.UNSIGNED_INT;
+		} else if(buffer instanceof FloatBuffer) {
+			return Format.FLOAT;
+		} else {
+			throw new IllegalStateException("Unknown format for buffer type: " + buffer.getClass());
 		}
 	}
 	

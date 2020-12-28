@@ -1,11 +1,13 @@
 package fr.mercury.nucleus.math.objects;
 
+import java.nio.BufferOverflowException;
 import java.nio.FloatBuffer;
 
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.pool.Reusable;
+import fr.alchemy.utilities.collections.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.readable.ReadableMatrix3f;
+import fr.mercury.nucleus.math.readable.ReadableMatrix4f;
 import fr.mercury.nucleus.math.readable.ReadableQuaternion;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
 import fr.mercury.nucleus.math.readable.ReadableVector3f;
@@ -24,7 +26,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	/**
 	 * The <code>Transform</code> identity &rarr; Translation: [0,0,0] | Rotation: [0,0,0,1] | Scale: [1,1,1].
 	 */
-	public static final Transform IDENTITY_TRANSFORM = new Transform();
+	public static final ReadableTransform IDENTITY_TRANSFORM = new Transform();
 	
 	/**
 	 * The translation of the object.
@@ -123,6 +125,18 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 		this.identity = other.isIdentity();
 		this.rotationMatrix = other.isRotationMatrix();
 		this.uniformScale = other.isUniformScale();
+		return this;
+	}
+	
+	public Transform set(ReadableMatrix4f matrix) {
+		this.translation.set(matrix.m03(), matrix.m13(), matrix.m23());
+		this.rotation.set(
+				matrix.m00(), matrix.m01(), matrix.m02(), 
+				matrix.m10(), matrix.m11(), matrix.m12(), 
+				matrix.m20(), matrix.m21(), matrix.m22()
+		);
+		
+		update(false);
 		return this;
 	}
 	
@@ -387,76 +401,94 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 			return result;
 		}
 		
-		result.m30 = 0.0F;
-		result.m31 = 0.0F;
-		result.m32 = 0.0F;
+		result.identity();
+		
+		result.m03 = 0.0F;
+		result.m13 = 0.0F;
+		result.m23 = 0.0F;
 		
 		if(rotationMatrix) {
 			result.m00 = scale.x() * rotation.m00;
-			result.m10 = scale.x() * rotation.m10;
-			result.m20 = scale.x() * rotation.m20;
-			result.m01 = scale.y() * rotation.m01;
+			result.m01 = scale.x() * rotation.m01;
+			result.m02 = scale.x() * rotation.m02;
+			result.m10 = scale.y() * rotation.m10;
 			result.m11 = scale.y() * rotation.m11;
-			result.m21 = scale.y() * rotation.m21;
-			result.m02 = scale.z() * rotation.m02;
-			result.m12 = scale.z() * rotation.m12;
+			result.m12 = scale.y() * rotation.m12;
+			result.m20 = scale.z() * rotation.m20;
+			result.m21 = scale.z() * rotation.m21;
 			result.m22 = scale.z() * rotation.m22;
 		} else {
 			result.m00 = rotation.m00;
-			result.m10 = rotation.m10;
-			result.m20 = rotation.m20;
 			result.m01 = rotation.m01;
-			result.m11 = rotation.m11;
-			result.m21 = rotation.m21;
 			result.m02 = rotation.m02;
+			result.m10 = rotation.m10;
+			result.m11 = rotation.m11;
 			result.m12 = rotation.m12;
+			result.m20 = rotation.m20;
+			result.m21 = rotation.m21;
 			result.m22 = rotation.m22;
 		}
 		
-		result.m03 = translation.x();
-		result.m13 = translation.y();
-		result.m23 = translation.z();
+		result.m30 = translation.x();
+		result.m31 = translation.y();
+		result.m32 = translation.z();
 		result.m33 = 1.0F;
 		
 		return result;
 	}
 	
+	/**
+	 * Populates the given {@link FloatBuffer} with the data from the <code>Transform</code> in column 
+	 * major order.
+	 * <p>
+	 * The method is using relative put method, meaning the float data is written at the current 
+	 * buffer's position and the position is incremented by 16.
+	 * <p>
+	 * The populated buffer can be used safely to transfer data to shaders as mat4 uniforms.
+	 * 
+	 * @param store The buffer to populate with the data (not null). 
+	 * @return 		The given store populated with the transform data.
+	 * 
+	 * @throws BufferOverflowException Thrown if there isn't enough space to write all 16 floats.
+	 */
 	@Override
-	public FloatBuffer asModelBuffer(FloatBuffer store) {
+	public FloatBuffer populate(FloatBuffer store) {
 		Validator.nonNull(store, "The float buffer can't be null!");
 		
-		store.put(3, 0.0F);
-		store.put(7, 0.0F);
-		store.put(11, 0.0F);
+		if (rotationMatrix) {
+			store.put(scale.x() * rotation.m00);
+			store.put(scale.x() * rotation.m10);
+			store.put(scale.x() * rotation.m20);
+			store.put(0.0F);
+			store.put(scale.y() * rotation.m01);
+			store.put(scale.y() * rotation.m11);
+			store.put(scale.y() * rotation.m21);
+			store.put(0.0F);
+			store.put(scale.z() * rotation.m02);
+			store.put(scale.z() * rotation.m12);
+			store.put(scale.z() * rotation.m22);
+			store.put(0.0F);
+		} else {
+			store.put(rotation.m00);
+			store.put(rotation.m10);
+			store.put(rotation.m20);
+			store.put(0.0F);
+			store.put(rotation.m01);
+			store.put(rotation.m11);
+			store.put(rotation.m21);
+			store.put(0.0F);
+			store.put(rotation.m02);
+			store.put(rotation.m12);
+			store.put(rotation.m22);
+			store.put(0.0F);
+		}
+
+		store.put(translation.x());
+		store.put(translation.y());
+		store.put(translation.z());
+		store.put(1.0F);
 		
-		if(rotationMatrix) {
-			store.put(0, scale.x() * rotation.m00);
-            store.put(1, scale.x() * rotation.m10);
-            store.put(2, scale.x() * rotation.m20);
-            store.put(4, scale.y() * rotation.m01);
-            store.put(5, scale.y() * rotation.m11);
-            store.put(6, scale.y() * rotation.m21);
-            store.put(8, scale.z() * rotation.m02);
-            store.put(9, scale.z() * rotation.m12);
-            store.put(10, scale.z() * rotation.m22);
-        } else {
-            store.put(0, rotation.m00);
-            store.put(1, rotation.m10);
-            store.put(2, rotation.m20);
-            store.put(4, rotation.m01);
-            store.put(5, rotation.m11);
-            store.put(6, rotation.m21);
-            store.put(8, rotation.m02);
-            store.put(9, rotation.m12);
-            store.put(10, rotation.m22);
-        }
-		
-		store.put(12, translation.x());
-        store.put(13, translation.y());
-        store.put(14, translation.z());
-        store.put(15, 1.0F);
-        
-        return store;
+		return store;
 	}
 	
 	public Transform worldTransform(ReadableTransform parent, Transform store) { 
@@ -489,13 +521,16 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
                 scale.mul(scale.x());
             }
             
-            update(true);
+            result.update(true);
+            
             return result;
     	}
     	
     	// In all remaining cases, the matrix cannot be written as R*S*X+T.
+    	var tmp = MercuryMath.getMatrix3f();
+    	tmp.reuse();
     	var matrixA = isRotationMatrix()
-    			? rotation.multiplyDiagonalPost(scale, MercuryMath.getMatrix3f())
+    			? rotation.multiplyDiagonalPost(scale, tmp)
     			: rotation;
     			
     	var	matrixB = parent.isRotationMatrix()
@@ -512,6 +547,7 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
         result.scale.set(1.0F, 1.0F, 1.0F);
         
         result.update(false);
+        
         return result;
 	}
 	
@@ -619,17 +655,22 @@ public final class Transform implements ReadableTransform, Comparable<Transform>
 	
 	@Override
 	public boolean equals(Object o) {
-		if (o == null || !(o instanceof Transform)) {
-			return false;
-		}
-
 		if (this == o) {
 			return true;
 		}
 		
-		Transform other = (Transform) o;
-		return translation.equals(other.translation)
-			&& rotation.equals(other.rotation)
-			&& scale.equals(other.scale);
+		if (!(o instanceof ReadableTransform)) {
+			return false;
+		}
+		
+		var other = (ReadableTransform) o;
+		return translation.equals(other.getTranslation())
+			&& rotation.equals(other.getRotation())
+			&& scale.equals(other.getScale());
+	}
+	
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + " [\nT= " + translation + ",\nR= " + rotation + ", \nS= " + scale + "]";
 	}
 }	

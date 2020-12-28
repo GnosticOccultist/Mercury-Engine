@@ -2,46 +2,97 @@
 
 	"Unlit_no_texture": {
 		"description": "Simple default material used for rendering animae without any lighting or fog and using a simple color.",
+		"attributes": [
+			{ "name": "position", "location": 0 },
+			{ "name": "normal", "location": 2 }
+		],
 		"shaders": [ 
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": [] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": [] }
 		],
 		"uniforms": {
-			"prefabs": ["VIEW_PROJECTION_MODEL"]
+			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
 		}
 	},
 	
 	"Unlit": {
 		"description": "Simple default material used for rendering animae without any lighting but a fog effect.",
+		"attributes": [
+			{ "name": "position", "location": 0 },
+			{ "name": "texCoord", "location": 1 },
+			{ "name": "normal", "location": 2 }
+		],
 		"shaders": [ 
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_FOG", "USE_TEXTURE"] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_FOG", "USE_TEXTURE"] }
 		],
 		"uniforms": {
-			"prefabs": ["FOG", "MODEL", "VIEW", "VIEW_PROJECTION_MODEL"]
+			"prefabs": ["FOG", "MODEL", "VIEW", "PROJECTION"]
 		}
 	},
 	
-	
 	"Unlit_no_fog": {
 		"description": "Simple default material used for rendering animae without any lighting or fog.",
+		"attributes": [
+			{ "name": "position", "location": 0 },
+			{ "name": "texCoord", "location": 1 },
+			{ "name": "normal", "location": 2 }
+		],
 		"shaders": [ 
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_TEXTURE"] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE"] }
 		],
 		"uniforms": {
-			"prefabs": ["VIEW_PROJECTION_MODEL"]
+			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
 		}
 	},
 	
 	"Unlit_atlas": {
 		"description": "Simple default material used for rendering animae without any lighting but a fog effect by using texture atlas",
+		"attributes": [
+			{ "name": "position", "location": 0 },
+			{ "name": "texCoord", "location": 1 },
+			{ "name": "normal", "location": 2 }
+		],
 		"shaders": [ 
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_FOG", "USE_ATLAS", "USE_TEXTURE"] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_FOG", "USE_ATLAS", "USE_TEXTURE"] }
 		],
 		"uniforms": {
-			"prefabs": ["FOG", "MODEL", "VIEW", "VIEW_PROJECTION_MODEL"]
+			"prefabs": ["FOG", "MODEL", "VIEW", "PROJECTION"]
+		}
+	},
+	
+	"Unlit_no_fog_instanced": {
+		"description": "Simple default material used for rendering animae without any lighting or fog but using mesh instancing.",
+		"attributes": [
+			{ "name": "position", "location": 0 },
+			{ "name": "texCoord", "location": 1 },
+			{ "name": "normal", "location": 2 },
+			{ "name": "instanceMatrix", "location": 3, "divisor": 1, "span": 4 }
+		],
+		"shaders": [ 
+			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_TEXTURE", "INSTANCING"] },
+			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE", "INSTANCING"] }
+		],
+		"uniforms": {
+			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
+		}
+	},
+	
+	"Unlit_no_fog_interleaved": {
+		"description": "Simple default material used for rendering animae without any lighting or fog but using only one VBO.",
+		"attributes": [
+			{ "name": "position", "location": 0, "stride": 32, "offset": 0 },
+			{ "name": "texCoord", "location": 1, "stride": 32, "offset": 12 },
+			{ "name": "normal", "location": 2, "stride": 32, "offset": 20 }
+		],
+		"shaders": [ 
+			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_TEXTURE"] },
+			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE"] }
+		],
+		"uniforms": {
+			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
 		}
 	}
 }

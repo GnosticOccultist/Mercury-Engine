@@ -1,5 +1,6 @@
 package fr.mercury.nucleus.renderer;
 
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,14 +8,25 @@ import java.util.Map;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
 
+import fr.alchemy.utilities.Instantiator;
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.math.objects.Color;
+import fr.mercury.nucleus.math.objects.FloatBufferPopulator;
+import fr.mercury.nucleus.math.objects.Matrix3f;
 import fr.mercury.nucleus.math.objects.Matrix4f;
+import fr.mercury.nucleus.math.readable.ReadableMatrix3f;
+import fr.mercury.nucleus.math.readable.ReadableMatrix4f;
 import fr.mercury.nucleus.math.readable.ReadableTransform;
+import fr.mercury.nucleus.renderer.logic.state.BlendState;
+import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState.PolygonMode;
 import fr.mercury.nucleus.renderer.logic.state.RenderState;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
@@ -27,7 +39,7 @@ import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
-public abstract class AbstractRenderer {
+public abstract class AbstractRenderer extends AbstractApplicationService implements Renderer {
 	
 	/**
 	 * The logger for the Mercury Renderer.
@@ -42,7 +54,7 @@ public abstract class AbstractRenderer {
 	 * The table containing the various matrices used for rendering in the shader 
 	 * as a float buffer.
 	 */
-	protected final EnumMap<MatrixType, Matrix4f> matrixMap = new EnumMap<>(MatrixType.class);
+	protected final EnumMap<MatrixType, FloatBufferPopulator> matrixMap = new EnumMap<>(MatrixType.class);
 	/**
 	 * The clear values for the color buffer used by the renderer.
 	 */
@@ -76,6 +88,40 @@ public abstract class AbstractRenderer {
 		}
 		
 		buckets.put(type, new RenderBucket(camera));
+	}
+	
+	/**
+	 * Register a new {@link RenderBucket} with the specified {@link BucketType} and {@link Comparator} 
+	 * for the <code>AbstractRenderer</code>.
+	 * 
+	 * @param type 		 The bucket type to register (not null).
+	 * @param comparator The comparator to sort the anima-mundi to render (not null).
+	 */
+	public void registerBucket(BucketType type, Comparator<AnimaMundi> comparator) {
+		Validator.nonNull(type, "The bucket type to register can't be null!");
+		if(type.equals(BucketType.LEGACY) || type.equals(BucketType.NONE)) {
+			throw new MercuryException("The bucket '" + type + "' cannot be registered!");
+		}
+		
+		buckets.put(type, new RenderBucket(camera, comparator));
+	}
+	
+	/**
+	 * Register a new {@link RenderBucket} with the specified {@link BucketType} and {@link Comparator} 
+	 * for the <code>AbstractRenderer</code>.
+	 * 
+	 * @param type 	 The bucket type to register (not null).
+	 * @param bucket The render bucket to register for the type (not null).
+	 */
+	public void registerBucket(BucketType type, RenderBucket bucket) {
+		Validator.nonNull(type, "The bucket type to register can't be null!");
+		Validator.nonNull(bucket, "The bucket to register can't be null!");
+		
+		if(type.equals(BucketType.LEGACY) || type.equals(BucketType.NONE)) {
+			throw new MercuryException("The bucket '" + type + "' cannot be registered!");
+		}
+		
+		buckets.put(type, bucket);
 	}
 	
 	/**
@@ -127,6 +173,8 @@ public abstract class AbstractRenderer {
 		
 		bucket.sort();
 		bucket.render(this);
+		
+		logger.debug("Rendered bucket of type '" + type + "' which contained " + bucket.size() + " anima-mundi.");
 	}
 	
 	/**
@@ -143,9 +191,9 @@ public abstract class AbstractRenderer {
 	 * Render the provided {@link AnimaMundi}.
 	 * Override this method in your implementation of <code>AbstractRenderer</code>.
 	 * 
-	 * @param anima The anima to render.
+	 * @param physica The physica-mundi to render (not null).
 	 */
-	public abstract void render(PhysicaMundi anima);
+	public abstract void render(PhysicaMundi physica);
 	
 	/**
 	 * Sets the clear values of the <code>AbstractRenderer</code> for the color-buffer.
@@ -213,6 +261,144 @@ public abstract class AbstractRenderer {
 						break;
 				}
 				break;
+			case POLYGON_MODE:
+				var wireframe = (PolygonModeState) state;
+				if(wireframe.isEnabled()) {
+					PolygonMode fMode = wireframe.polygonMode(Face.FRONT);
+					PolygonMode bMode = wireframe.polygonMode(Face.BACK);
+					if(fMode == bMode) {
+						switch (bMode) {
+							case FILL:
+								GL11C.glPolygonMode(GL11C.GL_FRONT_AND_BACK, GL11C.GL_FILL);
+								break;
+							case LINE:
+								GL11C.glPolygonMode(GL11C.GL_FRONT_AND_BACK, GL11C.GL_LINE);
+								break;
+							case POINT:
+								GL11C.glPolygonMode(GL11C.GL_FRONT_AND_BACK, GL11C.GL_POINT);
+								break;
+						}
+					} else if(fMode != bMode) {
+						switch (fMode) {
+							case FILL:
+								GL11C.glPolygonMode(GL11C.GL_FRONT, GL11C.GL_FILL);
+								break;
+							case LINE:
+								GL11C.glPolygonMode(GL11C.GL_FRONT, GL11C.GL_LINE);
+								break;
+							case POINT:
+								GL11C.glPolygonMode(GL11C.GL_FRONT, GL11C.GL_POINT);
+								break;
+						}
+						switch (bMode) {
+							case FILL:
+								GL11C.glPolygonMode(GL11C.GL_BACK, GL11C.GL_FILL);
+								break;
+							case LINE:
+								GL11C.glPolygonMode(GL11C.GL_BACK, GL11C.GL_LINE);
+								break;
+							case POINT:
+								GL11C.glPolygonMode(GL11C.GL_BACK, GL11C.GL_POINT);
+								break;
+						}
+					}
+				} else {
+					GL11C.glPolygonMode(GL11C.GL_FRONT_AND_BACK, GL11C.GL_FILL);
+				}
+				break;
+			case DEPTH_BUFFER:
+				var zBuffer = (DepthBufferState) state;
+				if(zBuffer.isEnabled()) {
+					GL11C.glEnable(GL11.GL_DEPTH_TEST);
+					switch (zBuffer.function()) {
+						case NEVER:
+							GL11C.glDepthFunc(GL11C.GL_NEVER);
+							break;
+						case ALWAYS:
+							GL11C.glDepthFunc(GL11C.GL_ALWAYS);
+							break;
+						case EQUAL:
+							GL11C.glDepthFunc(GL11C.GL_EQUAL);
+							break;
+						case NOT_EQUAL:
+							GL11C.glDepthFunc(GL11C.GL_NOTEQUAL);
+							break;
+						case LESS:
+							GL11C.glDepthFunc(GL11C.GL_LESS);
+							break;
+						case LESS_OR_EQUAL:
+							GL11C.glDepthFunc(GL11C.GL_LEQUAL);
+							break;
+						case GREATER:
+							GL11C.glDepthFunc(GL11C.GL_GREATER);
+							break;
+						case GREATER_OR_EQUAL:
+							GL11C.glDepthFunc(GL11C.GL_GEQUAL);
+							break;
+						default:
+							break;
+					}
+				} else {
+					GL11C.glDisable(GL11C.GL_DEPTH_TEST);
+				}
+				GL11C.glDepthMask(zBuffer.isWritable());
+				break;
+			case BLEND_STATE:
+				var blend = (BlendState) state;
+				if(blend.isEnabled()) {
+					GL11C.glEnable(GL11.GL_BLEND);
+					
+					int srcFactor = GL11C.GL_ONE;
+					int dstFactor = GL11C.GL_ZERO;
+					switch (blend.srcFactor()) {
+						case ONE:
+							srcFactor = GL11C.GL_ONE;
+							break;
+						case ZERO:
+							srcFactor = GL11C.GL_ZERO;
+							break;
+						case SOURCE_COLOR:
+							srcFactor = GL11C.GL_SRC_COLOR;
+							break;
+						case ONE_MINUS_SOURCE_COLOR:
+							srcFactor = GL11C.GL_ONE_MINUS_SRC_COLOR;
+							break;
+						case SOURCE_ALPHA:
+							srcFactor = GL11C.GL_SRC_ALPHA;
+							break;
+						case ONE_MINUS_SOURCE_ALPHA:
+							srcFactor = GL11C.GL_ONE_MINUS_SRC_ALPHA;
+							break;
+						default:
+							break;
+					}
+					switch (blend.dstFactor()) {
+						case ONE:
+							dstFactor = GL11C.GL_ONE;
+							break;
+						case ZERO:
+							dstFactor = GL11C.GL_ZERO;
+							break;
+						case SOURCE_COLOR:
+							dstFactor = GL11C.GL_SRC_COLOR;
+							break;
+						case ONE_MINUS_SOURCE_COLOR:
+							dstFactor = GL11C.GL_ONE_MINUS_SRC_COLOR;
+							break;
+						case SOURCE_ALPHA:
+							dstFactor = GL11C.GL_SRC_ALPHA;
+							break;
+						case ONE_MINUS_SOURCE_ALPHA:
+							dstFactor = GL11C.GL_ONE_MINUS_SRC_ALPHA;
+							break;
+						default:
+							break;
+					}
+					GL11C.glBlendFunc(srcFactor, dstFactor);
+				} else {
+					GL11C.glDisable(GL11C.GL_BLEND);
+				}
+				break;
 			default:
 				break;
 		}
@@ -222,24 +408,39 @@ public abstract class AbstractRenderer {
 	 * Setup the {@link Uniform} corresponding to the needed {@link MatrixType} specified by the provided
 	 * {@link Material} and applied for the given {@link ShaderProgram}.
 	 * 
-	 * @param shader  The shader program to which the matrix uniforms need to be passed.
-	 * @param physica The physica-mundi requesting the matrix uniforms.
+	 * @param shader  The shader program to which the matrix uniforms need to be passed (not null).
+	 * @param physica The physica-mundi requesting the matrix uniforms (not null).
 	 */
 	protected void setupMatrixUniforms(ShaderProgram shader, PhysicaMundi physica) {
+		Validator.nonNull(shader, "The shader program can't be null!");
+		Validator.nonNull(shader, "The physica-mundi can't be null!");
+		
 		var matrixUniforms = physica.getMaterial().getPrefabUniforms();
 		
 		for(MatrixType type : MatrixType.values()) {
 			var name = type.name();
 			
 			if(matrixUniforms.contains(name)) {
-				// First force-compute the matrix before adding it to the uniform.
-				if(type.canCompute()) {
-					computeMatrix(type);
-				}
-				
-				shader.addUniform(type.getUniformName(), UniformType.MATRIX4F, matrixMap.get(type));	
+				setupMatrixUniforms(shader, type);	
 			}
 		}
+	}
+	
+	/**
+	 * Setup the {@link Uniform} corresponding to the needed {@link MatrixType} for the provided {@link ShaderProgram}.
+	 * 
+	 * @param shader The shader program to which the matrix uniforms need to be passed (not null).
+	 * @param type 	 The matrix type to pass as a uniform through the shader program (not null).
+	 */
+	protected void setupMatrixUniforms(ShaderProgram shader, MatrixType type) {
+		Validator.nonNull(shader, "The shader program can't be null!");
+		Validator.nonNull(type, "The matrix type can't be null!");
+		
+		if(type.canCompute()) {
+			computeMatrix(type);
+		}
+				
+		shader.addUniform(type.getUniformName(), type.getUniformType(), matrixMap.get(type));
 	}
 	
 	/**
@@ -255,6 +456,11 @@ public abstract class AbstractRenderer {
 		for(int i = 0; i < prefabUniforms.size(); i++) {
 			
 			var prefabName = prefabUniforms.get(i);
+			if("CAMERA_POS".equals(prefabName)) {
+				shader.addUniform("cameraPos", UniformType.VECTOR3F, camera.getLocation());
+			}
+			
+			// Look for an environment element attached to an animae.
 			var property = physica.getEnvironmentElement(prefabName);
 			
 			if(property != null) {
@@ -262,27 +468,54 @@ public abstract class AbstractRenderer {
 			}
 		}
 	}
+
+	/**
+	 * Return the stored {@link ReadableMatrix4f} under the given {@link MatrixType}, or null
+	 * if none is stored.
+	 * 
+	 * @param type The type of the rendering matrix.
+	 * @return	   The stored rendering matrix, or null if none.
+	 */
+	public ReadableMatrix4f getMatrix(MatrixType type) {
+		return (ReadableMatrix4f) matrixMap.get(type);
+	}
 	
 	/**
-	 * Stores the provided {@link Matrix4f} for the given usage {@link MatrixType}
+	 * Stores the provided {@link ReadableMatrix4f} for the given usage {@link MatrixType}.
 	 * 
 	 * @param type   The type of the rendering matrix.
 	 * @param matrix The rendering matrix to store.
 	 */
-	public void setMatrix(MatrixType type, Matrix4f matrix) {
-		var buffer = matrixMap.computeIfAbsent(type, k -> new Matrix4f());
+	public void setMatrix(MatrixType type, ReadableMatrix4f matrix) {
+		type.checkType(matrix);
+		var buffer = (Matrix4f) matrixMap.computeIfAbsent(type, k -> type.newInstance());
 		buffer.set(matrix);
 	}
 	
 	/**
-	 * Stores the provided {@link Matrix4f} for the given usage {@link MatrixType}
+	 * Stores the provided {@link ReadableMatrix3f} for the given usage {@link MatrixType}.
+	 * 
+	 * @param type   The type of the rendering matrix.
+	 * @param matrix The rendering matrix to store.
+	 */
+	public void setMatrix(MatrixType type, ReadableMatrix3f matrix) {
+		type.checkType(matrix);
+		var buffer = (Matrix3f) matrixMap.computeIfAbsent(type, k -> type.newInstance());
+		buffer.set(matrix);
+	}
+	
+	/**
+	 * Stores the provided {@link ReadableTransform} for the given usage {@link MatrixType}.
 	 * 
 	 * @param type   The type of the rendering matrix.
 	 * @param matrix The rendering matrix to store.
 	 */
 	public void setMatrix(MatrixType type, ReadableTransform transform) {
-		var buffer = matrixMap.computeIfAbsent(type, k -> new Matrix4f());
-		transform.asModelMatrix(buffer);
+		var buffer = matrixMap.computeIfAbsent(type, k -> type.newInstance());
+		if(type.accepts(Matrix4f.class)) {
+			var matrix = (Matrix4f) buffer;
+			transform.asModelMatrix(matrix);
+		}
 	}
 	
 	/**
@@ -297,29 +530,35 @@ public abstract class AbstractRenderer {
 					type + " can't be computed!");
 		}
 		
-		var buffer = matrixMap.computeIfAbsent(type, k -> new Matrix4f());
+		var buffer = matrixMap.computeIfAbsent(type, k -> type.newInstance());
 		
 		switch (type) {
 			case VIEW_PROJECTION_MODEL:
-				var viewProj = matrixMap.get(MatrixType.VIEW_PROJECTION);
+				var store = (Matrix4f) buffer;
+				var viewProj = getMatrix(MatrixType.VIEW_PROJECTION);
 				
 				// First compute the view projection if not already present.
 				if(viewProj == null) {
 					computeMatrix(MatrixType.VIEW_PROJECTION);
-					viewProj = matrixMap.get(MatrixType.VIEW_PROJECTION);
+					viewProj = getMatrix(MatrixType.VIEW_PROJECTION);
 				}
 				
-				buffer.set(viewProj);
+				store.set(viewProj);
 				
-				var model = matrixMap.get(MatrixType.MODEL);
-				buffer.mult(model, buffer);
+				var model = getMatrix(MatrixType.MODEL);
+				store.mult(model, store);
 				break;
 			case VIEW_PROJECTION:
-				var projection = matrixMap.get(MatrixType.PROJECTION);
-				var view = matrixMap.get(MatrixType.VIEW);
+				store = (Matrix4f) buffer;
 				
-				buffer.set(projection);
-				buffer.mult(view, buffer);
+				var projection = getMatrix(MatrixType.PROJECTION);
+				var view = getMatrix(MatrixType.VIEW);
+				
+				store.set(view);
+				store.mult(projection, store);
+				break;
+			case NORMAL:
+				// TODO: 
 				break;
 			default:
 				throw new UnsupportedOperationException("The provided type of matrix: " + type + " can't be computed!");
@@ -369,7 +608,11 @@ public abstract class AbstractRenderer {
 		 * The view-projection-model matrix used to display an entire scene-graph
 		 * correctly in 3D-space taking into account the camera, window and object's transform.
 		 */
-		VIEW_PROJECTION_MODEL("viewProjectionModelMatrix", true);
+		VIEW_PROJECTION_MODEL("viewProjectionModelMatrix", true),
+		/**
+		 * The normal matrix computed using the model matrix.
+		 */
+		NORMAL("normalMatrix", true, Matrix3f.class);
 		
 		/**
 		 * The uniform name used inside the shader.
@@ -379,10 +622,19 @@ public abstract class AbstractRenderer {
 		 * Whether the matrix type can be computed.
 		 */
 		private final boolean compute;
+		/**
+		 * The type of matrix used.
+		 */
+		private final Class<? extends FloatBufferPopulator> type;
 		
 		private MatrixType(String uniformName, boolean compute) {
+			this(uniformName, compute, Matrix4f.class);
+		}
+		
+		private MatrixType(String uniformName, boolean compute, Class<? extends FloatBufferPopulator> type) {
 			this.uniformName = uniformName;
 			this.compute = compute;
+			this.type = type;
 		}
 		
 		/**
@@ -402,6 +654,38 @@ public abstract class AbstractRenderer {
 		 */
 		public boolean canCompute() {
 			return compute;
+		}
+		
+		/**
+		 * Create and return a new instance to store the <code>MatrixType</code> in.
+		 * 
+		 * @return A new instance of matrix (not null).
+		 */
+		@SuppressWarnings("unchecked")
+		public <F extends FloatBufferPopulator> F newInstance() {
+			return (F) Instantiator.fromClass(type);
+		}
+		
+		public <F extends FloatBufferPopulator> void checkType(F obj) {
+			if(!accepts(obj)) {
+				throw new IllegalArgumentException(this + " only accepts " + type.getSimpleName() + " !");
+			}
+		}
+		
+		public <F extends FloatBufferPopulator> boolean accepts(F obj) {
+			return accepts(obj.getClass());
+		}
+		
+		public <F extends FloatBufferPopulator> boolean accepts(Class<F> clazz) {
+			return type.isAssignableFrom(clazz);
+		}
+		
+		public UniformType getUniformType() {
+			if(type == Matrix3f.class) {
+				return UniformType.MATRIX3F;
+			}
+			
+			return UniformType.MATRIX4F;
 		}
 	}
 }

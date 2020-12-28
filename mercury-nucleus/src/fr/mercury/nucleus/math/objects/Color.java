@@ -1,7 +1,8 @@
 package fr.mercury.nucleus.math.objects;
 
 import fr.alchemy.utilities.Validator;
-import fr.alchemy.utilities.pool.Reusable;
+import fr.alchemy.utilities.collections.pool.Reusable;
+import fr.mercury.nucleus.math.readable.ReadableColor;
 
 /**
  * <code>Color</code> is a mathematical object defined of a red, green, blue and alpha component
@@ -14,12 +15,16 @@ import fr.alchemy.utilities.pool.Reusable;
  * 
  * @author GnosticOccultist
  */
-public final class Color implements Comparable<Color>, Reusable {
+public final class Color implements ReadableColor, Comparable<Color>, Reusable {
 	
 	/**
 	 * The white color (1,1,1,1).
 	 */
-	public static final Color WHITE = new Color();
+	public static final ReadableColor WHITE = new Color();
+	/**
+	 * The black color (0,0,0,1).
+	 */
+	public static final ReadableColor BLACK = new Color();
 	
 	/**
 	 * The red component.
@@ -79,7 +84,7 @@ public final class Color implements Comparable<Color>, Reusable {
 	 * 
 	 * @param other The other color to get the components.
 	 */
-	public Color(Color other) {
+	public Color(ReadableColor other) {
 		set(other);
 	}
 	
@@ -123,13 +128,13 @@ public final class Color implements Comparable<Color>, Reusable {
 	 * 
 	 * @param other The other color to copy from.
 	 */
-	public Color set(Color other) {
+	public Color set(ReadableColor other) {
 		Validator.nonNull(other, "The color cannot be null!");
 		
-		this.r = other.r;
-		this.g = other.g;
-		this.b = other.b;
-		this.a = other.a;
+		this.r = other.r();
+		this.g = other.g();
+		this.b = other.b();
+		this.a = other.a();
 		return this;
 	}
 	
@@ -154,12 +159,52 @@ public final class Color implements Comparable<Color>, Reusable {
 	}
 	
 	/**
+	 * Return the red component of the <code>Color</code>, as a single-precision float.
+	 * 
+	 * @return The red component value of the color.
+	 */
+	@Override
+	public float r() {
+		return r;
+	}
+	
+	/**
+	 * Return the green component of the <code>Color</code>, as a single-precision float.
+	 * 
+	 * @return The green component value of the color.
+	 */
+	@Override
+	public float g() {
+		return g;
+	}
+	
+	/**
+	 * Return the blue component of the <code>Color</code>, as a single-precision float.
+	 * 
+	 * @return The blue component value of the color.
+	 */
+	@Override
+	public float b() {
+		return b;
+	}
+	
+	/**
+	 * Return the alpha component of the <code>Color</code>, as a single-precision float.
+	 * 
+	 * @return The alpha component value of the color.
+	 */
+	@Override
+	public float a() {
+		return a;
+	}
+	
+	/**
    	 * Sets all the components of the <code>Color</code> to {@link #WHITE},
    	 * before retrieving it from a pool.
    	 */
    	@Override
    	public void reuse() {
-   		set(0, 0, 0, 1);
+   		set(1, 1, 1, 1);
    	}
    	
    	/**
@@ -168,7 +213,7 @@ public final class Color implements Comparable<Color>, Reusable {
    	 */
    	@Override
    	public void free() {
-   		set(0, 0, 0, 1);
+   		set(1, 1, 1, 1);
    	}
 
 	/**
@@ -201,21 +246,26 @@ public final class Color implements Comparable<Color>, Reusable {
 			return true;
 		}
 		
-		if (!(o instanceof Color)) {
+		if (!(o instanceof ReadableColor)) {
 			return false;
 		}
 
-		Color other = (Color) o;
-		if (Float.compare(r, other.r) != 0) {
+		var other = (ReadableColor) o;
+		if (Float.compare(r, other.r()) != 0) {
 			return false;
 		}
-		if (Float.compare(g, other.g) != 0) {
+		if (Float.compare(g, other.g()) != 0) {
 			return false;
 		}
-		if (Float.compare(b, other.b) != 0) {
+		if (Float.compare(b, other.b()) != 0) {
 			return false;
 		}
 		
-		return Float.compare(a, other.a) == 0;
+		return Float.compare(a, other.a()) == 0;
+	}
+	
+	@Override
+	public String toString() {
+		return "Color [ r= " + r + ", g= " + g + ", b= " + b + ", a= " + a + " ]";
 	}
 }

@@ -149,6 +149,13 @@ public final class ShaderSource extends GLObject {
 	}
 	
 	@Override
+	protected void restart() {
+		this.needsUpdate = true;
+		
+		super.restart();
+	}
+	
+	@Override
 	@OpenGLCall
 	protected Integer acquireID() {
 		return GL20.glCreateShader(type.toOpenGLType());
@@ -158,6 +165,12 @@ public final class ShaderSource extends GLObject {
 	@OpenGLCall
 	protected Consumer<Integer> deleteAction() {
 		return GL20::glDeleteShader;
+	}
+	
+	@Override
+	@OpenGLCall
+	public Runnable onDestroy(int id) {
+		return () -> GL20.glDeleteShader(id);
 	}
 	
 	/**

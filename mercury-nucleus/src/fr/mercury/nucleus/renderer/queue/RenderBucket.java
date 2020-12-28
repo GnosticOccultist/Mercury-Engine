@@ -2,8 +2,10 @@ package fr.mercury.nucleus.renderer.queue;
 
 import java.util.Comparator;
 
-import fr.alchemy.utilities.SortUtil;
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.collections.array.ArrayUtil;
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.renderer.AbstractRenderer;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
@@ -21,6 +23,10 @@ import fr.mercury.nucleus.scenegraph.PhysicaMundi;
  */
 public class RenderBucket {
 	
+	/**
+	 * The logger for the Mercury Renderer.
+	 */
+	protected static final Logger logger = FactoryLogger.getLogger("mercury.renderer");
 	/**
 	 * The initial size of the rendering bucket, specified as 16.
 	 */
@@ -44,7 +50,7 @@ public class RenderBucket {
 	/**
 	 * The comparator used to sort the animae.
 	 */
-	protected Comparator<AnimaMundi> comparator = DISTANCE_COMPARATOR;
+	protected Comparator<AnimaMundi> comparator;
 	/**
 	 * The camera used to compute the distance.
 	 */
@@ -59,25 +65,57 @@ public class RenderBucket {
 	protected int size;
 	
 	/**
-	 * Instantiates a new <code>RenderBucket</code> with an initial size
-	 * of {@link #INITIAL_SIZE} and the given {@link Camera}.
+	 * Instantiates a new <code>RenderBucket</code> with an initial size of {@link #INITIAL_SIZE} 
+	 * and the given {@link Camera}.
 	 * 
-	 * @param camera The camera used to compute distances.
+	 * @param camera The camera used to compute distances (not null).
 	 */
 	public RenderBucket(Camera camera) {
 		this(INITIAL_SIZE, camera);
 	}
 	
 	/**
-	 * Instantiates a new <code>RenderBucket</code> with the specified
-	 * initial size and {@link Camera}.
+	 * Instantiates a new <code>RenderBucket</code> with the specified initial size and {@link Camera}.
 	 * 
-	 * @param size   The initial size of the bucket.
-	 * @param camera The camera used to compute distances.
+	 * @param size   The initial size of the bucket (&ge;0).
+	 * @param camera The camera used to compute distances (not null).
 	 */
 	public RenderBucket(int size, Camera camera) {
+		Validator.nonNegative(size, "The size of the bucket can't be negative!");
+		Validator.nonNull(camera, "The camera can't be null!");
 		this.array = new AnimaMundi[size];
 		this.camera = camera;
+		this.comparator = DISTANCE_COMPARATOR;
+	}
+	
+	/**
+	 * Instantiates a new <code>RenderBucket</code> with an initial size of {@link #INITIAL_SIZE}, the {@link Camera}
+	 * and {@link Comparator} to use to sort the {@link AnimaMundi} in the bucket. Usually the comparator
+	 * uses the distance of the object to render from the camera.
+	 * 
+	 * @param camera 	 The camera used to compute distances (not null).
+	 * @param comparator The comparator to sort the bucket, usually a distance factor (not null).
+	 */
+	public RenderBucket(Camera camera, Comparator<AnimaMundi> comparator) {
+		this(INITIAL_SIZE, camera, comparator);
+	}
+	
+	/**
+	 * Instantiates a new <code>RenderBucket</code> with the specified initial size, the {@link Camera}
+	 * and {@link Comparator} to use to sort the {@link AnimaMundi} in the bucket. Usually the comparator
+	 * uses the distance of the object to render from the camera.
+	 * 
+	 * @param size   	 The initial size of the bucket (&ge;0).
+	 * @param camera 	 The camera used to compute distances (not null).
+	 * @param comparator The comparator to sort the bucket, usually a distance factor (not null).
+	 */
+	public RenderBucket(int size, Camera camera, Comparator<AnimaMundi> comparator) {
+		Validator.nonNegative(size, "The size of the bucket can't be negative!");
+		Validator.nonNull(camera, "The camera can't be null!");
+		Validator.nonNull(comparator, "The comparator can't be null!");
+		this.array = new AnimaMundi[size];
+		this.camera = camera;
+		this.comparator = comparator;
 	}
 	
 	/**
@@ -112,7 +150,7 @@ public class RenderBucket {
 		// Perform the sort only is there is more than one anima in the bucket.
 		if(size > 1) {
 			// Shell sorting the array.
-			SortUtil.shellSort(array, 0, size - 1, comparator);
+			ArrayUtil.shellSort(array, 0, size - 1, comparator);
 		}
 	}
 	
@@ -145,7 +183,7 @@ public class RenderBucket {
 	 * @param anima The anima to compute distance to.
 	 * @return		The distance between the camera and the anima translation.
 	 */
-	public double computeDistance(AnimaMundi anima) {
+	protected double computeDistance(AnimaMundi anima) {
 		Validator.nonNull(camera);
 		
 		// Distance has been already computed, return it.
@@ -206,13 +244,25 @@ public class RenderBucket {
 	}
 	
 	/**
-	 * Sets the {@link Camera} used by the <code>RenderBucket</code>.
+	 * Sets the {@link Camera} used to sort the {@link AnimaMundi} to render 
+	 * the <code>RenderBucket</code>.
 	 * 
 	 * @param camera The camera used by the bucket (not null).
 	 */
 	public void setCamera(Camera camera) {
 		Validator.nonNull(camera, "The camera can't be null!");
 		this.camera = camera;
+	}
+	
+	/**
+	 * Sets the {@link Comparator} used to sort the {@link AnimaMundi} to render 
+	 * the <code>RenderBucket</code>.
+	 * 
+	 * @param comparator The comparator used by the bucket (not null).
+	 */
+	public void setComparator(Comparator<AnimaMundi> comparator) {
+		Validator.nonNull(comparator, "The comparator can't be null!");
+		this.comparator = comparator;
 	}
 	
 	/**
@@ -231,5 +281,17 @@ public class RenderBucket {
 	 */
 	public int size() {
 		return size;
+	}
+	
+	public class TransparentComparator implements Comparator<AnimaMundi> {
+
+		@Override
+		public int compare(AnimaMundi anima1, AnimaMundi anima2) {
+			double d1 = computeDistance(anima1);
+			double d2 = computeDistance(anima2);
+			
+			// Inverse comparing, back to front.
+			return Double.compare(d2, d1);
+		}
 	}
 }

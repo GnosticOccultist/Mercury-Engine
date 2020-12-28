@@ -9,7 +9,12 @@ import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 public class Framebuffer extends GLObject {
-
+	
+	/**
+	 * The array of currently bound GL framebuffers to the context, normally one for each target.
+	 */
+	private static final Framebuffer[] CURRENTS = new Framebuffer[FramebufferTarget.values().length];
+	
 	/**
 	 * The framebuffer target to use in the OpenGL context.
 	 */
@@ -32,11 +37,16 @@ public class Framebuffer extends GLObject {
 	 */
 	@OpenGLCall
 	public void bind() {
+		if(CURRENTS[getTarget().ordinal()] == this) {
+			return;
+		}
+		
 		if(getID() == INVALID_ID) {
 			throw new GLException("The framebuffer isn't created yet!");
 		}
 		
 		GL30.glBindFramebuffer(target.getOpenGLType(), id);
+		CURRENTS[getTarget().ordinal()] = this;
 	}
 	
 	@Override
@@ -87,6 +97,8 @@ public class Framebuffer extends GLObject {
 	@OpenGLCall
 	public static void unbind(FramebufferTarget target) {
 		GL30.glBindFramebuffer(target.getOpenGLType(), 0);
+		
+		CURRENTS[target.ordinal()] = null;
 	}
 
 	/**
@@ -109,6 +121,12 @@ public class Framebuffer extends GLObject {
 	@OpenGLCall
 	protected Consumer<Integer> deleteAction() {
 		return GL30::glDeleteFramebuffers;
+	}
+	
+	@Override
+	@OpenGLCall
+	public Runnable onDestroy(int id) {
+		return () -> GL30.glDeleteFramebuffers(id);
 	}
 	
 	/**

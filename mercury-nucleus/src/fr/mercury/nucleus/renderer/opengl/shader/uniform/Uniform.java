@@ -4,11 +4,11 @@ import java.nio.FloatBuffer;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Color;
+import fr.mercury.nucleus.math.objects.Matrix3f;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Vector2f;
 import fr.mercury.nucleus.math.objects.Vector3f;
@@ -17,6 +17,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.scenegraph.environment.Fog;
 import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
+import fr.mercury.nucleus.utils.data.Allocator;
 
 /**
  * <code>Uniform</code> defines a variable inside a "glsl" file (<i>for example a shader</i>), to which the user can 
@@ -165,8 +166,12 @@ public class Uniform {
 					GL20.glUniform4f(location, color.r, color.g, color.b, color.a);
 				}
 				break;
+			case MATRIX3F:
+				buffer.rewind();
+				GL20.glUniformMatrix3fv(location, false, buffer);
+				break;
 			case MATRIX4F:
-				buffer.clear();
+				buffer.rewind();
 				GL20.glUniformMatrix4fv(location, false, buffer);
 				break;
 			default:
@@ -260,23 +265,43 @@ public class Uniform {
 				}
 				
 				break;
+			case MATRIX3F:
+				if(value.equals(this.value)) {
+					return;
+				}
+				
+				var matrix3 = (Matrix3f) value;
+				if(buffer == null) {
+					buffer = Allocator.allocFloat(9);
+				} else {
+					buffer.clear();
+				}
+				matrix3.populate(buffer);
+				buffer.flip();
+				if(this.value == null) {
+					this.value = new Matrix3f(matrix3);
+				} else {
+					((Matrix3f) this.value).set(matrix3);
+				}
+				
+				break;
 			case MATRIX4F:
 				if(value.equals(this.value)) {
 					return;
 				}
 				
-				Matrix4f matrix = (Matrix4f) value;
+				var matrix4 = (Matrix4f) value;
 				if(buffer == null) {
-					buffer = MemoryUtil.memAllocFloat(16);
+					buffer = Allocator.allocFloat(16);
 				} else {
 					buffer.clear();
 				}
-				matrix.fillFloatBuffer(buffer, true);
-				buffer.clear();
+				matrix4.populate(buffer, false);
+				buffer.flip();
 				if(this.value == null) {
-					this.value = new Matrix4f(matrix);
+					this.value = new Matrix4f(matrix4);
 				} else {
-					((Matrix4f) this.value).set(matrix);
+					((Matrix4f) this.value).set(matrix4);
 				}
 				break;
 			default:
@@ -294,7 +319,7 @@ public class Uniform {
 	 */
 	public void cleanup() {
 		this.needsUpdate = true;
-		setLocation(-2);
+		setLocation(UNKNOWN_LOCATION);
 	}
 	
 	/**
@@ -392,6 +417,10 @@ public class Uniform {
 		 * Store <code>Vector4f</code> data.
 		 */
 		VECTOR4F("vec4"),
+		/**
+		 * Store <code>Matrix3f</code> data.
+		 */
+		MATRIX3F("mat3"),
 		/**
 		 * Store <code>Matrix4f</code> data.
 		 */

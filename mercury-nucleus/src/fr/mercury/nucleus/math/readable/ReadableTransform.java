@@ -1,18 +1,17 @@
 package fr.mercury.nucleus.math.readable;
 
-import java.nio.FloatBuffer;
-
+import fr.mercury.nucleus.math.objects.FloatBufferPopulator;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Transform;
 
 /**
- * <code>ReadableTransform</code> is an interface to implement a readable-only
- * transform, meaning its fields can be accessed but not modified.
+ * <code>ReadableTransform</code> is an interface to implement a readable-only transform with a translation, rotation and scale, 
+ * meaning its fields can be accessed but not modified.
  * The actual implementation of this interface is the {@link Transform} class.
  * 
  * @author GnosticOccultist
  */
-public interface ReadableTransform {
+public interface ReadableTransform extends FloatBufferPopulator {
 	
 	/**
 	 * Return the translation {@link ReadableVector3f} of the <code>ReadableTransform</code>
@@ -44,16 +43,6 @@ public interface ReadableTransform {
 	 * @return The transformation matrix.
 	 */
 	Matrix4f asModelMatrix(Matrix4f store);
-	
-	/**
-	 * Return the float buffer of the <code>ReadableTransform</code>, usable by
-	 * the <code>OpenGL</code> context.
-	 * 
-	 * @param The float buffer to store the transform.
-	 * 
-	 * @return The float buffer containing the transform.
-	 */
-	FloatBuffer asModelBuffer(FloatBuffer store);
 	
 	/**
 	 * Return whether all 3 components (translation, rotation and scale) of the <code>ReadableTransform</code> 

@@ -4,14 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import fr.alchemy.utilities.Validator;
-import fr.mercury.nucleus.renderer.Renderer;
+import fr.mercury.nucleus.renderer.DefaultRenderer;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
 
 /**
  * <code>BucketType</code> describes a specific type of {@link RenderBucket} a {@link AnimaMundi} 
  * can use to be rendered on the screen. 
  * <p>
- * In order to do this the {@link Renderer} will have {@link Renderer#registerBucket(BucketType) to create} 
+ * In order to do this the {@link DefaultRenderer} will have {@link DefaultRenderer#registerBucket(BucketType) to create} 
  * a {@link RenderBucket} for the type, so each anima-mundi which uses this type of bucket can be 
  * submitted to the bucket, sorted and finally rendered. 
  * 
@@ -29,6 +29,11 @@ public final class BucketType {
 	 * The process is to render object front to back to prevent redrawing of pixels.
 	 */
 	public static final BucketType OPAQUE = get("Opaque");
+	/**
+	 * Bucket for transparent or translucent surfaces, which can be seen through. 
+	 * The process is to render object back to front to allow affecting and blending of surfaces behind the transparent ones.
+	 */
+	public static final BucketType TRANSPARENT = get("Transparent");
 	/**
 	 * Use the {@link AnimaMundi}'s parent bucket, or default to {@link #OPAQUE} if it is orphan.
 	 */

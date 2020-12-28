@@ -2,6 +2,10 @@ package fr.mercury.exempli.gratia.asset;
 
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.asset.OBJLoader;
+import fr.mercury.nucleus.renderer.logic.state.BlendState;
+import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
+import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.texture.TextureAtlas;
@@ -9,7 +13,7 @@ import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
 import fr.mercury.nucleus.texture.TextureState.WrapMode;
 import fr.mercury.nucleus.utils.OpenGLCall;
-import fr.mercury.nucleus.utils.Timer;
+import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
  * <code>TestOBJLoader</code> showcase the usage of an {@link OBJLoader} to load a {@link PhysicaMundi} in Mercury.
@@ -85,13 +89,15 @@ public class TestOBJLoader extends MercuryApplication {
 		// Set the texture of the capricorn to the loaded texture atlas.
 		capricorn.getMaterial().texture = atlas;
 		
+		scene.setRenderStates(new DepthBufferState(), new BlendState(), new FaceCullingState().setFace(Face.BACK).enable());
+		
 		// Finally, attach the cube, teapot and capricorn to the main scene.
 		scene.attachAll(cube, teapot, capricorn);
 	}
 	
 	@Override
 	@OpenGLCall
-	protected void update(Timer timer) {
+	protected void update(ReadableTimer timer) {
 		// Rotate slowly the cube, teapot and capricorn.
 		cube.rotate(0, 0.01f, 0);
 		teapot.rotate(0, 0.01f, 0);
