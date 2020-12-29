@@ -117,8 +117,8 @@ public abstract class Texture extends GLObject {
 	 */
 	@OpenGLCall
 	public void bindToUnit(int unit) {
-		GL13.glActiveTexture(GL13.GL_TEXTURE0 + unit);
 		bind();
+		GL13.glActiveTexture(GL13.GL_TEXTURE0 + unit);
 	}
 	
 	/**

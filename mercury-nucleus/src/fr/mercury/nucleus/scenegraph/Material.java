@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import fr.alchemy.utilities.Validator;
+import fr.mercury.nucleus.renderer.opengl.GLObject;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexAttribute;
@@ -14,7 +15,7 @@ import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
 import fr.mercury.nucleus.texture.Texture;
 import fr.mercury.nucleus.utils.MercuryException;
 
-public class Material {
+public class Material implements Comparable<Material> {
 	
 	/**
 	 * The name of the material, used for debugging.
@@ -33,6 +34,10 @@ public class Material {
 	 */
 	private final List<VertexAttribute> attributes = new ArrayList<>();
 	/**
+	 * The attributes used to pass vertex data through the shader.
+	 */
+	private final List<MaterialData> materialData = new ArrayList<>();
+	/**
 	 * The set of the shader sources for the material.
 	 */
 	private final Map<String, List<ShaderSource>> sources = new HashMap<String, List<ShaderSource>>();
@@ -40,9 +45,6 @@ public class Material {
 	 * The store for already loaded shaders.
 	 */
 	private final Map<String, ShaderProgram> shaders = new HashMap<String, ShaderProgram>();
-	
-	// TODO: Privatize field.
-	public Texture texture;
 	
 	/**
 	 * Instantiates a new empty <code>Material</code>.
@@ -66,13 +68,26 @@ public class Material {
 		this.description = description;
 	}
 	
-	public void setupUniforms(ShaderProgram program) {
-		if(texture != null) {
-			program.use();
-			program.register(texture);
-			texture.upload();
-			texture.bindToUnit(0);
-		}
+	public void setupData(ShaderProgram program) {
+		materialData.forEach(data -> {
+			program.register(data);
+			
+			if (data.value instanceof Texture) {
+				Texture texture = (Texture) data.value;
+				texture.upload();
+				texture.bindToUnit(0);
+			}
+		});
+	}
+	
+	public <D> Material addData(String name, D data) {
+		this.materialData.add(new MaterialData(name, data));
+		return this;
+	}
+	
+	public Material setData(String name, Object value) {
+		this.materialData.stream().filter(d -> name.equals(d.name)).forEach(d -> d.value = value);
+		return this;
 	}
 	
 	/**
@@ -154,10 +169,6 @@ public class Material {
 		this.attributes.add(attribute);
 	}
 	
-	public String getName() {
-		return name;
-	}
-	
 	public void addShaderSource(String name, ShaderSource source) {
 		var list = sources.get(name);
 		if(list == null) {
@@ -169,10 +180,11 @@ public class Material {
 	
 	public void cleanup() {
 		shaders.values().forEach(ShaderProgram::cleanup);
-		
-		if(texture != null) {
-			texture.cleanup();
-		}
+		materialData.stream()
+				.map(MaterialData::value)
+				.filter(GLObject.class::isInstance)
+				.map(GLObject.class::cast)
+				.forEach(GLObject::cleanup);
 	}
 	
 	public Material copy(Texture texture) {
@@ -180,14 +192,23 @@ public class Material {
 		copy.prefabUniforms.addAll(prefabUniforms);
 		copy.shaders.putAll(shaders);
 		copy.attributes.addAll(attributes);
-		
-		copy.texture = texture;
+		copy.materialData.addAll(materialData);
 		
 		return copy;
 	}
 	
+	public String getName() {
+		return name;
+	}
+	
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	@Override
+	public int compareTo(Material other) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 	
 	@Override
