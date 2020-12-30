@@ -476,8 +476,9 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 	 * @param type The type of the rendering matrix.
 	 * @return	   The stored rendering matrix, or null if none.
 	 */
-	public ReadableMatrix4f getMatrix(MatrixType type) {
-		return (ReadableMatrix4f) matrixMap.get(type);
+	@SuppressWarnings("unchecked")
+	public <F extends FloatBufferPopulator> F getMatrix(MatrixType type) {
+		return (F) type.cast(matrixMap.get(type));
 	}
 	
 	/**
@@ -535,7 +536,7 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 		switch (type) {
 			case VIEW_PROJECTION_MODEL:
 				var store = (Matrix4f) buffer;
-				var viewProj = getMatrix(MatrixType.VIEW_PROJECTION);
+				Matrix4f viewProj = getMatrix(MatrixType.VIEW_PROJECTION);
 				
 				// First compute the view projection if not already present.
 				if(viewProj == null) {
@@ -545,14 +546,14 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 				
 				store.set(viewProj);
 				
-				var model = getMatrix(MatrixType.MODEL);
+				Matrix4f model = getMatrix(MatrixType.MODEL);
 				store.mult(model, store);
 				break;
 			case VIEW_PROJECTION:
 				store = (Matrix4f) buffer;
 				
-				var projection = getMatrix(MatrixType.PROJECTION);
-				var view = getMatrix(MatrixType.VIEW);
+				Matrix4f projection = getMatrix(MatrixType.PROJECTION);
+				Matrix4f view = getMatrix(MatrixType.VIEW);
 				
 				store.set(view);
 				store.mult(projection, store);
@@ -664,6 +665,11 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 		@SuppressWarnings("unchecked")
 		public <F extends FloatBufferPopulator> F newInstance() {
 			return (F) Instantiator.fromClass(type);
+		}
+		
+		@SuppressWarnings("unchecked")
+		public <F extends FloatBufferPopulator> F cast(F populator) {
+			return (F) type.cast(populator);
 		}
 		
 		public <F extends FloatBufferPopulator> void checkType(F obj) {
