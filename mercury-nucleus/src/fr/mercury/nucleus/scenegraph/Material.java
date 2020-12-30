@@ -70,10 +70,11 @@ public class Material implements Comparable<Material> {
 	
 	public void setupData(ShaderProgram program) {
 		materialData.forEach(data -> {
-			program.register(data);
+			var value = data.value;
+			program.register(value);
 			
-			if (data.value instanceof Texture) {
-				Texture texture = (Texture) data.value;
+			if (value instanceof Texture) {
+				var texture = (Texture) value;
 				texture.upload();
 				texture.bindToUnit(0);
 			}
@@ -187,11 +188,17 @@ public class Material implements Comparable<Material> {
 				.forEach(GLObject::cleanup);
 	}
 	
-	public Material copy(Texture texture) {
-		Material copy = new Material(name, description);
+	public Material copyShader() {
+		var copy = new Material(name, description);
 		copy.prefabUniforms.addAll(prefabUniforms);
 		copy.shaders.putAll(shaders);
 		copy.attributes.addAll(attributes);
+		
+		return copy;
+	}
+	
+	public Material copy() {
+		var copy = copyShader();
 		copy.materialData.addAll(materialData);
 		
 		return copy;

@@ -41,7 +41,6 @@ import fr.mercury.nucleus.texture.TextureState.MagFilter;
 import fr.mercury.nucleus.texture.TextureState.MinFilter;
 import fr.mercury.nucleus.texture.TextureState.WrapMode;
 import fr.mercury.nucleus.utils.MercuryException;
-import fr.mercury.nucleus.utils.SceneUtils;
 import fr.mercury.nucleus.utils.data.Allocator;
 import fr.mercury.nucleus.utils.data.BufferUtils;
 
@@ -122,13 +121,11 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		
 		scene.mRootNode().mTransformation(AIMatrix4x4.create().set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
 
-		AnimaMundi result = readScene(scene, configFlags);
-		
-		// TODO: Define textures according to geometries instead of material.
-		Material[] materials = assetManager.loadMaterial("/materials/unlit.json");
+		var materials = assetManager.loadMaterial("/materials/unlit.json");
 		assert materials[2] != null;
 		materials[2].getFirstShader();
-		SceneUtils.applyMaterial(result, materials[2]);
+		
+		var result = readScene(scene, materials[2], configFlags);
 
 		/*
 		 * Release the imported scene when finished.
@@ -138,7 +135,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		return result;
 	}
 
-	private AnimaMundi readScene(AIScene scene, int configFlags) {
+	private AnimaMundi readScene(AIScene scene, Material template, int configFlags) {
 		var ignore = ConfigFlag.hasFlag(ConfigFlag.IGNORE_ROOT_NODE, configFlags);
 		
 		var materialCount = scene.mNumMaterials();
@@ -157,11 +154,11 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		 */
 		if(ignore && meshCount == 1) {
 			var aiMesh = AIMesh.create(aiMeshes.get(0));
-			return processMesh(aiMesh, surfaces);
+			return processMesh(aiMesh, surfaces, template);
 		}
 
 		var rootNode = scene.mRootNode();
-		var rootNucleus = processNode(rootNode, scene, surfaces);
+		var rootNucleus = processNode(rootNode, scene, surfaces, template);
 
 		return rootNucleus;
 	}
@@ -199,7 +196,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		return result;
 	}
 	
-	private NucleusMundi processNode(AINode node, AIScene scene, Array<Surface> materials) {
+	private NucleusMundi processNode(AINode node, AIScene scene, Array<Surface> materials, Material template) {
 		NucleusMundi nucleus = new NucleusMundi(node.mName().dataString());
 		logger.info("Processing node: " + nucleus);
 		
@@ -212,12 +209,12 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		for(int i = 0, count = node.mNumMeshes(); i < count; ++i) {
 			var index = nodeMeshes.get(i);
 			var mesh = AIMesh.create(scene.mMeshes().get(index));
-			nucleus.attach(processMesh(mesh, materials));
+			nucleus.attach(processMesh(mesh, materials, template));
 		}
 		
 		// Handle the children of the node.
 		for(int i = 0, count = node.mNumChildren(); i < count; ++i) {
-			nucleus.attach(processNode(AINode.create(node.mChildren().get(i)), scene, materials));
+			nucleus.attach(processNode(AINode.create(node.mChildren().get(i)), scene, materials, template));
 		}
 		
 		return nucleus;
@@ -231,7 +228,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 	 * @return A new anima-mundi with a mesh matching the one loaded with assimp
 	 *         (not null).
 	 */
-	private AnimaMundi processMesh(AIMesh aiMesh, Array<Surface> materials) {
+	private AnimaMundi processMesh(AIMesh aiMesh, Array<Surface> materials, Material template) {
 		Validator.nonNull(aiMesh, "The Assimp mesh data can't be null!");
 		var mesh = new Mesh();
 
@@ -250,13 +247,14 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		var physica = new PhysicaMundi(aiMesh.mName().dataString(), mesh);
 		logger.info("Processing geometry " + physica);
 		
+		var material = template.copyShader();
+		// Check if the mesh uses materials.
 		var matIndex = aiMesh.mMaterialIndex();
 		if(matIndex >= 0 && matIndex < materials.size()) {
-			var material = new Material();
 			var texture = materials.get(matIndex).diffuse;
-			material.texture = texture;
-			physica.setMaterial(material);
+			material.addData("texture_sampler", texture);
 		}
+		physica.setMaterial(material);
 		
 		return physica;
 	}

@@ -3,6 +3,10 @@ package fr.mercury.exempli.gratia.material;
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.math.objects.Vector3f;
+import fr.mercury.nucleus.renderer.logic.state.BlendState;
+import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
+import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
 import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.scenegraph.environment.Fog;
@@ -43,25 +47,26 @@ public class TestFogMaterial extends MercuryApplication {
 		// Load the 2D texture for the cube and upload it directly to the GPU.
 		Texture2D texture = assetManager.loadTexture2D("/textures/octostone.png")
 				.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
-				.setWrapMode(WrapMode.CLAMP_EDGES, WrapMode.CLAMP_EDGES);
+				.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
 		texture.upload();
 		
 		// Load and prepare both cubes in the scene.
 		cube1 = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube1.setName("cube1");
-		cube1.setTranslation(0, 0, 4F).setRotation(0f, 0, 0f).setScale(1f, 1f, 1f);
+		cube1.setTranslation(0, 0, -7.0F).setRotation(0f, 0, 0f).setScale(1f, 1f, 1f);
 		
 		cube2 = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube2.setName("cube2");
-		cube2.setTranslation(0, 0, 2.5F).setRotation(0f, 0, 0f).setScale(1f, 1f, 1f);
+		cube2.setTranslation(0, 0, -5.0F).setRotation(0f, 0, 0f).setScale(1f, 1f, 1f);
 		
 		// Select the second material which is "Unlit" to render the cube using
 		// a texture and a fog.
 		Material[] materials = assetManager.loadMaterial("/materials/unlit.json");
+		materials[1].getFirstShader();
 		cube1.setMaterial(materials[1]);
-		cube1.getMaterial().texture = texture;
-		cube2.setMaterial(materials[1]);
-		cube2.getMaterial().texture = texture;
+		cube1.getMaterial().addData("texture_sampler", texture);
+		cube2.setMaterial(materials[1].copyShader());
+		cube2.getMaterial().addData("texture_sampler", texture);
 		
 		// Rotate the camera towards the first cube.
 		var translation = cube1.getLocalTransform().getTranslation();
@@ -70,6 +75,9 @@ public class TestFogMaterial extends MercuryApplication {
 		// Attach a fog effect to the root-scene, so both cubes are affected.
 		Fog fog = new Fog(new Color(0.4f, 0.4f, 0.5f, 1), 0.1f);
 		scene.addEnvironmentElement(fog);
+		
+		scene.setRenderStates(new DepthBufferState(), new BlendState(), new FaceCullingState().setFace(Face.BACK).enable());
+		
 		scene.attach(cube1);
 		scene.attach(cube2);
 	}

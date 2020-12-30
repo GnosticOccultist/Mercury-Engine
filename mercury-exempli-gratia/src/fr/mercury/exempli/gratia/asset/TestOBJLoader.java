@@ -61,33 +61,34 @@ public class TestOBJLoader extends MercuryApplication {
 		// Load and prepare the cube in the scene.
 		cube = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube.setName("cube");
-		cube.setTranslation(0.0f, 0.0f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
+		cube.setTranslation(0.0f, 0.0f, -10f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		// Load and prepare the teapot in the scene.
 		teapot = assetManager.loadPhysicaMundi("/model/teapot.obj");
 		teapot.setName("teapot");
-		teapot.setTranslation(-5.0f, -0.5f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
+		teapot.setTranslation(-5.0f, -0.5f, -10f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		// Load and prepare the capricorn in the scene.
 		capricorn = assetManager.loadPhysicaMundi("/model/capricorn.obj");
 		capricorn.setName("capricorn");
-		capricorn.setTranslation(5.0f, -1.0f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(0.05f, 0.05f, 0.05f);
+		capricorn.setTranslation(5.0f, -1.0f, -10f).setRotation(0.0f, 0.0f, 0.0f).setScale(0.05f, 0.05f, 0.05f);
 		
 		// Select the fourth material which is "Unlit_atlas" to render the cube using
 		// a texture atlas.
 		Material[] materials = assetManager.loadMaterial("/materials/unlit.json");
 		assert materials[3] != null;
+		materials[3].getFirstShader();
 		cube.setMaterial(materials[3]);
 		// Set the texture of the cube to the loaded texture atlas.
-		cube.getMaterial().texture = atlas;
+		cube.getMaterial().addData("texture_sampler", atlas);
 		
-		teapot.setMaterial(materials[3]);
+		teapot.setMaterial(materials[3].copyShader());
 		// Set the texture of the teapot to the loaded texture atlas.
-		teapot.getMaterial().texture = atlas;
+		teapot.getMaterial().addData("texture_sampler", atlas);
 		
-		capricorn.setMaterial(materials[3]);
+		capricorn.setMaterial(materials[3].copyShader());
 		// Set the texture of the capricorn to the loaded texture atlas.
-		capricorn.getMaterial().texture = atlas;
+		capricorn.getMaterial().addData("texture_sampler", atlas);
 		
 		scene.setRenderStates(new DepthBufferState(), new BlendState(), new FaceCullingState().setFace(Face.BACK).enable());
 		

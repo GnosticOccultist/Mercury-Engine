@@ -6,8 +6,6 @@ import fr.mercury.nucleus.renderer.logic.state.BlendState.BlendFunction;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState.DepthFunction;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
-import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
-import fr.mercury.nucleus.renderer.logic.state.PolygonModeState.PolygonMode;
 import fr.mercury.nucleus.renderer.logic.state.RenderState;
 import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
 import fr.mercury.nucleus.renderer.queue.BucketType;
@@ -69,66 +67,51 @@ public class TestRenderState extends MercuryApplication {
 		
 		PhysicaMundi box = assetManager.loadPhysicaMundi("/model/cube.obj");
 		box.setName("box");
-		box.setTranslation(0.0f, 0.0f, 1f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
+		box.setTranslation(0.0f, 0.0f, -10f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		NucleusMundi transparentNucleus = new NucleusMundi("Transparent Group");
 		
 		// Load and prepare the cube in the scene.
 		cube = assetManager.loadPhysicaMundi("/model/cube.obj");
 		cube.setName("cube");
-		cube.setTranslation(0.0f, 0.0f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
+		cube.setTranslation(0.0f, 0.0f, -10f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		// Load and prepare the teapot in the scene.
 		teapot = assetManager.loadPhysicaMundi("/model/teapot.obj");
 		teapot.setName("teapot");
-		teapot.setTranslation(-5.0f, -0.5f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
+		teapot.setTranslation(-5.0f, -0.5f, -10f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 		
 		// Load and prepare the capricorn in the scene.
 		capricorn = assetManager.loadPhysicaMundi("/model/capricorn.obj");
 		capricorn.setName("capricorn");
-		capricorn.setTranslation(5.0f, -1.0f, 2f).setRotation(0.0f, 0.0f, 0.0f).setScale(0.05f, 0.05f, 0.05f);
+		capricorn.setTranslation(5.0f, -1.0f, -10f).setRotation(0.0f, 0.0f, 0.0f).setScale(0.05f, 0.05f, 0.05f);
 		
-		// Select the fourth material which is "Unlit_atlas" to render the cube using
-		// a texture atlas.
+		// Select the fourth material which is "Unlit_no_fog" to render the cube using
+		// a texture without fog effect.
 		Material[] materials = assetManager.loadMaterial("/materials/unlit.json");
 		assert materials[2] != null;
+		materials[2].getFirstShader();
 		
-		// Select the fourth material which is "Unlit_atlas" to render the cube using
-		// a texture atlas.
-		Material[] materials2 = assetManager.loadMaterial("/materials/unlit.json");
-		assert materials2[2] != null;
-		
-		box.setMaterial(materials2[2]);
+		box.setMaterial(materials[2]);
 		// Set the texture of the cube to the loaded texture atlas.
-		box.getMaterial().texture = textureOcto;
+		box.getMaterial().addData("texture_sampler", textureOcto);
 		
-		cube.setMaterial(materials[2]);
+		var transparentMat = materials[2].copyShader();
+		cube.setMaterial(transparentMat);
 		// Set the texture of the cube to the loaded texture atlas.
-		cube.getMaterial().texture = texture;
+		cube.getMaterial().addData("texture_sampler", texture);
+		teapot.setMaterial(transparentMat);
+		capricorn.setMaterial(transparentMat);
 		
-		teapot.setMaterial(materials[2]);
-		// Set the texture of the teapot to the loaded texture atlas.
-		Texture2D copy = texture.copy();
-		copy.upload();
-		teapot.getMaterial().texture = copy;
-		
-		capricorn.setMaterial(materials[2]);
-		// Set the texture of the capricorn to the loaded texture atlas.
-		copy = texture.copy();
-		copy.upload();
-		capricorn.getMaterial().texture = copy;
-		
-		// Apply some render states to the scene-root.
-		PolygonModeState polygonState = new PolygonModeState().setPolygonMode(Face.FRONT_AND_BACK, PolygonMode.LINE).enable();
 		DepthBufferState zState = new DepthBufferState().mask().setFunction(DepthFunction.LESS_OR_EQUAL).enable();
 		BlendState blendState = new BlendState().setSRCFactor(BlendFunction.SOURCE_ALPHA).setDSTFactor(BlendFunction.ONE_MINUS_SOURCE_ALPHA).enable();
 		transparentNucleus.setRenderStates(zState, blendState);
+		transparentNucleus.setBucket(BucketType.TRANSPARENT);
 		
 		transparentNucleus.attachAll(cube, teapot, capricorn);
 		// Finally, attach the cube, teapot and capricorn to the main scene.
 		scene.attachAll(box, transparentNucleus);
 		scene.setRenderStates(new DepthBufferState(), new BlendState(), new FaceCullingState().setFace(Face.BACK).enable());
-		transparentNucleus.setBucket(BucketType.TRANSPARENT);
 	}
 	
 	@Override

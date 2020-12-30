@@ -135,7 +135,7 @@ public class DefaultRenderer extends AbstractRenderer {
 		setupPrefabUniforms(shader, physica);
 		
 		var material = physica.getMaterial();
-		material.setupUniforms(shader);
+		material.setupData(shader);
 		material.bindAttributes(physica);
 		
 		// Upload latest changes to the OpenGL state.
