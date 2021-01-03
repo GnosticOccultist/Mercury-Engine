@@ -19,8 +19,6 @@ import fr.mercury.nucleus.input.GLFWMouseInput;
 import fr.mercury.nucleus.renderer.device.PhysicalDevice;
 import fr.mercury.nucleus.renderer.device.Vendor;
 import fr.mercury.nucleus.utils.MercuryException;
-import fr.mercury.nucleus.utils.NanoTimer;
-import fr.mercury.nucleus.utils.Timer;
 
 /**
  * <code>MercuryContext</code> represent the core layer of an {@link Application}. It contains the main-loop within which the
@@ -67,17 +65,9 @@ public class MercuryContext implements Runnable {
 	 */
 	private final AtomicBoolean needRestart = new AtomicBoolean(false);
 	/**
-	 * The timer using to calculate the sleeping time.
-	 */
-	private Timer timer;
-	/**
 	 * The frame-rate limit.
 	 */
 	private int frameRateLimit = -1;
-	/**
-	 * The sleeping time of the frame.
-	 */
-	private double frameSleepTime;
 	/**
 	 * The physical device used for rendering, or null for headless context.
 	 */
@@ -225,19 +215,7 @@ public class MercuryContext implements Runnable {
 			setFrameRateLimit(settings.getFrameRate());
 		}
 		
-		if (frameRateLimit > 0) {
-			var sleep = frameSleepTime - (timer.getTimePerFrame() / 1000.0);
-			var sleepMillis = (long) sleep;
-			var additionalNanos = (int) ((sleep - sleepMillis) * 1000000.0);
-
-			if (sleepMillis >= 0 && additionalNanos >= 0) {
-				try {
-					Thread.sleep(sleepMillis, additionalNanos);
-				} catch (InterruptedException ignored) {
-					// Just ignore...
-				}
-			}
-		}
+		Sync.sync(frameRateLimit);
 	}
 
 	/**
@@ -250,8 +228,6 @@ public class MercuryContext implements Runnable {
 	 */
 	private boolean initializeInMercury() {
 		try {
-
-			timer = new NanoTimer();
 
 			createContext(settings);
 
@@ -346,7 +322,6 @@ public class MercuryContext implements Runnable {
 		application.service(GLFWWindow.class, GLFWWindow::destroy);
 
 		// Reset the state of variables.
-		timer = null;
 		initialized.set(false);
 	}
 
@@ -393,7 +368,6 @@ public class MercuryContext implements Runnable {
 	 */
 	private void setFrameRateLimit(int frameRateLimit) {
 		this.frameRateLimit = frameRateLimit;
-		this.frameSleepTime = 1000.0 / this.frameRateLimit;
 	}
 
 	/**
