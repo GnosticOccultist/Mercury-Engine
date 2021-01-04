@@ -283,6 +283,15 @@ public class RenderBucket {
 		return size;
 	}
 	
+	/**
+	 * Return whether the <code>RenderBucket</code> is empty.
+	 * 
+	 * @return Whether the bucket is empty.
+	 */
+	public boolean isEmpty() {
+		return size <= 0;
+	}
+	
 	public class TransparentComparator implements Comparator<AnimaMundi> {
 
 		@Override

@@ -60,6 +60,10 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 	 */
 	protected final Color clearColor = new Color(0, 0, 0, 0);
 	/**
+	 * The render state machine for switching between states.
+	 */
+	protected final RenderStateMachine renderStateMachine = new RenderStateMachine(this);
+	/**
 	 * The camera used by the renderer.
 	 */
 	protected Camera camera;
@@ -70,9 +74,26 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 	 * @param camera The camera to use for rendering (not null).
 	 */
 	protected AbstractRenderer(Camera camera) {
+		this(camera, new FaceCullingState().setFace(Face.BACK).enable(), new PolygonModeState(), 
+				new BlendState(), new DepthBufferState().enable());
+	}
+	
+	/**
+	 * Instantiates a new <code>AbstractRenderer</code> with the provided {@link Camera}.
+	 * Note that the provided default {@link RenderState} will be applied directly.
+	 * 
+	 * @param camera 		The camera to use for rendering (not null).
+	 * @param defaultStates The default render states used by the renderer.
+	 */
+	protected AbstractRenderer(Camera camera, RenderState... defaultStates) {
 		Validator.nonNull(camera, "The camera can't be null!");
 		
 		this.camera = camera;
+		this.renderStateMachine.withDefaultStates(defaultStates);
+		
+		for (var type : RenderState.Type.values()) {
+			renderStateMachine.applyDefault(type);
+		}
 	}
 	
 	/**
@@ -171,6 +192,10 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 			throw new IllegalStateException("No bucket for type: " + type + " is defined in the renderer!");
 		}
 		
+		if (bucket.isEmpty()) {
+			return;
+		}
+		
 		bucket.sort();
 		bucket.render(this);
 		
@@ -200,8 +225,9 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 	 * 
 	 * @param color The color to be cleared from the buffer (not null).
 	 */
+	@Override
 	@OpenGLCall
-	protected void setClearColor(Color color) {
+	public void setClearColor(Color color) {
 		Validator.nonNull(color, "The clear color can't be null!");
 		if(!clearColor.equals(color)) {
 			clearColor.set(color);
@@ -229,6 +255,7 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
 	protected void applyRenderState(RenderState state) {
 		Validator.nonNull(state, "The render state can't be null!");
 		
+		logger.debug("Applying state " + state);
 		switch (state.type()) {
 			case FACE_CULLING:
 				var cull = (FaceCullingState) state;

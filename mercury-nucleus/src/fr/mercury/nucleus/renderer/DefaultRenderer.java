@@ -5,7 +5,13 @@ import org.lwjgl.opengl.GL11C;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.logic.DefaultRenderLogic;
 import fr.mercury.nucleus.renderer.logic.RenderLogic;
+import fr.mercury.nucleus.renderer.logic.state.BlendState;
+import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
+import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
 import fr.mercury.nucleus.renderer.logic.state.RenderState;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Type;
 import fr.mercury.nucleus.renderer.queue.BucketType;
 import fr.mercury.nucleus.renderer.queue.RenderBucket;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
@@ -73,7 +79,21 @@ public class DefaultRenderer extends AbstractRenderer {
 	 * @param camera The camera to use for rendering (not null).
 	 */
 	public DefaultRenderer(Camera camera) {
-		super(camera);
+		this(camera, new FaceCullingState().setFace(Face.BACK).enable(), new PolygonModeState(), 
+				new BlendState(), new DepthBufferState().enable());
+	}
+	
+	/**
+	 * Instantiates a new <code>Renderer</code> with the provided {@link Camera} and register a 
+	 * {@link RenderBucket} for {@link BucketType#OPAQUE} objects.
+	 * <p>
+	 * Note that the provided default {@link RenderState} will be applied directly.
+	 * 
+	 * @param camera 		The camera to use for rendering (not null).
+	 * @param defaultStates The default render states used by the renderer.
+	 */
+	public DefaultRenderer(Camera camera, RenderState... defaultStates) {
+		super(camera, defaultStates);
 		
 		this.defaultLogic = new DefaultRenderLogic();
 		
@@ -89,7 +109,9 @@ public class DefaultRenderer extends AbstractRenderer {
 	 */
 	@OpenGLCall
 	public void clearBuffers() {
+		renderStateMachine.applyDefault(Type.DEPTH_BUFFER);
 		GL11C.glClear(GL11C.GL_COLOR_BUFFER_BIT | GL11C.GL_DEPTH_BUFFER_BIT | GL11C.GL_STENCIL_BUFFER_BIT);
+		renderStateMachine.restore(Type.DEPTH_BUFFER);
 	}
 	
 	@OpenGLCall
@@ -157,11 +179,9 @@ public class DefaultRenderer extends AbstractRenderer {
 	private void applyRenderStates(PhysicaMundi physica) {
 		for(var type : RenderState.Type.values()) {
 			var state = physica.getLocalRenderState(type);
-			if(state != null && state.needsUpdate()) {
-				logger.debug("Changing render state " + state + " before rendering " + physica);
-				
-				applyRenderState(state);
-				state.setNeedsUpdate(false);
+			if (state != null) {
+				logger.debug("Request " + type.name() + " state change before rendering " + physica + ".");
+				renderStateMachine.pushAndApply(state);
 			}
 		}
 	}
