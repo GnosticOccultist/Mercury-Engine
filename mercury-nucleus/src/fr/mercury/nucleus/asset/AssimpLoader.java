@@ -5,6 +5,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.EnumMap;
 import java.util.function.Consumer;
 
 import org.lwjgl.assimp.AIFace;
@@ -28,6 +29,11 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Transform;
+import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState;
+import fr.mercury.nucleus.renderer.logic.state.PolygonModeState.PolygonMode;
+import fr.mercury.nucleus.renderer.logic.state.RenderState;
+import fr.mercury.nucleus.renderer.logic.state.RenderState.Face;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBufferType;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
@@ -45,7 +51,7 @@ import fr.mercury.nucleus.utils.data.Allocator;
 import fr.mercury.nucleus.utils.data.BufferUtils;
 
 public class AssimpLoader implements AssetLoader<AnimaMundi> {
-	
+
 	/**
 	 * The logger of the Assimp loader.
 	 */
@@ -58,7 +64,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 			| Assimp.aiProcess_PreTransformVertices | Assimp.aiProcess_FlipUVs;
 
 	private AssetManager assetManager = null;
-	
+
 	@Override
 	public AnimaMundi load(String path) {
 		return load(path, 0);
@@ -115,16 +121,16 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 
 		// TODO: Allow the user to choose its own tags.
 		AIScene scene = Assimp.aiImportFile(path, DEFAULT_ASSIMP_FLAGS);
-		if(scene == null) {
+		if (scene == null) {
 			throw new MercuryException("Error while loading model '" + path + "': " + Assimp.aiGetErrorString());
 		}
-		
+
 		scene.mRootNode().mTransformation(AIMatrix4x4.create().set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
 
 		var materials = assetManager.loadMaterial("/materials/unlit.json");
 		assert materials[2] != null;
 		materials[2].getFirstShader();
-		
+
 		var result = readScene(scene, materials[2], configFlags);
 
 		/*
@@ -137,14 +143,14 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 
 	private AnimaMundi readScene(AIScene scene, Material template, int configFlags) {
 		var ignore = ConfigFlag.hasFlag(ConfigFlag.IGNORE_ROOT_NODE, configFlags);
-		
+
 		var materialCount = scene.mNumMaterials();
 		var surfaces = Array.ofType(Surface.class, materialCount);
-		for(var i = 0; i < materialCount; ++i) {
+		for (var i = 0; i < materialCount; ++i) {
 			var material = AIMaterial.create(scene.mMaterials().get(i));
 			surfaces.add(processMaterial(material));
 		}
-		
+
 		var aiMeshes = scene.mMeshes();
 		var meshCount = scene.mNumMeshes();
 
@@ -152,7 +158,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		 * If the flag is set to ignore root-node and we only have one mesh in the whole
 		 * scene, directly return the PhysicaMundi with the converted mesh data.
 		 */
-		if(ignore && meshCount == 1) {
+		if (ignore && meshCount == 1) {
 			var aiMesh = AIMesh.create(aiMeshes.get(0));
 			return processMesh(aiMesh, surfaces, template);
 		}
@@ -164,59 +170,87 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 	}
 
 	private Surface processMaterial(AIMaterial material) {
-		
+
 		var result = Allocator.stackSafe(stack -> {
 			var aiName = AIString.create();
 			Assimp.aiGetMaterialString(material, Assimp.AI_MATKEY_NAME, Assimp.aiTextureType_NONE, 0, aiName);
-			
+
 			var name = aiName.dataString();
 			logger.info("Loading material '" + name + "' using Assimp...");
-			
+
 			var aiTexturePath = AIString.callocStack(stack);
 			Assimp.aiGetMaterialTexture(material, Assimp.aiTextureType_DIFFUSE, 0, aiTexturePath, (IntBuffer) null,
 					null, null, null, null, null);
-			
+
 			var texturePath = aiTexturePath.dataString();
-            if (texturePath != null && texturePath.length() > 0) {
-                texturePath = "model/sponza" + File.separator + new File(texturePath).getName();
-            }
-    		
-            var surface = new Surface();
-            if(texturePath != null && !texturePath.isEmpty()) {
-            	Texture2D texture = assetManager.loadTexture2D(texturePath)
-     					.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
-     					.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
-            	texture.upload();
-            	surface.diffuse = texture;
-            }
-            
-            return surface;
+			if (texturePath != null && texturePath.length() > 0) {
+				texturePath = "model/sponza" + File.separator + new File(texturePath).getName();
+			}
+
+			var surface = new Surface();
+			if (texturePath != null && !texturePath.isEmpty()) {
+				Texture2D texture = assetManager.loadTexture2D(texturePath)
+						.setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
+						.setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
+				texture.upload();
+				surface.diffuse = texture;
+			}
+
+			var buffer = stack.mallocInt(1);
+			var out = stack.ints(1);
+
+			if (readMaterialInfo(material, Assimp.AI_MATKEY_ENABLE_WIREFRAME, buffer, out)) {
+				var wireframe = new PolygonModeState();
+				var value = buffer.get(0);
+				// Requesting wireframing render mode.
+				if (value == 1) {
+					wireframe.setPolygonMode(Face.FRONT_AND_BACK, PolygonMode.LINE);
+					wireframe.enable();
+					surface.renderStates.put(wireframe.type(), wireframe);
+				}
+			}
+
+			if (readMaterialInfo(material, Assimp.AI_MATKEY_TWOSIDED, buffer, out)) {
+				var culling = new FaceCullingState();
+				var value = buffer.get(0);
+				// Not two-sided, we can cull back faces.
+				if (value == 0) {
+					culling.setFace(Face.BACK);
+					culling.enable();
+				}
+
+				// Add the state even if its default because the renderer might
+				// defaulting to culling back faces.
+				surface.renderStates.put(culling.type(), culling);
+			}
+
+			return surface;
 		});
-		
+
 		return result;
 	}
-	
+
 	private NucleusMundi processNode(AINode node, AIScene scene, Array<Surface> materials, Material template) {
 		NucleusMundi nucleus = new NucleusMundi(node.mName().dataString());
 		logger.info("Processing node: " + nucleus);
-		
+
 		var transform = new Transform();
 		transform.set(convertMatrix(node.mTransformation(), new Matrix4f()));
 		nucleus.setTransform(transform);
-		
+
 		// Handle the meshes of the node.
 		var nodeMeshes = node.mMeshes();
-		for(int i = 0, count = node.mNumMeshes(); i < count; ++i) {
+		for (int i = 0, count = node.mNumMeshes(); i < count; ++i) {
 			var index = nodeMeshes.get(i);
 			var mesh = AIMesh.create(scene.mMeshes().get(index));
 			nucleus.attach(processMesh(mesh, materials, template));
 		}
-		
+
 		// Handle the children of the node.
-		for(int i = 0, count = node.mNumChildren(); i < count; ++i) {
+		for (int i = 0, count = node.mNumChildren(); i < count; ++i) {
 			nucleus.attach(processNode(AINode.create(node.mChildren().get(i)), scene, materials, template));
 		}
-		
+
 		return nucleus;
 	}
 
@@ -237,25 +271,31 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 				b -> mesh.setupBuffer(VertexBufferType.TEX_COORD, Usage.STATIC_DRAW, b));
 		toFloatBuffer(aiMesh.mNormals(), 3, b -> mesh.setupBuffer(VertexBufferType.NORMAL, Usage.STATIC_DRAW, b));
 		toFloatBuffer(aiMesh.mTangents(), 3, b -> mesh.setupBuffer(VertexBufferType.TANGENT, Usage.STATIC_DRAW, b));
-		
+
 		toIntBuffer(aiMesh.mFaces(), aiMesh.mNumVertices(), b -> mesh.setupIndexBuffer(b));
 
 		var mode = convertPrimitive(aiMesh.mPrimitiveTypes());
 		mesh.setMode(mode);
-		
+
 		// The mesh should be uploaded by the Renderer only.
 		var physica = new PhysicaMundi(aiMesh.mName().dataString(), mesh);
 		logger.info("Processing geometry " + physica);
-		
+
 		var material = template.copyShader();
 		// Check if the mesh uses materials.
 		var matIndex = aiMesh.mMaterialIndex();
-		if(matIndex >= 0 && matIndex < materials.size()) {
-			var texture = materials.get(matIndex).diffuse;
+		if (matIndex >= 0 && matIndex < materials.size()) {
+			var surface = materials.get(matIndex);
+			var texture = surface.diffuse;
 			material.addData("texture_sampler", texture);
+			
+			for (var state : surface.renderStates.values()) {
+				physica.setRenderStates(state);
+			}
 		}
-		physica.setMaterial(material);
 		
+		physica.setMaterial(material);
+
 		return physica;
 	}
 
@@ -272,14 +312,14 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 	 */
 	private Mesh.Mode convertPrimitive(int type) {
 		switch (type) {
-			case Assimp.aiPrimitiveType_POINT:
-				return Mode.POINTS;
-			case Assimp.aiPrimitiveType_LINE:
-				return Mode.LINES;
-			case Assimp.aiPrimitiveType_TRIANGLE:
-				return Mode.TRIANGLES;
-			default:
-				throw new UnsupportedOperationException("Unsupported primitive type with index: '" + type + "'");
+		case Assimp.aiPrimitiveType_POINT:
+			return Mode.POINTS;
+		case Assimp.aiPrimitiveType_LINE:
+			return Mode.LINES;
+		case Assimp.aiPrimitiveType_TRIANGLE:
+			return Mode.TRIANGLES;
+		default:
+			throw new UnsupportedOperationException("Unsupported primitive type with index: '" + type + "'");
 		}
 	}
 
@@ -300,14 +340,21 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 				m.c4(), m.d1(), m.d2(), m.d3(), m.d4());
 	}
 
+	private boolean readMaterialInfo(AIMaterial material, String key, IntBuffer store, IntBuffer out) {
+		store.clear();
+		var result = Assimp.aiGetMaterialIntegerArray(material, key, Assimp.aiTextureType_NONE, 0, store, out);
+		// Make sure the info is present.
+		return result == Assimp.aiReturn_SUCCESS && out.get(0) == 1;
+	}
+
 	private void toIntBuffer(AIFace.Buffer source, int verticesCount, Consumer<Buffer> consumer) {
 		var count = source != null ? source.remaining() : 0;
-		if(count == 0) {
+		if (count == 0) {
 			return;
 		}
 
 		var buffer = BufferUtils.createIndicesBuffer(count * 3, verticesCount);
-		for(var i = 0; i < count; ++i) {
+		for (var i = 0; i < count; ++i) {
 			var face = source.get();
 			BufferUtils.put(buffer, face.mIndices());
 		}
@@ -323,30 +370,33 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 		}
 
 		var buffer = BufferUtils.createFloatBuffer(count * componentSize);
-		for(var i = 0; i < count; ++i) {
+		for (var i = 0; i < count; ++i) {
 			var vec = source.get();
 			buffer.put(vec.x());
 			buffer.put(vec.y());
 
-			if(componentSize > 2) {
+			if (componentSize > 2) {
 				buffer.put(vec.z());
 			}
 		}
 		buffer.flip();
-		
+
 		consumer.accept(buffer);
 	}
-	
+
 	@Override
 	public void registerAssetManager(AssetManager assetManager) {
 		this.assetManager = assetManager;
 	}
-	
+
 	public class Surface {
-		
+
 		Texture2D diffuse;
-		
-		public Surface() {}
+
+		EnumMap<RenderState.Type, RenderState> renderStates = new EnumMap<>(RenderState.Type.class);
+
+		Surface() {
+		}
 	}
 
 	/**
