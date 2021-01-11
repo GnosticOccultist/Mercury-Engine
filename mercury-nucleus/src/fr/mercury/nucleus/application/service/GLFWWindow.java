@@ -179,9 +179,11 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
 	public void update(ReadableTimer timer) {
 		super.update(timer);
 
-		var settings = application.getSettings();
-		if (settings.getBoolean("ShowFPS")) {
-			setTitle(settings.getTitle() + " - " + (int) (timer.getFrameRate()) + " FPS");
+		if (timer.getTime() % 1500 == 0) {
+			var settings = application.getSettings();
+			if (settings.getBoolean("ShowFPS")) {
+				setTitle(settings.getTitle() + " - " + (int) (timer.getFrameRate()) + " FPS");
+			}
 		}
 	}
 

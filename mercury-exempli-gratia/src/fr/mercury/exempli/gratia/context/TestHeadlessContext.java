@@ -5,6 +5,7 @@ import fr.mercury.nucleus.application.MercuryContext.Type;
 import fr.mercury.nucleus.application.service.TaskExecutorService;
 import fr.mercury.nucleus.application.service.Window;
 import fr.mercury.nucleus.input.BaseInputProcessor;
+import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.utils.ReadableTimer;
 
@@ -33,6 +34,7 @@ public class TestHeadlessContext extends MercuryApplication {
 		taskService.scheduleAtFixedRate(this::printTPF, 500);
 		
 		assert getService(Window.class) == null;
+		assert getService(Renderer.class) == null;
 		assert getService(BaseInputProcessor.class) == null;
 	}
 
