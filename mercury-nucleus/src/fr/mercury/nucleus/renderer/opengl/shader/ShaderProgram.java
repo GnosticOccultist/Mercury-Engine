@@ -138,6 +138,7 @@ public final class ShaderProgram extends GLObject {
 		GL20.glUseProgram(id);
 		
 		CURRENT = this;
+		logger.debug("Using ShaderProgram " + this + ".");
 	}
 	
 	/**
@@ -271,8 +272,8 @@ public final class ShaderProgram extends GLObject {
     			continue;
     		}
     		
-    		// Make sure we are using the right shader program.
-    		use();
+    		// Make sure the shader program is created and that we are using it.
+    		upload();
     		
     		var annotation = method.getAnnotation(UniformField.class);
     		try {

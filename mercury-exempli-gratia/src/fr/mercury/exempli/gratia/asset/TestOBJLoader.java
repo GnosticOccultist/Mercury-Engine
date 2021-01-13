@@ -59,7 +59,7 @@ public class TestOBJLoader extends MercuryApplication {
         atlas.setIndex(0);
 
         // Load and prepare the cube in the scene.
-        cube = assetManager.loadPhysicaMundi("/model/cube.obj");
+        cube = assetManager.loadAnimaMundi("/model/cube.obj");
         cube.setName("cube");
         cube.setTranslation(0.0f, 0.0f, -10f).setRotation(0.0f, 0.0f, 0.0f).setScale(1f, 1f, 1f);
 

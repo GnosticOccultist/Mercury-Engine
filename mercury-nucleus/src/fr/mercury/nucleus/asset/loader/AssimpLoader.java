@@ -59,7 +59,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
      */
     public static final AssetLoaderDescriptor<AssimpLoader> DESCRIPTOR = new AssetLoaderDescriptor<>(
             AssimpLoader::new,
-            2, 
+            0, 
             FileExtensions.BLENDER_MODEL_FORMAT, 
             FileExtensions.OBJ_MODEL_FORMAT, 
             FileExtensions.GLTF_MODEL_FORMAT,
