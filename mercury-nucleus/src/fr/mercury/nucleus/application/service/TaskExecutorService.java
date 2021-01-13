@@ -5,6 +5,7 @@ import java.security.PrivilegedAction;
 import java.util.Deque;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -40,7 +41,7 @@ import fr.mercury.nucleus.utils.ReadableTimer;
  * 
  * @author GnosticOccultist
  */
-public class TaskExecutorService extends AbstractApplicationService {
+public class TaskExecutorService extends AbstractApplicationService implements Executor {
 
     /**
      * The logger for the tasking module.
@@ -148,6 +149,14 @@ public class TaskExecutorService extends AbstractApplicationService {
         logger.info("TaskExecutorModule successfully shutdown.");
 
         super.cleanup();
+    }
+    
+    @Override
+    public void execute(Runnable command) {
+        submitGraphics(() -> {
+            command.run();
+            return true;
+        });
     }
 
     /**

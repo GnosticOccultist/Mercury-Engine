@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11C;
-import org.lwjgl.opengl.GL13C;
 import org.lwjgl.opengl.GL30C;
+import org.lwjgl.opengl.GL43C;
 import org.lwjgl.opengl.GLCapabilities;
 
 import fr.alchemy.utilities.Validator;
@@ -270,7 +270,8 @@ public class MercuryContext implements Runnable {
         physicalDevice.check(settings);
 
         if (settings.getInteger("Samples") > 1) {
-            GL11C.glEnable(GL13C.GL_MULTISAMPLE);
+            // TODO: Don't know if it is useful.
+            GL11C.glEnable(GL43C.GL_MULTISAMPLE);
         }
 
         // Finally show the window when finished.

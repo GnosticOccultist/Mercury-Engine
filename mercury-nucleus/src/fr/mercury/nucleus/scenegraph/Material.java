@@ -133,7 +133,6 @@ public class Material implements Comparable<Material> {
 				// Compute the new shader.
 				var source = sources.values().stream().findFirst().orElseThrow();
 				var newShader = new ShaderProgram().attachSources(source);
-				newShader.upload();
 				shaders.put(name, newShader);
 				return newShader;
 			}
@@ -144,7 +143,7 @@ public class Material implements Comparable<Material> {
 	
 	public ShaderProgram getShader(String name) {
 		var shader = shaders.get(name);
-		if(shader == null) {
+		if(shader == null && sources.containsKey(name)) {
 			// Compute the new shader.
 			shader = new ShaderProgram().attachSources(sources.get(name));
 			shader.upload();
@@ -214,8 +213,7 @@ public class Material implements Comparable<Material> {
 	
 	@Override
 	public int compareTo(Material other) {
-		// TODO Auto-generated method stub
-		return 0;
+		return Integer.compare(hashCode(), other.hashCode());
 	}
 	
 	@Override

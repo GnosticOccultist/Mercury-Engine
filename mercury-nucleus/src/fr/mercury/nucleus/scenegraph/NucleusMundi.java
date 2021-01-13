@@ -8,6 +8,7 @@ import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.scenegraph.visitor.DirtyType;
 import fr.mercury.nucleus.scenegraph.visitor.VisitType;
 import fr.mercury.nucleus.scenegraph.visitor.Visitor;
+import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
  * <code>NucleusMundi</code> represents a node ('<i>nucleus</i>') constituting a manifestation of the {@link AnimaMundi}.
@@ -95,6 +96,20 @@ public class NucleusMundi extends AnimaMundi {
 			children.remove(child);
 			child.setParent(null);
 		}
+	}
+	
+	@Override
+	protected void updateChildren(ReadableTimer timer) {
+	    super.updateChildren(timer);
+	    
+	    // Propagate the geometric state update to its children, because they might
+	    // have been added after the node update and removing of its dirty flags.
+	    for(int i = 0; i < size(); i++) {
+	        var child = children.get(i);
+	        if (child != null) {
+	            child.updateGeometricState(timer);
+	        }
+	    }
 	}
 	
 	@Override

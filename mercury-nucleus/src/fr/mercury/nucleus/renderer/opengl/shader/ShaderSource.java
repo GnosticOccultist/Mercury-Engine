@@ -9,7 +9,7 @@ import org.lwjgl.opengl.GL40;
 import org.lwjgl.opengl.GL43;
 
 import fr.alchemy.utilities.Validator;
-import fr.mercury.nucleus.asset.GLSLLoader;
+import fr.mercury.nucleus.asset.loader.GLSLLoader;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
 import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.OpenGLCall;

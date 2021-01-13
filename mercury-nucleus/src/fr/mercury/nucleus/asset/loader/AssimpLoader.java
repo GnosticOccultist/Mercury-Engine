@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.asset;
+package fr.mercury.nucleus.asset.loader;
 
 import java.io.File;
 import java.nio.Buffer;
@@ -24,9 +24,11 @@ import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.collections.array.Array;
+import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
@@ -53,6 +55,17 @@ import fr.mercury.nucleus.utils.data.BufferUtils;
 public class AssimpLoader implements AssetLoader<AnimaMundi> {
 
     /**
+     * The assimp asset loader descriptor.
+     */
+    public static final AssetLoaderDescriptor<AssimpLoader> DESCRIPTOR = new AssetLoaderDescriptor<>(
+            AssimpLoader::new,
+            2, 
+            FileExtensions.BLENDER_MODEL_FORMAT, 
+            FileExtensions.OBJ_MODEL_FORMAT, 
+            FileExtensions.GLTF_MODEL_FORMAT,
+            FileExtensions.FBX_MODEL_FORMAT);
+
+    /**
      * The logger of the Assimp loader.
      */
     private static final Logger logger = FactoryLogger.getLogger("mercury.asset.assimp");
@@ -67,7 +80,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 
     @Override
     public AnimaMundi load(String path) {
-        return load(path, 0);
+        return load(path, ConfigFlag.IGNORE_ROOT_NODE | ConfigFlag.LOAD_TEXTURE);
     }
 
     public AnimaMundi load(String path, int configFlags) {
@@ -192,7 +205,6 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
                 Texture2D texture = assetManager.loadTexture2D(texturePath)
                         .setFilter(MinFilter.TRILINEAR, MagFilter.BILINEAR)
                         .setWrapMode(WrapMode.REPEAT, WrapMode.REPEAT);
-                texture.upload();
                 surface.diffuse = texture;
             }
 
@@ -255,12 +267,11 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
     }
 
     /**
-     * Create and return a new {@link AnimaMundi} based on the provided
-     * <code>Assimp</code> mesh data.
+     * Create and return a new {@link AnimaMundi} based on the provided <code>Assimp</code> mesh data.
      * 
      * @param aiMesh The mesh data to create the anima-mundi from (not null).
-     * @return A new anima-mundi with a mesh matching the one loaded with assimp
-     *         (not null).
+     * @return       A new anima-mundi with a mesh matching the one loaded with assimp
+     *               (not null).
      */
     private AnimaMundi processMesh(AIMesh aiMesh, Array<Surface> materials, Material template) {
         Validator.nonNull(aiMesh, "The Assimp mesh data can't be null!");
@@ -300,12 +311,12 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
     }
 
     /**
-     * Converts the given <code>Assimp</code> primitive type to the corresponding
-     * {@link Mode} for the {@link Mesh} to create.
+     * Converts the given <code>Assimp</code> primitive type to the corresponding {@link Mode} for 
+     * the {@link Mesh} to create.
      * 
      * @param type The primitive type to convert.
-     * @return A mesh mode corresponding to the assimp library primitive type (not
-     *         null).
+     * @return     A mesh mode corresponding to the assimp library primitive type (not
+     *             null).
      * 
      * @throws UnsupportedOperationException Thrown if the primitive type isn't
      *                                       handled by the loader.
@@ -330,8 +341,8 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
      * @param m     The 4x4 matrix to convert (not null).
      * @param store The matrix to store the result in or null to instantiate a new
      *              one.
-     * @return The store matrix containing the converted data or a new instanced
-     *         one.
+     * @return      The store matrix containing the converted data or a new instanced
+     *              one.
      */
     private Matrix4f convertMatrix(AIMatrix4x4 m, Matrix4f store) {
         Validator.nonNull(m, "The Assimp matrix can't be null!");
@@ -395,8 +406,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 
         EnumMap<RenderState.Type, RenderState> renderStates = new EnumMap<>(RenderState.Type.class);
 
-        Surface() {
-        }
+        Surface() {}
     }
 
     /**
@@ -413,13 +423,17 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
          * root node defined and just want the children.
          */
         public static final int IGNORE_ROOT_NODE = 0x1;
+        /**
+         * Whether the loader should load and apply the textures to the loaded scene.
+         */
+        public static final int LOAD_TEXTURE = 0x2;
 
         /**
          * Return whether the provided flags are containing the given one.
          * 
          * @param flag  The configuration flag to check presence of.
          * @param flags The configuration flags in which to search the flag.
-         * @return Whether the flag is described in the provided ones.
+         * @return      Whether the flag is described in the provided ones.
          */
         public static boolean hasFlag(int flag, int flags) {
             return (flags & flag) != 0x0;
