@@ -127,6 +127,27 @@ public class AssetManager extends AbstractApplicationService {
         throw new MercuryException("The asset '" + path + "' cannot be loaded using the "
                 + "provided descriptor " + descriptor + ".");
     }
+    
+    /**
+     * Loads the provided asset asynchronously using an {@link AssetLoader} described by the given {@link AssetLoaderDescriptor}.
+     * <p>
+     * If no loader is found it will throw an exception.
+     * 
+     * @param path       The path of the asset to load (not null or empty).
+     * @param descriptor The asset loader descriptor to use (not null).
+     * @param executor   The synchronous executor to run the listener on main thread.
+     * @param listener   The listener to call once the model has been loaded.
+     * @return           The loaded asset or null.
+     */
+    public <T, A extends AssetLoader<T>> CompletableFuture<Void> loadAsync(String path, AssetLoaderDescriptor<A> descriptor, Executor executor, Consumer<T> listener) {
+        AssetLoader<T> loader = instantiateNewLoader(descriptor);
+        if (loader != null) {
+            return loader.loadFuture(path, executor, listener);
+        }
+        
+        throw new MercuryException("The asset '" + path + "' cannot be loaded using the "
+                + "provided descriptor " + descriptor + ".");
+    }
 
     /**
      * Loads the provided asset by translating it into a {@link PhysicaMundi} using a valid {@link AssetLoader}.
