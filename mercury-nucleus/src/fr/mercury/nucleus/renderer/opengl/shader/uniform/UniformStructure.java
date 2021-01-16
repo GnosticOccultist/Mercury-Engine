@@ -26,19 +26,19 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
  * @author GnosticOccultist
  */
 public interface UniformStructure {
-	
-	/**
-	 * Sets the uniforms of the <code>UniformStructure</code>, to the provided
-	 * {@link ShaderProgram}.
-	 * 
-	 * @param program The shader program in which the uniforms must be added.
-	 */
-	void uniforms(ShaderProgram program);
-	
-	/**
-	 * Return the name of the <code>UniformStructure</code>.
-	 * 
-	 * @return The name of the uniform structure.
-	 */
-	String name();
+
+    /**
+     * Sets the uniforms of the <code>UniformStructure</code>, to the provided
+     * {@link ShaderProgram}.
+     * 
+     * @param program The shader program in which the uniforms must be added.
+     */
+    void uniforms(ShaderProgram program);
+
+    /**
+     * Return the name of the <code>UniformStructure</code>.
+     * 
+     * @return The name of the uniform structure.
+     */
+    String name();
 }

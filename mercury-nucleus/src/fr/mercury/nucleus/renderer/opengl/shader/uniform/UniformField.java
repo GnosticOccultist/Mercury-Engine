@@ -19,18 +19,18 @@ import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 @Target(METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface UniformField {
-	
-	/**
-	 * Return the name of the described {@link Uniform}.
-	 * 
-	 * @return The name of the uniform (not null).
-	 */
-	String name();
-	
-	/**
-	 * Return the {@link UniformType} of the described {@link Uniform}.
-	 * 
-	 * @return The type of the uniform (not null).
-	 */
-	UniformType type();
+
+    /**
+     * Return the name of the described {@link Uniform}.
+     * 
+     * @return The name of the uniform (not null).
+     */
+    String name();
+
+    /**
+     * Return the {@link UniformType} of the described {@link Uniform}.
+     * 
+     * @return The type of the uniform (not null).
+     */
+    UniformType type();
 }

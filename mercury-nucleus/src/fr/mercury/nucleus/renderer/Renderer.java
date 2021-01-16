@@ -6,11 +6,11 @@ import fr.mercury.nucleus.scenegraph.NucleusMundi;
 
 public interface Renderer extends ApplicationService {
 
-	void resize(int width, int height);
-	
-	void setClearColor(Color color);
-	
-	void setCamera(Camera camera);
+    void resize(int width, int height);
 
-	void renderScene(NucleusMundi scene);
+    void setClearColor(Color color);
+
+    void setCamera(Camera camera);
+
+    void renderScene(NucleusMundi scene);
 }
