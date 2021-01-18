@@ -20,14 +20,13 @@ import fr.mercury.nucleus.scenegraph.environment.light.Light;
  * @author GnosticOccultist
  */
 public interface EnvironmentElement extends UniformStructure {
-	
-	/**
-	 * Return whether the <code>EnvironmentElement</code> can only be specified once
-	 * per {@link AnimaMundi}.
-	 * 
-	 * @return Whether this element is a singleton, meaning it can only be specified once.
-	 */
-	default boolean isSingleton() {
-		return true;
-	}
+
+    /**
+     * Return whether the <code>EnvironmentElement</code> can only be specified once per {@link AnimaMundi}.
+     * 
+     * @return Whether this element is a singleton, meaning it can only be specified once.
+     */
+    default boolean isSingleton() {
+        return true;
+    }
 }

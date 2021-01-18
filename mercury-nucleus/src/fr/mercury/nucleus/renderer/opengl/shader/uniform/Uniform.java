@@ -449,7 +449,7 @@ public class Uniform {
          * @return The uniform type from the glsl type.
          */
         public static UniformType getUniformType(String glslType) {
-            for (UniformType value : UniformType.values()) {
+            for (var value : UniformType.values()) {
                 if (value.toGLSLType().equals(glslType)) {
                     return value;
                 }
