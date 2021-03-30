@@ -2,7 +2,6 @@ package fr.mercury.nucleus.application;
 
 import java.lang.StackWalker.Option;
 
-import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.application.service.ApplicationService;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.ReadableTimer;
@@ -67,7 +66,6 @@ public abstract class AbstractApplicationService implements ApplicationService {
      * @param The application linked to the service (not null).
      */
     public void setApplication(Application application) {
-        Validator.nonNull(application, "The application can't be null!");
         this.application = application;
     }
 
