@@ -2,11 +2,14 @@ package fr.mercury.nucleus.asset.loader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.asset.loader.data.AssetData;
+import fr.mercury.nucleus.asset.loader.data.PathAssetData;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
 
@@ -40,16 +43,16 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
     /**
      * Load the <code>ShaderSource</code> from the provided file path.
      * 
-     * @param path The file path.
+     * @param path The asset data of the file to read.
      * @return     The readed shader source code.
      */
     @Override
-    public ShaderSource load(String path) {
+    public ShaderSource load(AssetData data) {
 
         StringBuilder sb = new StringBuilder();
-        read(path, sb);
+        read(data, sb);
 
-        ShaderSource shaderSource = new ShaderSource(ShaderType.fromExtension(FileUtils.getExtension(path)),
+        ShaderSource shaderSource = new ShaderSource(ShaderType.fromExtension(FileUtils.getExtension(data.getName())),
                 sb.toString());
 
         return shaderSource;
@@ -64,12 +67,12 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
      * that the method is recursive, so an imported file can itself define some
      * imports.
      * 
-     * @param path The path of the file to read.
+     * @param data The asset data of the file to read.
      * @param sb   The string builder to fill.
      * @return     The filled string builder with the file's content.
      */
-    private StringBuilder read(String path, StringBuilder sb) {
-        try (final var bufferedReader = FileUtils.readBuffered(path)) {
+    private StringBuilder read(AssetData data, StringBuilder sb) {
+        try (final var bufferedReader = FileUtils.readBuffered(data.openStream())) {
 
             String line = null;
 
@@ -83,12 +86,12 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
                         importPath = importPath.substring(1, importPath.length() - 1);
                     }
                     // It shouldn't need to import the main-file itself into it.
-                    if (path.equals(importPath)) {
-                        throw new IOException(path + " cannot import itself!");
+                    if (data.getName().equals(importPath)) {
+                        throw new IOException(data.getName() + " cannot import itself!");
                     }
 
                     // Read the import file and inject its content in the string builder.
-                    read(importPath, sb);
+                    read(new PathAssetData(Paths.get(importPath)), sb);
 
                     logger.info("Successfully imported: " + importPath);
                 } else {
@@ -97,7 +100,7 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
             }
 
         } catch (IOException ex) {
-            logger.error("Failed to read import: " + path + " Error: " + ex.getMessage());
+            logger.error("Failed to read import: " + data.getName() + " Error: " + ex.getMessage());
             ex.printStackTrace();
         }
 

@@ -1,5 +1,6 @@
 package fr.mercury.nucleus.asset;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,8 @@ import fr.mercury.nucleus.asset.loader.GLSLLoader;
 import fr.mercury.nucleus.asset.loader.ImageReader;
 import fr.mercury.nucleus.asset.loader.MaterialLoader;
 import fr.mercury.nucleus.asset.loader.OBJLoader;
+import fr.mercury.nucleus.asset.loader.data.AssetData;
+import fr.mercury.nucleus.asset.loader.data.PathAssetData;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform;
@@ -114,17 +117,17 @@ public class AssetManager extends AbstractApplicationService {
      * <p>
      * If no loader is found it will throw an exception.
      * 
-     * @param path       The path of the asset to load (not null or empty).
+     * @param data       The asset data to load (not null).
      * @param descriptor The asset loader descriptor to use (not null).
      * @return           The loaded asset or null.
      */
-    public <T, A extends AssetLoader<T>> T load(String path, AssetLoaderDescriptor<A> descriptor) {
+    public <T, A extends AssetLoader<T>> T load(AssetData data, AssetLoaderDescriptor<A> descriptor) {
         AssetLoader<T> loader = instantiateNewLoader(descriptor);
         if (loader != null) {
-            return loader.load(path);
+            return loader.load(data);
         }
         
-        throw new MercuryException("The asset '" + path + "' cannot be loaded using the "
+        throw new MercuryException("The asset '" + data + "' cannot be loaded using the "
                 + "provided descriptor " + descriptor + ".");
     }
     
@@ -133,19 +136,19 @@ public class AssetManager extends AbstractApplicationService {
      * <p>
      * If no loader is found it will throw an exception.
      * 
-     * @param path       The path of the asset to load (not null or empty).
+     * @param data       The data of the asset to load (not null).
      * @param descriptor The asset loader descriptor to use (not null).
      * @param executor   The synchronous executor to run the listener on main thread.
      * @param listener   The listener to call once the model has been loaded.
      * @return           The loaded asset or null.
      */
-    public <T, A extends AssetLoader<T>> CompletableFuture<Void> loadAsync(String path, AssetLoaderDescriptor<A> descriptor, Executor executor, Consumer<T> listener) {
+    public <T, A extends AssetLoader<T>> CompletableFuture<Void> loadAsync(AssetData data, AssetLoaderDescriptor<A> descriptor, Executor executor, Consumer<T> listener) {
         AssetLoader<T> loader = instantiateNewLoader(descriptor);
         if (loader != null) {
-            return loader.loadFuture(path, executor, listener);
+            return loader.loadFuture(data, executor, listener);
         }
         
-        throw new MercuryException("The asset '" + path + "' cannot be loaded using the "
+        throw new MercuryException("The asset '" + data + "' cannot be loaded using the "
                 + "provided descriptor " + descriptor + ".");
     }
 
@@ -173,7 +176,7 @@ public class AssetManager extends AbstractApplicationService {
     public <A extends AnimaMundi> A loadAnimaMundi(String path) {
         AssetLoader<A> loader = acquireLoader(path);
         if (loader != null) {
-            return loader.load(path);
+            return loader.load(new PathAssetData(Paths.get(path)));
         }
 
         throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
@@ -193,7 +196,7 @@ public class AssetManager extends AbstractApplicationService {
     public <A extends AnimaMundi> CompletableFuture<Void> loadAnimaMundiAsync(String path, Executor executor, Consumer<A> listener) {
         AssetLoader<A> loader = acquireLoader(path);
         if (loader != null) {
-            return loader.loadFuture(path, executor, listener);
+            return loader.loadFuture(new PathAssetData(Paths.get(path)), executor, listener);
         }
 
         throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
@@ -211,7 +214,7 @@ public class AssetManager extends AbstractApplicationService {
     public Material[] loadMaterial(String path) {
         AssetLoader<Material[]> loader = acquireLoader(path);
         if (loader != null) {
-            return loader.load(path);
+            return loader.load(new PathAssetData(Paths.get(path)));
         }
 
         throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
@@ -284,7 +287,7 @@ public class AssetManager extends AbstractApplicationService {
     public Image loadImage(String path) {
         AssetLoader<Image> loader = acquireLoader(path);
         if (loader != null) {
-            Image image = loader.load(path);
+            Image image = loader.load(new PathAssetData(Paths.get(path)));
             return image;
         }
 
@@ -303,7 +306,7 @@ public class AssetManager extends AbstractApplicationService {
     public ShaderSource loadShaderSource(String path) {
         AssetLoader<ShaderSource> loader = acquireLoader(path);
         if (loader != null) {
-            return loader.load(path);
+            return loader.load(new PathAssetData(Paths.get(path)));
         }
 
         throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");

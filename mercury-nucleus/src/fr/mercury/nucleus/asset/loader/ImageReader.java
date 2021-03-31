@@ -12,6 +12,7 @@ import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.texture.Texture;
 import fr.mercury.nucleus.utils.MercuryException;
@@ -37,17 +38,17 @@ public class ImageReader implements AssetLoader<Image> {
     );
 
     @Override
-    public Image load(String path) {
+    public Image load(AssetData data) {
 
         Image image = null;
 
         // Creating the image from byte buffer.
         ByteBuffer buffer = BufferUtils.createByteBuffer(16777216);
-        image = decodeImage(buffer, path);
+        image = decodeImage(buffer, data);
 
         // Prevent the user that the image has been successfully loaded.
         if (image != null) {
-            logger.info("Successfully loaded image data with image file: " + path);
+            logger.info("Successfully loaded image data with image file: " + data);
         }
 
         return image;
@@ -58,10 +59,10 @@ public class ImageReader implements AssetLoader<Image> {
      * finally create an {@link Image} instance from the loaded data.
      * 
      * @param buffer The byte buffer to fill with pixel data.
-     * @param path   The path to the image to load.
+     * @param data   The asset data of the image to load.
      * @return       The loaded image instance.
      */
-    private Image decodeImage(ByteBuffer buffer, String path) {
+    private Image decodeImage(ByteBuffer buffer, AssetData data) {
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
 
@@ -72,7 +73,7 @@ public class ImageReader implements AssetLoader<Image> {
             IntBuffer components = stack.mallocInt(1);
 
             // Decode texture image into a byte buffer.
-            ByteBuffer decodedImage = STBImage.stbi_load_from_memory(FileUtils.toByteBuffer(path, buffer, this::resize),
+            ByteBuffer decodedImage = STBImage.stbi_load_from_memory(FileUtils.toByteBuffer(data.openStream(), buffer, this::resize),
                     w, h, components, 4);
 
             if (decodedImage == null) {

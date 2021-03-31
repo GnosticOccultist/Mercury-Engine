@@ -15,6 +15,7 @@ import fr.alchemy.utilities.file.json.JSONValue;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexAttribute;
@@ -49,14 +50,14 @@ public class MaterialLoader implements AssetLoader<Material[]> {
     private final StringBuffer buffer = new StringBuffer(MAX_DEFINES);
 
     @Override
-    public Material[] load(String path) {
-        var extension = FileUtils.getExtension(path);
+    public Material[] load(AssetData data) {
+        var extension = FileUtils.getExtension(data.getName());
 
         if (FileExtensions.JSON_FORMAT.equals(extension)) {
-            try (final InputStreamReader isr = FileUtils.readStream(path)) {
+            try (final InputStreamReader isr = FileUtils.readStream(data.openStream())) {
                 return loadJSON(isr);
             } catch (IOException ex) {
-                logger.error("An error has occured while reading material file '" + path + "' !", ex);
+                logger.error("An error has occured while reading material file '" + data + "' !", ex);
             }
         }
 

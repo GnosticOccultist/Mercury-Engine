@@ -14,6 +14,7 @@ import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.math.objects.Vector2f;
 import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.renderer.opengl.GLBuffer.Usage;
@@ -72,14 +73,14 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
     private final MeshStore store = new MeshStore();
 
     @Override
-    public PhysicaMundi load(String path) {
+    public PhysicaMundi load(AssetData data) {
         try {
             // Clear the store for the new loaded OBJ file.
             store.clear();
             // Set the name of the geometry to the filename by default.
-            store.setName(FileUtils.getFileName(path));
+            store.setName(data.getName());
 
-            var reader = FileUtils.readBuffered(path);
+            var reader = FileUtils.readBuffered(data.openStream());
 
             String line = null;
             long currentSmoothGroup = -1;
@@ -175,7 +176,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
             }
             return store.toMercuryPhysica();
         } catch (IOException ex) {
-            logger.error("Failed to load OBJ resource from path '" + path + "'!", ex);
+            logger.error("Failed to load OBJ resource '" + data.getName() + "'!", ex);
             return null;
         }
     }

@@ -64,7 +64,7 @@ public final class AssetLoaderDescriptor<A extends AssetLoader<?>> implements Su
         Validator.nonEmpty(extensions, "The supported extensions can't be null or empty!");
         this.loaderSupplier = loaderSupplier;
         this.priority = priority;
-        this.extensions = Array.of(extensions);
+        this.extensions = Array.ofArray(extensions);
     }
 
     /**

@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.application.service.TaskExecutorService;
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.asset.loader.data.AssetData;
 
 /**
  * <code>AssetLoader</code> is an interface for implementing a specific type of  asset loader. 
@@ -27,14 +28,14 @@ public interface AssetLoader<T> {
      * the future, therefore their must be executed once the asset loaded on the
      * main {@link Thread}.
      * 
-     * @param path The path of the object to load (not null or empty).
+     * @param data The asset data to load (not null).
      * @return     A future task which will contain the loaded object once finished.
      * 
      * @see #loadFuture(String, Consumer)
      */
-    default CompletableFuture<T> loadFuture(String path) {
-        Validator.nonEmpty(path, "The asset path to load can't be null or empty!");
-        return CompletableFuture.supplyAsync(() -> load(path));
+    default CompletableFuture<T> loadFuture(AssetData data) {
+        Validator.nonNull(data, "The asset data to load can't be null!");
+        return CompletableFuture.supplyAsync(() -> load(data));
     }
 
     /**
@@ -46,16 +47,16 @@ public interface AssetLoader<T> {
      * the future or in the listener, therefore their must be executed once the
      * asset loaded on the main {@link Thread}.
      * 
-     * @param path     The path of the object to load (not null or empty).
+     * @param data     The asset data to load (not null).
      * @param listener The listener to get the asset once loaded.
      * @return         A future task which will contain the loaded object once finished, but
      *                 shouldn't be needed if you provide a listener for the result.
      * 
      * @see #loadFuture(String, Consumer)
      */
-    default CompletableFuture<Void> loadFuture(String path, Consumer<T> listener) {
-        Validator.nonEmpty(path, "The asset path to load can't be null or empty!");
-        return CompletableFuture.supplyAsync(() -> load(path)).thenAccept(listener);
+    default CompletableFuture<Void> loadFuture(AssetData data, Consumer<T> listener) {
+        Validator.nonNull(data, "The asset data to load can't be null!");
+        return CompletableFuture.supplyAsync(() -> load(data)).thenAccept(listener);
     }
 
     /**
@@ -67,7 +68,7 @@ public interface AssetLoader<T> {
      * the future or in the listener, unless the provided {@link Executor} is
      * running on the main {@link Thread}, like {@link TaskExecutorService#getGraphicsExecutor()}
      * 
-     * @param path     The path of the object to load (not null or empty).
+     * @param data     The asset data to load (not null).
      * @param executor The executor to use for running the given listener.
      * @param listener The listener to get the asset once loaded.
      * @return         A future task which will contain the loaded object once finished, but
@@ -76,19 +77,19 @@ public interface AssetLoader<T> {
      * @see #loadFuture(String, Consumer)
      * @see TaskExecutorService
      */
-    default CompletableFuture<Void> loadFuture(String path, Executor executor, Consumer<T> listener) {
-        Validator.nonEmpty(path, "The asset path to load can't be null or empty!");
-        return CompletableFuture.supplyAsync(() -> load(path)).thenAcceptAsync(listener, executor);
+    default CompletableFuture<Void> loadFuture(AssetData data, Executor executor, Consumer<T> listener) {
+        Validator.nonNull(data, "The asset data to load can't be null!");
+        return CompletableFuture.supplyAsync(() -> load(data)).thenAcceptAsync(listener, executor);
     }
 
     /**
      * Loads the specific asset type from the specified path, to use in the
      * application.
      * 
-     * @param path The path of the object to load (not null or empty).
+     * @param data The asset data to load (not null).
      * @return     The loaded object.
      */
-    T load(String path);
+    T load(AssetData data);
 
     /**
      * Sets the {@link AssetManager} for this <code>AssetLoader</code>, which can be

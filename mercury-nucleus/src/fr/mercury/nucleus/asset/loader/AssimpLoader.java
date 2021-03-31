@@ -29,6 +29,7 @@ import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
@@ -79,11 +80,11 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
     private AssetManager assetManager = null;
 
     @Override
-    public AnimaMundi load(String path) {
-        return load(path, ConfigFlag.IGNORE_ROOT_NODE | ConfigFlag.LOAD_TEXTURE);
+    public AnimaMundi load(AssetData data) {
+        return load(data, ConfigFlag.IGNORE_ROOT_NODE | ConfigFlag.LOAD_TEXTURE);
     }
 
-    public AnimaMundi load(String path, int configFlags) {
+    public AnimaMundi load(AssetData data, int configFlags) {
         // Define our own IO logic for Assimp.
         AIFileIO io = AIFileIO.create();
 
@@ -133,9 +134,9 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
         }, MemoryUtil.NULL);
 
         // TODO: Allow the user to choose its own tags.
-        AIScene scene = Assimp.aiImportFile(path, DEFAULT_ASSIMP_FLAGS);
+        AIScene scene = Assimp.aiImportFile(data.getName(), DEFAULT_ASSIMP_FLAGS);
         if (scene == null) {
-            throw new MercuryException("Error while loading model '" + path + "': " + Assimp.aiGetErrorString());
+            throw new MercuryException("Error while loading model '" + data + "': " + Assimp.aiGetErrorString());
         }
 
         scene.mRootNode().mTransformation(AIMatrix4x4.create().set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
