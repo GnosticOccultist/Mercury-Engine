@@ -100,6 +100,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
 
                 file.ReadProc((pFile, pBuffer, size, count) -> {
                     var max = Math.min(data.remaining(), size * count);
+                    System.out.println("path :" + filePath);
                     MemoryUtil.memCopy(MemoryUtil.memAddress(data) + data.position(), pBuffer, max);
                     return max;
                 });
@@ -134,14 +135,14 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
         }, MemoryUtil.NULL);
 
         // TODO: Allow the user to choose its own tags.
-        AIScene scene = Assimp.aiImportFile(data.getName(), DEFAULT_ASSIMP_FLAGS);
+        AIScene scene = Assimp.aiImportFile(data.getPath(), DEFAULT_ASSIMP_FLAGS);
         if (scene == null) {
             throw new MercuryException("Error while loading model '" + data + "': " + Assimp.aiGetErrorString());
         }
 
         scene.mRootNode().mTransformation(AIMatrix4x4.create().set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
 
-        var materials = assetManager.loadMaterial("/materials/unlit.json");
+        var materials = assetManager.loadMaterial("materials/unlit.json");
         assert materials[2] != null;
         materials[2].getFirstShader();
 

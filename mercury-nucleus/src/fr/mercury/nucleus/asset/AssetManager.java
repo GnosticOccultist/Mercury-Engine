@@ -10,7 +10,9 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 import fr.alchemy.utilities.Instantiator;
+import fr.alchemy.utilities.SystemUtils;
 import fr.alchemy.utilities.Validator;
+import fr.alchemy.utilities.collections.array.Array;
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
@@ -56,6 +58,10 @@ public class AssetManager extends AbstractApplicationService {
      * The table containing the asset loaders ordered by their descriptor.
      */
     private final Map<AssetLoaderDescriptor<?>, AssetLoader<?>> loaders = new HashMap<>();
+    /**
+     * The table containing the asset loaders ordered by their descriptor.
+     */
+    private final Array<AssetData> roots = Array.ofType(AssetData.class);
 
     /**
      * Instantiates a new <code>AssetManager</code> with a set of default
@@ -70,6 +76,20 @@ public class AssetManager extends AbstractApplicationService {
         registerLoader(ImageReader.DESCRIPTOR);
         registerLoader(MaterialLoader.DESCRIPTOR);
         registerLoader(AssimpLoader.DESCRIPTOR);
+        
+        registerWorkingDirectory();
+    }
+    
+    private void registerWorkingDirectory() {
+        var workingDirectory = SystemUtils.getWorkingDirectory();
+        registerRoot(new PathAssetData(Paths.get("").toAbsolutePath()));
+        registerRoot(new PathAssetData(Paths.get("", "resources").toAbsolutePath()));
+
+        var index = workingDirectory.lastIndexOf('\\');
+        workingDirectory = workingDirectory.substring(0, index);
+        workingDirectory += "/mercury-nucleus/resources";
+
+        registerRoot(new PathAssetData(Paths.get(workingDirectory)));
     }
 
     /**
@@ -174,12 +194,7 @@ public class AssetManager extends AbstractApplicationService {
      * @return     The loaded model or null.
      */
     public <A extends AnimaMundi> A loadAnimaMundi(String path) {
-        AssetLoader<A> loader = acquireLoader(path);
-        if (loader != null) {
-            return loader.load(new PathAssetData(Paths.get(path)));
-        }
-
-        throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
+        return load(new PathAssetData(Paths.get(path)));
     }
 
     /**
@@ -212,12 +227,7 @@ public class AssetManager extends AbstractApplicationService {
      * @return     The loaded materials or null.
      */
     public Material[] loadMaterial(String path) {
-        AssetLoader<Material[]> loader = acquireLoader(path);
-        if (loader != null) {
-            return loader.load(new PathAssetData(Paths.get(path)));
-        }
-
-        throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
+        return load(new PathAssetData(Paths.get(path)));
     }
 
     /**
@@ -285,13 +295,7 @@ public class AssetManager extends AbstractApplicationService {
      * @return     The loaded image or null.
      */
     public Image loadImage(String path) {
-        AssetLoader<Image> loader = acquireLoader(path);
-        if (loader != null) {
-            Image image = loader.load(new PathAssetData(Paths.get(path)));
-            return image;
-        }
-
-        throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
+        return load(new PathAssetData(Paths.get(path)));
     }
 
     /**
@@ -304,12 +308,23 @@ public class AssetManager extends AbstractApplicationService {
      * @return     The loaded shader source or null.
      */
     public ShaderSource loadShaderSource(String path) {
-        AssetLoader<ShaderSource> loader = acquireLoader(path);
+        return load(new PathAssetData(Paths.get(path)));
+    }
+    
+    public <T> T load(AssetData data) {
+        AssetLoader<T> loader = acquireLoader(data.getName()); 
         if (loader != null) {
-            return loader.load(new PathAssetData(Paths.get(path)));
+            // Try resolving asset path with registered roots.
+            var resoved = tryResolving(data);
+            if (resoved != null) {
+                return loader.load(resoved);
+            }
+            
+            logger.error("Couldn't resolve '" + data + "' with the roots registered!");
+            throw new MercuryException("The asset '" + data + "' cannot be loaded using the registered roots.");
         }
-
-        throw new MercuryException("The asset '" + path + "' cannot be loaded using the registered loaders.");
+        
+        throw new MercuryException("The asset '" + data + "' cannot be loaded using the registered loaders.");
     }
 
     /**
@@ -342,6 +357,33 @@ public class AssetManager extends AbstractApplicationService {
         }
 
         logger.warning("No asset loaders are registered for the extension: '" + extension + "'.");
+        return null;
+    }
+    
+    public AssetManager registerRoot(AssetData root) {
+        this.roots.add(root);
+        return this;
+    }
+    
+    public AssetManager unregisterRoot(AssetData root) {
+        this.roots.remove(root);
+        return this;
+    }
+    
+    private AssetData tryResolving(AssetData data) {
+        if (roots.isEmpty()) {
+            logger.error("Couldn't resolve '" + data + " since there are no roots registered!");
+            return null;
+        }
+        
+        for (var root : roots) {
+            
+            var resolved = root.resolve(data);
+            if (resolved != null) {
+                return resolved;
+            }
+        }
+        
         return null;
     }
 

@@ -2,14 +2,12 @@ package fr.mercury.nucleus.asset.loader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Paths;
 
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.loader.data.AssetData;
-import fr.mercury.nucleus.asset.loader.data.PathAssetData;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
 
@@ -91,7 +89,7 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
                     }
 
                     // Read the import file and inject its content in the string builder.
-                    read(new PathAssetData(Paths.get(importPath)), sb);
+                    read(data.sibling(importPath), sb);
 
                     logger.info("Successfully imported: " + importPath);
                 } else {
