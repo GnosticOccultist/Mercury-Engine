@@ -36,14 +36,14 @@ public class TestAsyncLoading extends MercuryApplication {
         var executor = new TaskExecutorService();
         linkService(executor);
 
+        scene.setRenderStates(new DepthBufferState().enable(), new BlendState().enable(),
+                new FaceCullingState().setFace(Face.BACK).enable());
+        
         // Load a complex model, like the sponza, asynchronously and then upload it on
         // the main thread.
         assetManager.loadAnimaMundiAsync("resources/model/sponza/sponza.gltf", executor, a -> uploadOnMainThread(a));
 
         logger.info("Continuing on " + Thread.currentThread().getName() + "...");
-
-        scene.setRenderStates(new DepthBufferState().enable(), new BlendState().enable(),
-                new FaceCullingState().setFace(Face.BACK).enable());
     }
 
     @OpenGLCall

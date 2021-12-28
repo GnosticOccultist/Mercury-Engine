@@ -96,7 +96,7 @@ public class RenderStateMachine {
         var current = result != null ? result.lastSafe().orElse(null) : null;
 
         if (current == null) {
-            throw new UnsupportedOperationException("No state is applied!");
+            return false;
         }
 
         return canApply(current, state);

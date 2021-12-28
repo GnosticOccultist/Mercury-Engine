@@ -131,46 +131,6 @@ public class AssetManager extends AbstractApplicationService {
     public <A extends AssetLoader<?>> A unregisterLoader(AssetLoaderDescriptor<A> descriptor) {
         return (A) loaders.remove(descriptor);
     }
-    
-    /**
-     * Loads the provided asset using an {@link AssetLoader} described by the given {@link AssetLoaderDescriptor}.
-     * <p>
-     * If no loader is found it will throw an exception.
-     * 
-     * @param data       The asset data to load (not null).
-     * @param descriptor The asset loader descriptor to use (not null).
-     * @return           The loaded asset or null.
-     */
-    public <T, A extends AssetLoader<T>> T load(AssetData data, AssetLoaderDescriptor<A> descriptor) {
-        AssetLoader<T> loader = instantiateNewLoader(descriptor);
-        if (loader != null) {
-            return loader.load(data);
-        }
-        
-        throw new MercuryException("The asset '" + data + "' cannot be loaded using the "
-                + "provided descriptor " + descriptor + ".");
-    }
-    
-    /**
-     * Loads the provided asset asynchronously using an {@link AssetLoader} described by the given {@link AssetLoaderDescriptor}.
-     * <p>
-     * If no loader is found it will throw an exception.
-     * 
-     * @param data       The data of the asset to load (not null).
-     * @param descriptor The asset loader descriptor to use (not null).
-     * @param executor   The synchronous executor to run the listener on main thread.
-     * @param listener   The listener to call once the model has been loaded.
-     * @return           The loaded asset or null.
-     */
-    public <T, A extends AssetLoader<T>> CompletableFuture<Void> loadAsync(AssetData data, AssetLoaderDescriptor<A> descriptor, Executor executor, Consumer<T> listener) {
-        AssetLoader<T> loader = instantiateNewLoader(descriptor);
-        if (loader != null) {
-            return loader.loadFuture(data, executor, listener);
-        }
-        
-        throw new MercuryException("The asset '" + data + "' cannot be loaded using the "
-                + "provided descriptor " + descriptor + ".");
-    }
 
     /**
      * Loads the provided asset by translating it into a {@link PhysicaMundi} using a valid {@link AssetLoader}.
@@ -311,13 +271,79 @@ public class AssetManager extends AbstractApplicationService {
         return load(new PathAssetData(Paths.get(path)));
     }
     
+    /**
+     * Loads the provided asset using an {@link AssetLoader} described by the extension of the given {@link AssetData}.
+     * <p>
+     * If no loader is found it will throw an exception.
+     * 
+     * @param data       The data of the asset to load (not null).
+     * @param executor   The synchronous executor to run the listener on main thread.
+     * @param listener   The listener to call once the model has been loaded.
+     * @return           The loaded asset or null.
+     */
     public <T> T load(AssetData data) {
-        AssetLoader<T> loader = acquireLoader(data.getName()); 
+        return load(data, null);
+    }
+    
+    /**
+     * Loads the provided asset using an {@link AssetLoader} described by the given {@link AssetLoaderDescriptor}.
+     * <p>
+     * If no loader is found it will throw an exception.
+     * 
+     * @param data       The data of the asset to load (not null).
+     * @param descriptor The asset loader descriptor to use (not null).
+     * @param executor   The synchronous executor to run the listener on main thread.
+     * @param listener   The listener to call once the model has been loaded.
+     * @return           The loaded asset or null.
+     */
+    public <T, A extends AssetLoader<T>> T load(AssetData data, AssetLoaderDescriptor<A> descriptor) {
+        AssetLoader<T> loader = descriptor == null ? acquireLoader(data.getName()) : instantiateNewLoader(descriptor);
         if (loader != null) {
             // Try resolving asset path with registered roots.
             var resoved = tryResolving(data);
             if (resoved != null) {
                 return loader.load(resoved);
+            }
+            
+            logger.error("Couldn't resolve '" + data + "' with the roots registered!");
+            throw new MercuryException("The asset '" + data + "' cannot be loaded using the registered roots.");
+        }
+        
+        throw new MercuryException("The asset '" + data + "' cannot be loaded using the registered loaders.");
+    }
+    
+    /**
+     * Loads the provided asset asynchronously using an {@link AssetLoader} described by the extension of the given {@link AssetData}.
+     * <p>
+     * If no loader is found it will throw an exception.
+     * 
+     * @param data       The data of the asset to load (not null).
+     * @param executor   The synchronous executor to run the listener on main thread.
+     * @param listener   The listener to call once the model has been loaded.
+     * @return           The loaded asset or null.
+     */
+    public <T> CompletableFuture<Void> loadAsync(AssetData data, Executor executor, Consumer<T> listener) {
+        return loadAsync(data, null, executor, listener);
+    }
+    
+    /**
+     * Loads the provided asset asynchronously using an {@link AssetLoader} described by the given {@link AssetLoaderDescriptor}.
+     * <p>
+     * If no loader is found it will throw an exception.
+     * 
+     * @param data       The data of the asset to load (not null).
+     * @param descriptor The asset loader descriptor to use (not null).
+     * @param executor   The synchronous executor to run the listener on main thread.
+     * @param listener   The listener to call once the model has been loaded.
+     * @return           The loaded asset or null.
+     */
+    public <T, A extends AssetLoader<T>> CompletableFuture<Void> loadAsync(AssetData data, AssetLoaderDescriptor<A> descriptor, Executor executor, Consumer<T> listener) {
+        AssetLoader<T> loader = descriptor == null ? acquireLoader(data.getName()) : instantiateNewLoader(descriptor);
+        if (loader != null) {
+            // Try resolving asset path with registered roots.
+            var resoved = tryResolving(data);
+            if (resoved != null) {
+                return loader.loadFuture(data, executor, listener);
             }
             
             logger.error("Couldn't resolve '" + data + "' with the roots registered!");
