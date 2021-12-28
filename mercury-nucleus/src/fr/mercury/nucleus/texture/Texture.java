@@ -336,6 +336,15 @@ public abstract class Texture extends GLObject {
 
         super.restart();
     }
+    
+    /**
+     * Returns the {@link Image} contained in the <code>Texture</code>.
+     * 
+     * @param image The image contained by the texture.
+     */
+    public Image getImage() {
+        return image;
+    }
 
     /**
      * Sets the {@link Image} contained in the <code>Texture</code>.
