@@ -2,6 +2,8 @@ package fr.mercury.nucleus.asset.loader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
@@ -30,6 +32,19 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
      * The tag for import glsl file inside the shader source.
      */
     private static final String IMPORT_TAG = "#import";
+    /**
+     * The tag for beginning a for-loop in a glsl file.
+     */
+    private static final String IMPORT_BEGIN_FOR = "#for";
+    /**
+     * The tag for ending a for-loop in a glsl file.
+     */
+    private static final String IMPORT_END_FOR = "#endfor";
+    /**
+     * The for-loop pattern regex.
+     */
+    private static final Pattern FOR_REGEX = Pattern
+            .compile("([^=]+)=\\s*([0-9]+)\\s*\\.\\.\\s*([0-9]+)\\s*\\((.+)\\)");
     /**
      * The glsl asset loader descriptor.
      */
@@ -73,8 +88,14 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
         try (final var bufferedReader = FileUtils.readBuffered(data.openStream())) {
 
             String line = null;
+            int lineIndex = 0;
+
+            String forDeclaration = null;
+            StringBuilder currentFor = null;
 
             while ((line = bufferedReader.readLine()) != null) {
+
+                lineIndex++;
 
                 if (line.startsWith(IMPORT_TAG)) {
 
@@ -85,18 +106,59 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
                     }
                     // It shouldn't need to import the main-file itself into it.
                     if (data.getName().equals(importPath)) {
-                        throw new IOException(data.getName() + " cannot import itself!");
+                        throw new IOException(data.getName() + " at line " + lineIndex + " cannot import itself!");
                     }
 
                     // Read the import file and inject its content in the string builder.
                     read(data.sibling(importPath), sb);
 
                     logger.info("Successfully imported: " + importPath);
+                } else if (line.startsWith(IMPORT_BEGIN_FOR)) {
+                    forDeclaration = line;
+                    currentFor = new StringBuilder();
+                } else if (line.startsWith(IMPORT_END_FOR)) {
+
+                    if (currentFor == null) {
+                        throw new IOException("Mark ending of a for-loop at line ('" + line + "'@" + lineIndex
+                                + "), that hasn't started!");
+                    }
+
+                    forDeclaration = forDeclaration.substring((IMPORT_BEGIN_FOR + " ").length()).trim();
+
+                    Matcher matcher = FOR_REGEX.matcher(forDeclaration);
+                    if (matcher.matches()) {
+                        String varN = "$" + matcher.group(1);
+                        int start = Integer.parseInt(matcher.group(2));
+                        int end = Integer.parseInt(matcher.group(3));
+                        String inj = matcher.group(4);
+                        if (inj.trim().isEmpty()) {
+                            inj = "$0";
+                        }
+
+                        String inCode = currentFor.toString();
+                        currentFor = null;
+
+                        for (int i = start; i < end; i++) {
+                            if (i != start) {
+                                sb.append("\n");
+                            }
+                            sb.append(inj.replace("$0", "\n" + inCode).replace(varN, "" + i)).append("\n");
+                        }
+                        continue;
+                    }
                 } else {
-                    sb.append(line).append('\n');
+                    /*
+                     * If we're inside a for loop append in a seperate builder. Otherwise append to
+                     * the global output.
+                     */
+                    if (currentFor != null) {
+                        currentFor.append(line).append("\n");
+                    } else {
+                        sb.append(line).append('\n');
+                    }
+
                 }
             }
-
         } catch (IOException ex) {
             logger.error("Failed to read import: " + data.getName() + " Error: " + ex.getMessage());
             ex.printStackTrace();
