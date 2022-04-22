@@ -2,6 +2,8 @@ package fr.mercury.nucleus.application;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.lwjgl.Version;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL30C;
@@ -20,13 +22,16 @@ import fr.mercury.nucleus.renderer.device.Vendor;
 import fr.mercury.nucleus.utils.MercuryException;
 
 /**
- * <code>MercuryContext</code> represent the core layer of an {@link Application}. It contains the main-loop within 
- * which the update and render logic take place.
+ * <code>MercuryContext</code> represent the core layer of an
+ * {@link Application}. It contains the main-loop within which the update and
+ * render logic take place.
  * <p>
- * The usage of a context is defined by its {@link Type}, for example some context type can't display a window, 
- * handle inputs or play sounds, like the {@link Type#HEADLESS}.
- * Such type should be provided in the {@link MercurySettings}, using the {@link MercurySettings#setContextType(Type)} 
- * method and before starting the application.
+ * The usage of a context is defined by its {@link Type}, for example some
+ * context type can't display a window, handle inputs or play sounds, like the
+ * {@link Type#HEADLESS}. Such type should be provided in the
+ * {@link MercurySettings}, using the
+ * {@link MercurySettings#setContextType(Type)} method and before starting the
+ * application.
  * 
  * @author GnosticOccultist
  */
@@ -75,8 +80,9 @@ public class MercuryContext implements Runnable {
     private PhysicalDevice physicalDevice;
 
     /**
-     * Instantiates and return a new <code>MercuryContext</code> bound to the provided {@link Application}. 
-     * The context is created accordingly to the given {@link MercurySettings}.
+     * Instantiates and return a new <code>MercuryContext</code> bound to the
+     * provided {@link Application}. The context is created accordingly to the given
+     * {@link MercurySettings}.
      * 
      * @param application The application to bound the context to (not null).
      * @param settings    The settings to use for creation (not null).
@@ -97,6 +103,7 @@ public class MercuryContext implements Runnable {
             // No need for window.
             break;
         case WINDOW:
+        case OFFSCREEN:
             var window = new GLFWWindow();
             application.linkService(window);
             break;
@@ -226,6 +233,8 @@ public class MercuryContext implements Runnable {
         try {
 
             createContext(settings);
+            logger.info("Created LWJGL context " + Version.getVersion() + " and running on thread "
+                    + Thread.currentThread().getName() + "\n* Graphics Adapter: GLFW " + GLFW.glfwGetVersionString());
 
             initialized.set(true);
 
@@ -259,6 +268,18 @@ public class MercuryContext implements Runnable {
         window.useVSync(settings.isVSync());
 
         GLCapabilities capabilities = GL.createCapabilities();
+        var minVersion = settings.getMinGraphicsVersion();
+        if (!checkVersionSupport(capabilities, minVersion)) {
+            throw new MercuryException("A minimum version " + minVersion + " of the graphics API is required to run '"
+                    + settings.getTitle() + "'!");
+        }
+        
+        var version = settings.getGraphicsAPI();
+        if (!checkVersionSupport(capabilities, version)) {
+            logger.info("Graphics version '" + version + "' not supported, defaulting to the minimum "
+                    + "required version '" + minVersion + "'...");
+            settings.setGraphicsAPI(minVersion);
+        }
 
         /*
          * Once we have set the current OpenGL context we can access informations about
@@ -275,7 +296,9 @@ public class MercuryContext implements Runnable {
         }
 
         // Finally show the window when finished.
-        window.show();
+        if (type.canShowWindow()) {
+            window.show();
+        }
 
         var glfwWindow = (GLFWWindow) window;
 
@@ -313,8 +336,8 @@ public class MercuryContext implements Runnable {
     }
 
     /**
-     * Cleanup the <code>MercuryContext</code> and all of its sub-services.
-     * This method is called automatically when exiting the main-loop.
+     * Cleanup the <code>MercuryContext</code> and all of its sub-services. This
+     * method is called automatically when exiting the main-loop.
      */
     private void cleanup() {
         application.cleanup();
@@ -406,6 +429,37 @@ public class MercuryContext implements Runnable {
     }
 
     /**
+     * Check if the given version is supported by the {@link GLCapabilities}.
+     * 
+     * @param capabilities The OpenGL capabilities (not null).
+     * @param version      The version to check support for (not null, not empty).
+     * @return             Whether the version is supported.
+     */
+    public static boolean checkVersionSupport(GLCapabilities capabilities, String version) {
+        switch (version) {
+        case MercurySettings.OPENGL_32:
+            return capabilities.OpenGL32;
+        case MercurySettings.OPENGL_33:
+            return capabilities.OpenGL33;
+        case MercurySettings.OPENGL_40:
+            return capabilities.OpenGL40;
+        case MercurySettings.OPENGL_41:
+            return capabilities.OpenGL41;
+        case MercurySettings.OPENGL_42:
+            return capabilities.OpenGL42;
+        case MercurySettings.OPENGL_43:
+            return capabilities.OpenGL43;
+        case MercurySettings.OPENGL_44:
+            return capabilities.OpenGL44;
+        case MercurySettings.OPENGL_45:
+            return capabilities.OpenGL45;
+        case MercurySettings.OPENGL_46:
+            return capabilities.OpenGL46;
+        }
+        return false;
+    }
+
+    /**
      * <code>Type</code> enumerates the different context which can be created along
      * the {@link Application}.
      * 
@@ -423,6 +477,24 @@ public class MercuryContext implements Runnable {
          */
         WINDOW,
         /**
+         * The offscreen context isn't visible by the user directly through a window.
+         * Rendering still occurs but the result is often copied to a buffer for other
+         * usage, such as networking, screenshot saving, or display it in a external UI
+         * framework.
+         */
+        OFFSCREEN {
+
+            /**
+             * Return false, offscreen context shouldn't allow a window to be shown.
+             * 
+             * @return Always false.
+             */
+            @Override
+            protected boolean canShowWindow() {
+                return false;
+            }
+        },
+        /**
          * The headless context doesn't define any renderable surface and doesn't
          * provide any window, input or sound playing or streaming.
          * <p>
@@ -439,6 +511,16 @@ public class MercuryContext implements Runnable {
             protected boolean isRenderable() {
                 return false;
             }
+
+            /**
+             * Return false, headless context shouldn't allow a window to be shown.
+             * 
+             * @return Always false.
+             */
+            @Override
+            protected boolean canShowWindow() {
+                return false;
+            }
         };
 
         /**
@@ -448,6 +530,16 @@ public class MercuryContext implements Runnable {
          * @return Whether the context supports rendering.
          */
         protected boolean isRenderable() {
+            return true;
+        }
+
+        /**
+         * Return whether the <code>Type</code> of context support showing the window on
+         * screen.
+         * 
+         * @return Whether the context supports window showing.
+         */
+        protected boolean canShowWindow() {
             return true;
         }
     }

@@ -56,8 +56,9 @@ import fr.mercury.nucleus.utils.ReadableTimer;
 import fr.mercury.nucleus.utils.data.Allocator;
 
 /**
- * <code>GLFWWindow</code> is an implementation of {@link Window} which extends {@link AbstractApplicationService}.
- * It uses the GLFW bindings provided by LWJGL3 to create a window based on an OpenGL context.
+ * <code>GLFWWindow</code> is an implementation of {@link Window} which extends
+ * {@link AbstractApplicationService}. It uses the GLFW bindings provided by
+ * LWJGL3 to create a window based on an OpenGL context.
  * 
  * @author GnosticOccultist
  */
@@ -102,8 +103,16 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
         glfwWindowHint(GLFW_REFRESH_RATE, settings.getFrequency());
         glfwWindowHint(GLFW_SAMPLES, settings.getSamples());
 
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+        var version = settings.getGraphicsAPI();
+        var hints = getVersionHints(version);
+        // No found any matching version so default to the minimum required.
+        if (hints[0] == 0) {
+            version = settings.getMinGraphicsVersion();
+            hints = getVersionHints(version);
+        }
+
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, hints[0]);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, hints[1]);
 
         // This allow to use OpenGL 3.x and 4.x contexts on OSX.
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -178,6 +187,56 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
         setIcon(icon);
 
         super.initialize(settings);
+    }
+
+    /**
+     * Return the version hints as an array of two integer, the first one being the
+     * major and second the minor.
+     * 
+     * @param version The version string representation.
+     * @return An array of two version integer (not null).
+     */
+    private int[] getVersionHints(String version) {
+        var result = new int[2];
+        switch (version) {
+        case MercurySettings.OPENGL_32:
+            result[0] = 3;
+            result[1] = 2;
+            break;
+        case MercurySettings.OPENGL_33:
+            result[0] = 3;
+            result[1] = 3;
+            break;
+        case MercurySettings.OPENGL_40:
+            result[0] = 4;
+            result[1] = 0;
+            break;
+        case MercurySettings.OPENGL_41:
+            result[0] = 4;
+            result[1] = 1;
+            break;
+        case MercurySettings.OPENGL_42:
+            result[0] = 4;
+            result[1] = 2;
+            break;
+        case MercurySettings.OPENGL_43:
+            result[0] = 4;
+            result[1] = 3;
+            break;
+        case MercurySettings.OPENGL_44:
+            result[0] = 4;
+            result[1] = 4;
+            break;
+        case MercurySettings.OPENGL_45:
+            result[0] = 4;
+            result[1] = 5;
+            break;
+        case MercurySettings.OPENGL_46:
+            result[0] = 4;
+            result[1] = 6;
+            break;
+        }
+        return result;
     }
 
     @Override

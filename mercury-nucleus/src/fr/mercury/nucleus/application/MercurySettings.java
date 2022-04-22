@@ -24,10 +24,23 @@ public final class MercurySettings extends HashMap<String, Object> {
      * The default table with settings.
      */
     private static final MercurySettings DEFAULT = new MercurySettings(false);
+    
+    
+    public static final String OPENGL_32 = "OpenGL32";
+    public static final String OPENGL_33 = "OpenGL33";
+    public static final String OPENGL_40 = "OpenGL40";
+    public static final String OPENGL_41 = "OpenGL41";
+    public static final String OPENGL_42 = "OpenGL42";
+    public static final String OPENGL_43 = "OpenGL43";
+    public static final String OPENGL_44 = "OpenGL44";
+    public static final String OPENGL_45 = "OpenGL45";
+    public static final String OPENGL_46 = "OpenGL46";
 
     static {
 
         DEFAULT.put("ContextType", Type.WINDOW);
+        DEFAULT.put("GraphicsAPI", OPENGL_43);
+        DEFAULT.put("MinGraphicsVersion", OPENGL_32);
         DEFAULT.put("RendererType", "fr.mercury.nucleus.renderer.DefaultRenderer");
         DEFAULT.put("Width", 1280);
         DEFAULT.put("Height", 768);
@@ -94,6 +107,54 @@ public final class MercurySettings extends HashMap<String, Object> {
     public void setContextType(Type type) {
         Validator.nonNull(type, "The context type can't be null!");
         put("ContextType", type);
+    }
+    
+    /**
+     * Return the graphics API used to render the {@link MercuryApplication}.
+     * This setting is ignored if the context type is {@link Type#HEADLESS}.
+     * 
+     * @return The graphics API (not null).
+     */
+    public String getGraphicsAPI() {
+        var result = (String) get("MinGraphicsVersion");
+
+        assert result != null;
+        return result; 
+    }
+    
+    /**
+     * Set the graphics API used to render the {@link MercuryApplication}.
+     * This setting is ignored if the context type is {@link Type#HEADLESS}.
+     * 
+     * @return The graphics API (not null).
+     */
+    public void setGraphicsAPI(String version) {
+        Validator.nonEmpty(version, "The minimum graphics version type can't be null or empty!");
+        put("GraphicsAPI", version);
+    }
+    
+    /**
+     * Return the minimum graphics version required to run the {@link MercuryApplication}.
+     * This setting is ignored if the context type is {@link Type#HEADLESS}.
+     * 
+     * @return The minimum required graphics version (not null).
+     */
+    public String getMinGraphicsVersion() {
+        var result = (String) get("MinGraphicsVersion");
+
+        assert result != null;
+        return result; 
+    }
+    
+    /**
+     * Set the minimum graphics version required to run the {@link MercuryApplication}.
+     * This setting is ignored if the context type is {@link Type#HEADLESS}.
+     * 
+     * @return The minimum required graphics version (not null).
+     */
+    public void setMinGraphicsVersion(String version) {
+        Validator.nonEmpty(version, "The minimum graphics version type can't be null or empty!");
+        put("MinGraphicsVersion", version);
     }
 
     /**
