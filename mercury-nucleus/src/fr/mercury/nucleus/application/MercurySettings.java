@@ -25,15 +25,41 @@ public final class MercurySettings extends HashMap<String, Object> {
      */
     private static final MercurySettings DEFAULT = new MercurySettings(false);
     
-    
+    /**
+     * OpenGL graphics functionality up to 3.2 version.
+     */
     public static final String OPENGL_32 = "OpenGL32";
+    /**
+     * OpenGL graphics functionality up to 3.3 version.
+     */
     public static final String OPENGL_33 = "OpenGL33";
+    /**
+     * OpenGL graphics functionality up to 4.0 version.
+     */
     public static final String OPENGL_40 = "OpenGL40";
+    /**
+     * OpenGL graphics functionality up to 4.1 version.
+     */
     public static final String OPENGL_41 = "OpenGL41";
+    /**
+     * OpenGL graphics functionality up to 4.2 version.
+     */
     public static final String OPENGL_42 = "OpenGL42";
+    /**
+     * OpenGL graphics functionality up to 4.3 version.
+     */
     public static final String OPENGL_43 = "OpenGL43";
+    /**
+     * OpenGL graphics functionality up to 4.4 version.
+     */
     public static final String OPENGL_44 = "OpenGL44";
+    /**
+     * OpenGL graphics functionality up to 4.5 version.
+     */
     public static final String OPENGL_45 = "OpenGL45";
+    /**
+     * OpenGL graphics functionality up to 4.6 version.
+     */
     public static final String OPENGL_46 = "OpenGL46";
 
     static {

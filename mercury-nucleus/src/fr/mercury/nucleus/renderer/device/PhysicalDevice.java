@@ -9,9 +9,10 @@ import org.lwjgl.opengl.GLCapabilities;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.application.MercurySettings;
 
-public class PhysicalDevice {
+public class PhysicalDevice extends AbstractApplicationService {
 
     /**
      * The application logger.
@@ -31,6 +32,10 @@ public class PhysicalDevice {
      */
     private final String version;
     /**
+     * The current version of the shading language.
+     */
+    private final String shadingLangVersion;
+    /**
      * The array of available extensions.
      */
     private final String[] extensions;
@@ -39,11 +44,12 @@ public class PhysicalDevice {
      */
     private final GLCapabilities capabilities;
 
-    public PhysicalDevice(Vendor vendor, String deviceName, String version, String[] extensions,
-            GLCapabilities capabilities) {
+    public PhysicalDevice(Vendor vendor, String deviceName, String version, String shadingLangVersion, 
+            String[] extensions, GLCapabilities capabilities) {
         this.vendor = vendor;
         this.deviceName = deviceName;
         this.version = version;
+        this.shadingLangVersion = shadingLangVersion;
         this.extensions = extensions;
         this.capabilities = capabilities;
     }
@@ -85,6 +91,10 @@ public class PhysicalDevice {
         return version;
     }
 
+    public String getShadingLangVersion() {
+        return shadingLangVersion;
+    }
+    
     private String versionOnly() {
         return version.split(" ")[0];
     }
@@ -119,7 +129,6 @@ public class PhysicalDevice {
     @Override
     public String toString() {
         return "* VENDOR = " + vendor + "\n" + "* DEVICE_NAME = " + deviceName + "\n" + "* GRAPHICS_API_VERSION = "
-                + version + "\n" + "* EXTENSIONS_COUNT = " + extensions.length + "\n" + "* EXTENSIONS = "
-                + Arrays.toString(extensions) + "\n";
+                + version + "\n" + "* SHADING_LANGUAGE_VERSION = " + shadingLangVersion + "\n" + "* EXTENSIONS_COUNT = " + extensions.length;
     }
 }

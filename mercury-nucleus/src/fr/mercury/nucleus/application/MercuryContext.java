@@ -6,6 +6,7 @@ import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11C;
+import org.lwjgl.opengl.GL20C;
 import org.lwjgl.opengl.GL30C;
 import org.lwjgl.opengl.GL43C;
 import org.lwjgl.opengl.GLCapabilities;
@@ -74,10 +75,6 @@ public class MercuryContext implements Runnable {
      * The frame-rate limit.
      */
     private int frameRateLimit = -1;
-    /**
-     * The physical device used for rendering, or null for headless context.
-     */
-    private PhysicalDevice physicalDevice;
 
     /**
      * Instantiates and return a new <code>MercuryContext</code> bound to the
@@ -285,10 +282,11 @@ public class MercuryContext implements Runnable {
          * Once we have set the current OpenGL context we can access informations about
          * our device.
          */
-        physicalDevice = createPhysicalDevice(capabilities);
+        PhysicalDevice physicalDevice = createPhysicalDevice(capabilities);
 
         logger.info("Using physical device: \n" + physicalDevice);
         physicalDevice.check(settings);
+        application.linkService(physicalDevice);
 
         if (settings.getInteger("Samples") > 1) {
             // TODO: Don't know if it is useful.
@@ -325,6 +323,7 @@ public class MercuryContext implements Runnable {
         Vendor vendor = Vendor.fromGLVendor(GL11C.glGetString(GL11C.GL_VENDOR));
         String device = GL11C.glGetString(GL11C.GL_RENDERER);
         String version = GL11C.glGetString(GL11C.GL_VERSION);
+        String shadingVersion = GL11C.glGetString(GL20C.GL_SHADING_LANGUAGE_VERSION);
 
         int count = GL11C.glGetInteger(GL30C.GL_NUM_EXTENSIONS);
         String[] extensions = new String[count];
@@ -332,7 +331,7 @@ public class MercuryContext implements Runnable {
             extensions[i] = GL30C.glGetStringi(GL11C.GL_EXTENSIONS, i);
         }
 
-        return new PhysicalDevice(vendor, device, version, extensions, capabilites);
+        return new PhysicalDevice(vendor, device, version, shadingVersion, extensions, capabilites);
     }
 
     /**
