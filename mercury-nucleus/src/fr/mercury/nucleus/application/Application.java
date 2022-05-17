@@ -1,5 +1,7 @@
 package fr.mercury.nucleus.application;
 
+import java.util.Optional;
+
 import fr.alchemy.utilities.task.actions.BooleanAction;
 import fr.alchemy.utilities.task.actions.VoidAction;
 import fr.mercury.nucleus.application.service.ApplicationService;
@@ -70,24 +72,61 @@ public interface Application {
      * @return The settings used to create the context (not null).
      */
     MercurySettings getSettings();
+    
+    /**
+     * Return an optional value of an  {@link ApplicationService} matching the provided type linked 
+     * to the <code>Application</code>.
+     * <p>
+     * This function is supposed to be used to access the module, however it shouldn't be used to detach 
+     * it from the application, use {@link #unlinkService(ApplicationService)} instead.
+     * 
+     * @param type The type of service to return.
+     * @return     An optional value containing either a service matching the given type,
+     *             or nothing if none is linked to the application.
+     * 
+     * @see #getService(Class)
+     */
+    default <M extends ApplicationService> Optional<M> getOptionalService(Class<M> type) {
+        return Optional.ofNullable(getService(type));
+    }
 
     /**
-     * Return an {@link ApplicationModule} matching the provided type linked to the
+     * Return an {@link ApplicationService} matching the provided type linked to the
      * <code>Application</code>.
      * 
-     * @param type The type of module to return.
-     * @return     A module matching the given type, or null if none is linked to the
+     * @param type The type of service to return.
+     * @return     A service matching the given type, or null if none is linked to the
      *             application.
+     *             
+     * @see #getOptionalService(Class)
      */
     <M extends ApplicationService> M getService(Class<M> type);
 
     /**
-     * Links the provided {@link ApplicationModule} to the <code>Application</code>.
+     * Links the provided {@link ApplicationService} to the <code>Application</code>.
      * 
-     * @param module The module to be linked.
+     * @param service The service to be linked (not null).
      */
-    void linkService(ApplicationService module);
+    void linkService(ApplicationService service);
+    
+    /**
+     * Unlink the provided {@link ApplicationService} from the <code>Application</code>.
+     * 
+     * @param service The service to be unlinked (not null).
+     * 
+     * @return Whether the service was unlinked.
+     */
+    boolean unlinkService(ApplicationService service);
 
+    /**
+     * Perform the given {@link VoidAction} with a linked  {@link ApplicationService} of the
+     * matching type if any.
+     * 
+     * @param type   The type of application service (not null).
+     * @param action The action to perform (not null).
+     * 
+     * @param <M> The type of application service.
+     */
     default <M extends ApplicationService> void service(Class<M> type, VoidAction<M> action) {
         var service = getService(type);
         if (service != null) {
@@ -95,13 +134,24 @@ public interface Application {
         }
     }
 
+    /**
+     * Perform the given {@link BooleanAction} with a linked  {@link ApplicationService} of the
+     * matching type if any.
+     * 
+     * @param type   The type of application service (not null).
+     * @param action The action to perform (not null).
+     * 
+     * @return Whether the action was performed and returned <code>true</code>.
+     * 
+     * @param <M> The type of application service.
+     */
     default <M extends ApplicationService> boolean checkService(Class<M> type, BooleanAction<M> action) {
         var service = getService(type);
         return service != null && action.perform(service);
     }
-
+    
     /**
-     * Notify the <code>Application</code> about a maximized or focused <code>MercuryContext</code>.
+     * Notify the <code>Application</code> about a maximized or focused {@link MercuryContext}.
      * <p>
      * By default the function doesn't do anything and is purely optional, you can
      * implement your own code by overriding the function.
@@ -109,7 +159,7 @@ public interface Application {
     default void gainFocus() {}
 
     /**
-     * Notify the <code>Application</code> about a minimized or unfocused <code>MercuryContext</code>.
+     * Notify the <code>Application</code> about a minimized or unfocused {@link MercuryContext}.
      * <p>
      * By default the function doesn't do anything and is purely optional, you can
      * implement your own code by overriding the function.

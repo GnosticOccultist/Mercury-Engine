@@ -606,12 +606,24 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
     }
 
     /**
+     * Return the {@link Camera} used for rendering in the <code>AbstractRenderer</code>.
+     * 
+     * @param camera The camera to render with (not null).
+     */
+    @Override
+    public Camera getCamera() {
+        assert camera != null;
+        return camera;
+    }
+    
+    /**
      * Sets the {@link Camera} used for rendering in the
      * <code>AbstractRenderer</code>. It will automatically set the camera for the
      * registered {@link RenderBucket} as well.
      * 
      * @param camera The camera to render with (not null).
      */
+    @Override
     public void setCamera(Camera camera) {
         Validator.nonNull(camera, "The camera can't be null");
 

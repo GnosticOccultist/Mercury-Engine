@@ -45,11 +45,18 @@ public interface ApplicationService {
      * @return Whether the service is initialized.
      */
     boolean isInitialized();
+    
+    /**
+     * Return the {@link Application} linked to the <code>ApplicationService</code>.
+     * 
+     * @return The application linked to the service, or null if unlinked.
+     */
+    Application getApplication();
 
     /**
      * Set the {@link Application} linked to the <code>ApplicationService</code>.
      * 
-     * @param The application linked to the service (not null).
+     * @param The application linked to the service, or null if unlinked.
      */
     void setApplication(Application application);
 }

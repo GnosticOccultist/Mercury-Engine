@@ -1,7 +1,6 @@
 package fr.mercury.nucleus.application;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import fr.alchemy.utilities.Instantiator;
@@ -111,16 +110,19 @@ public abstract class MercuryApplication implements Application {
         var renderable = context.getType().isRenderable();
         if (renderable) {
 
-            // Initialize the camera.
-            camera = new Camera(settings.getWidth(), settings.getHeight());
-            camera.setLocation(0f, 0f, 0f);
-            camera.setFrustumPerspective(45F, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
-
+            if (camera == null) {
+                // Initialize the camera.
+                camera = new Camera(settings.getWidth(), settings.getHeight());
+                camera.setLocation(0f, 0f, 0f);
+                camera.setFrustumPerspective(45F, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
+            }
+            
             // Try initializing the renderer from settings.
             var type = settings.getRendererType();
 
             try {
                 this.renderer = Instantiator.fromNameImplements(type, Renderer.class, null, camera);
+                
             } catch (Exception ex) {
                 logger.error("Unable to instantiate Renderer implementation from class '" + type
                         + "'! Switching to DefaultRenderer instead.", ex);
@@ -204,7 +206,7 @@ public abstract class MercuryApplication implements Application {
     public void postFrame() {
         var count = Allocator.stackFrameIndex();
         if (count > 0) {
-            logger.debug(count + " pushed stack on the current frame. Consider " + "popping them when no longer used!");
+            logger.warning(count + " pushed stack on the current frame. Consider " + "popping them when no longer used!");
         }
 
         NativeObjectCleaner.cleanUnused();
@@ -264,23 +266,6 @@ public abstract class MercuryApplication implements Application {
     }
 
     /**
-     * Return an optional value of an {@link ApplicationModule} matching the provided type linked 
-     * to the <code>MercuryApplication</code>.
-     * <p>
-     * This function is supposed to be used to access the module, however it shouldn't be used to detach 
-     * it from the application, use {@link #unlinkService(ApplicationModule)} instead.
-     * 
-     * @param type The type of module to return.
-     * @return     An optional value containing either a module matching the given type,
-     *             or nothing if none is linked to the application.
-     * 
-     * @see #getService(Class)
-     */
-    public <M extends AbstractApplicationService> Optional<M> getOptionalModule(Class<M> type) {
-        return Optional.ofNullable(getService(type));
-    }
-
-    /**
      * Return an {@link ApplicationModule} matching the provided type linked to the <code>MercuryApplication</code>.
      * <p>
      * This function is supposed to be used to access the module, however it shouldn't be used to detach it 
@@ -291,7 +276,7 @@ public abstract class MercuryApplication implements Application {
      *             application.
      * 
      * @see #unlinkService(ApplicationModule)
-     * @see #getOptionalModule(Class)
+     * @see #getOptionalService(Class)
      */
     @Override
     @SuppressWarnings("unchecked")
@@ -306,8 +291,8 @@ public abstract class MercuryApplication implements Application {
     }
 
     /**
-     * Links the provided {@link ApplicationModule} to the <code>MercuryApplication</code>. 
-     * Note that the module will be initialized during the next update cycle if it hasn't been yet.
+     * Links the provided {@link ApplicationService} to the <code>MercuryApplication</code>. 
+     * Note that the service will be initialized during the next update cycle if it hasn't been yet.
      * 
      * @param module The module to be linked (not null).
      */
@@ -319,17 +304,20 @@ public abstract class MercuryApplication implements Application {
     }
 
     /**
-     * Unlinks the provided {@link ApplicationModule} from the <code>MercuryApplication</code> 
-     * and terminate the module by calling the {@link ApplicationModule#cleanup()} method.
+     * Unlinks the provided {@link ApplicationService} from the <code>MercuryApplication</code> 
+     * and terminate the service by calling the {@link ApplicationModule#cleanup()} method.
      * 
-     * @param module The module which is to be cleaned up and removed (not null).
+     * @param module The service which is to be cleaned up and removed (not null).
      */
-    public void unlinkService(ApplicationService module) {
+    @Override
+    public boolean unlinkService(ApplicationService module) {
         Validator.nonNull(module, "The module can't be null!");
-        if (services.remove(module)) {
+        var result = services.remove(module);
+        if (result) {
             module.cleanup();
             module.setApplication(null);
         }
+        return result;
     }
 
     /**
@@ -345,7 +333,7 @@ public abstract class MercuryApplication implements Application {
     }
 
     /**
-     * Return the {@link MercurySettings} of the <code>Application</code>.
+     * Return the {@link MercurySettings} of the <code>MercuryApplication</code>.
      * 
      * @return The settings used to create the context (not null).
      */
@@ -355,7 +343,7 @@ public abstract class MercuryApplication implements Application {
     }
 
     /**
-     * Set the {@link MercurySettings} for the <code>Application</code>.
+     * Set the {@link MercurySettings} for the <code>MercuryApplication</code>.
      * <p>
      * You can change the display settings when the application is running but in
      * order to apply the changes you will need to call {@link #restart()}.

@@ -39,6 +39,11 @@ public abstract class AbstractApplicationService implements ApplicationService {
         assert !initialized;
 
         this.initialized = true;
+        
+        var caller = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE).getCallerClass();
+        if (!checkCaller(caller)) {
+            throw new IllegalStateException("Update method must be called by an Application instance only!");
+        }
     }
 
     /**
@@ -53,18 +58,24 @@ public abstract class AbstractApplicationService implements ApplicationService {
     public void update(ReadableTimer timer) {
         assert application != null;
         assert initialized;
-
-        var caller = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE).getCallerClass();
-        if (!checkCaller(caller)) {
-            throw new IllegalStateException("Update method must be called by an Application instance only!");
-        }
+    }
+    
+    /**
+     * Return the {@link Application} linked to the <code>AbstractApplicationService</code>.
+     * 
+     * @return The application linked to the service, or null if unlinked.
+     */
+    @Override
+    public Application getApplication() {
+        return application;
     }
 
     /**
      * Set the {@link Application} linked to the <code>AbstractApplicationService</code>.
      * 
-     * @param The application linked to the service (not null).
+     * @param The application linked to the service, or null if unlinked.
      */
+    @Override
     public void setApplication(Application application) {
         this.application = application;
     }
