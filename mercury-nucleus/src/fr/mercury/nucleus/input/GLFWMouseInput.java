@@ -35,6 +35,7 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.MercuryContext;
 import fr.mercury.nucleus.application.service.GLFWWindow;
+import fr.mercury.nucleus.utils.OpenGLCall;
 
 public final class GLFWMouseInput {
 
@@ -252,14 +253,55 @@ public final class GLFWMouseInput {
         return (long) (glfwGetTime() * 1_000_000_000);
     }
 
-    public void center() {
-        setPos(window.getWidth() / 2, window.getHeight() / 2);
+    /**
+     * Center the current cursor position on the window. This function 
+     * will only work if the cursor is visible.
+     * 
+     * <p><b>Do not use this function</b> to implement things like camera 
+     * controls and mouse grabbing mechanics.
+     * If the cursor {@link #isCursorVisible() isn't visible} then its position is automatically recentered.
+     * 
+     * @param x The x coordinate in screen coordinates.
+     * @param y The y coordinate in screen coordinates.
+     * 
+     * @see #isCursorVisible()
+     * @see #setCursorVisible(boolean)
+     */
+    @OpenGLCall
+    public void centerCursor() {
+        setCursorPos(window.getWidth() / 2, window.getHeight() / 2);
     }
 
-    public void setPos(double x, double y) {
+    /**
+     * Sets the current cursor position in screen coordinates relative to
+     * the upper-left corner of the window.
+     * This function will only work if the cursor is visible.
+     * 
+     * @param x The x coordinate in screen coordinates.
+     * @param y The y coordinate in screen coordinates.
+     * 
+     * @see #isCursorVisible()
+     * @see #setCursorVisible(boolean)
+     */
+    @OpenGLCall
+    public void setCursorPos(double x, double y) {
         GLFW.glfwSetCursorPos(window.getID(), x, y);
     }
 
+    /**
+     * Return whether the cursor of the mouse should be visible.
+     * <ul>
+     * <li><code>true</code> makes the cursor visible and behaving normally.</li>
+     * <li><code>false</code> hides and grabs the cursor, providing virtual and
+     * unlimited cursor movement.</li>
+     * </ul>
+     * 
+     * @return Whether the cursor is visible.
+     */
+    public boolean isCursorVisible() {
+        return cursorVisible;
+    }
+    
     /**
      * Sets whether the cursor of the mouse should be visible.
      * <ul>
@@ -270,6 +312,7 @@ public final class GLFWMouseInput {
      * 
      * @param cursorVisible Whether the cursor is visible.
      */
+    @OpenGLCall
     public void setCursorVisible(boolean cursorVisible) {
         this.cursorVisible = cursorVisible;
 
@@ -279,7 +322,7 @@ public final class GLFWMouseInput {
             glfwSetInputMode(window.getID(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
     }
-
+    
     /**
      * Sets the {@link InputProcessor} to dispatch the {@link MouseEvent} of the <code>GLFWMouseInput</code> to.
      * 

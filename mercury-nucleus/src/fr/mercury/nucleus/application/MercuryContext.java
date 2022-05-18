@@ -15,7 +15,7 @@ import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.service.GLFWWindow;
-import fr.mercury.nucleus.input.BaseInputProcessor;
+import fr.mercury.nucleus.input.DelegateInputProcessor;
 import fr.mercury.nucleus.input.GLFWKeyInput;
 import fr.mercury.nucleus.input.GLFWMouseInput;
 import fr.mercury.nucleus.renderer.device.PhysicalDevice;
@@ -240,7 +240,7 @@ public class MercuryContext implements Runnable {
              * Creation failed destroying the window and input processor and stopping there.
              */
             application.service(GLFWWindow.class, GLFWWindow::destroy);
-            application.service(BaseInputProcessor.class, BaseInputProcessor::cleanup);
+            application.service(DelegateInputProcessor.class, DelegateInputProcessor::cleanup);
             ex.printStackTrace();
             return false;
         }
@@ -307,7 +307,7 @@ public class MercuryContext implements Runnable {
         keyInput.initialize();
 
         // Initialize input processor with window input handlers.
-        var inputProcessor = new BaseInputProcessor(mouseInput, keyInput);
+        var inputProcessor = new DelegateInputProcessor(mouseInput, keyInput);
         application.linkService(inputProcessor);
     }
 
