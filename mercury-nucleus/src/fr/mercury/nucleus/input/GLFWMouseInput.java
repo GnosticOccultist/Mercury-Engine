@@ -310,11 +310,11 @@ public final class GLFWMouseInput {
      * unlimited cursor movement.</li>
      * </ul>
      * 
-     * @param cursorVisible Whether the cursor is visible.
+     * @param visible Whether the cursor is visible.
      */
     @OpenGLCall
-    public void setCursorVisible(boolean cursorVisible) {
-        this.cursorVisible = cursorVisible;
+    public void setCursorVisible(boolean visible) {
+        this.cursorVisible = visible;
 
         if (cursorVisible) {
             glfwSetInputMode(window.getID(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);

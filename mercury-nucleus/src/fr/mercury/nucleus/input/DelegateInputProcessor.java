@@ -142,7 +142,7 @@ public class DelegateInputProcessor extends AbstractApplicationService implement
      * unlimited cursor movement.</li>
      * </ul>
      * 
-     * @param cursorVisible Whether the cursor is visible.
+     * @param visible Whether the cursor is visible.
      */
     @OpenGLCall
     public void setCursorVisible(boolean visible) {
