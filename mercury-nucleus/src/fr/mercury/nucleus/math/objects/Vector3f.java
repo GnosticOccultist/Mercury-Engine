@@ -163,12 +163,12 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
      * @param other The other vector to subtract (not null).
      * @return      The vector with its new components values.
      */
-    public Vector3f sub(Vector3f other) {
+    public Vector3f sub(ReadableVector3f other) {
         Validator.nonNull(other, "The vector cannot be null!");
 
-        this.x -= other.x;
-        this.y -= other.y;
-        this.z -= other.z;
+        this.x -= other.x();
+        this.y -= other.y();
+        this.z -= other.z();
         return this;
     }
 
@@ -179,7 +179,7 @@ public final class Vector3f implements ReadableVector3f, Comparable<Vector3f>, R
      * @return       The vector with its new components values.
      */
     public Vector3f mul(float scalar) {
-        return mul(scalar);
+        return mul(scalar, scalar, scalar);
     }
 
     /**
