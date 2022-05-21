@@ -12,6 +12,7 @@ import fr.mercury.nucleus.input.Button;
 import fr.mercury.nucleus.input.InputProcessor;
 import fr.mercury.nucleus.input.KeyEvent;
 import fr.mercury.nucleus.input.MouseEvent;
+import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.ReadableTimer;
 
 public class LayeredInputProcessor extends AbstractApplicationService implements InputProcessor {
@@ -33,15 +34,40 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
      */
     private volatile float tpf = 0;
     
+    /**
+     * Instantiates a new <code>LayeredInputProcessor</code> with {@link InputLayer#DEFAULT} active.
+     */
     public LayeredInputProcessor() {
         // Activate the input default layer.
         activate(InputLayer.DEFAULT);
     }
     
+    /**
+     * Activate the provided {@link InputLayer} for the <code>LayeredInputProcessor</code>.
+     * 
+     * @param layer The layer to activate (not null).
+     * @return      Whether the layer was inactive before.
+     */
     public boolean activate(InputLayer layer) {
         return activeLayers.add(layer);
     }
     
+    /**
+     * Deactivate the provided {@link InputLayer} for the <code>LayeredInputProcessor</code>.
+     * 
+     * @param layer The layer to deactivate (not null).
+     * @return      Whether the layer was active before.
+     */
+    public boolean deactivate(InputLayer layer) {
+        return activeLayers.remove(layer);
+    }
+    
+    /**
+     * Return whether the provided {@link InputLayer} is active in the <code>LayeredInputProcessor</code>.
+     * 
+     * @param layer The layer to check (not null).
+     * @return      Whether the layer is active.
+     */
     public boolean isLayerActive(InputLayer layer) {
         if (activeLayers.contains(layer)) {
             return true;
@@ -52,11 +78,14 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
                 .findAny().isPresent();
     }
     
-    public boolean deactivate(InputLayer layer) {
-        return activeLayers.remove(layer);
-    }
-    
+    /**
+     * Update the <code>LayeredInputProcessor</code> and the internal time per frame using 
+     * the specified {@link ReadableTimer}. 
+     * 
+     * @param timer The readable only timer (not null).
+     */
     @Override
+    @OpenGLCall
     public void update(ReadableTimer timer) {
         super.update(timer);
         
@@ -241,9 +270,20 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
         }
     }
     
+    /**
+     * <code>InputListener</code> is an interface to implement listener for input mappings.
+     * 
+     * @author GnosticOccultist
+     */
     @FunctionalInterface
     public interface InputListener {
         
+        /**
+         * Trigger the <code>InputListener</code> for the given {@link InputLayer}.
+         * 
+         * @param layer The input layer triggered (not null).
+         * @param value The new value after the input was triggered.
+         */
         void trigger(InputLayer layer, double value);
     }
 }
