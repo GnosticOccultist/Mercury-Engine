@@ -124,7 +124,7 @@ public final class ShaderSource extends GLObject {
     /**
      * Sets the defines list used by the <code>ShaderSource</code>.
      * 
-     * @param source The defines list to be used by the shader (not null or empty).
+     * @param defines The defines list to be used by the shader (not null or empty).
      */
     public void setDefines(String defines) {
         Validator.nonEmpty(source, "Can't use null or empty source for shader!");
