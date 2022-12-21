@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.ARBDebugOutput;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL20C;
@@ -20,6 +21,7 @@ import fr.mercury.nucleus.input.GLFWKeyInput;
 import fr.mercury.nucleus.input.GLFWMouseInput;
 import fr.mercury.nucleus.renderer.device.PhysicalDevice;
 import fr.mercury.nucleus.renderer.device.Vendor;
+import fr.mercury.nucleus.renderer.opengl.OpenGLDebugOutputCallback;
 import fr.mercury.nucleus.utils.MercuryException;
 
 /**
@@ -287,6 +289,11 @@ public class MercuryContext implements Runnable {
         logger.info("Using physical device: \n" + physicalDevice);
         physicalDevice.check(settings);
         application.linkService(physicalDevice);
+        
+        if (settings.isGraphicsDebugOutput() && physicalDevice.supportsGLDebug()) {
+            logger.info("Enabling OpenGL debug mode.");
+            ARBDebugOutput.glDebugMessageCallbackARB(new OpenGLDebugOutputCallback(), 0);
+        }
 
         if (settings.getInteger("Samples") > 1) {
             // TODO: Don't know if it is useful.

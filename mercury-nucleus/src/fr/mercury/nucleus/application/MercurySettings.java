@@ -80,6 +80,7 @@ public final class MercurySettings extends HashMap<String, Object> {
         DEFAULT.put("ShowFPS", true);
         DEFAULT.put("Samples", 1);
         DEFAULT.put("RequiredExtensions", new String[0]);
+        DEFAULT.put("GraphicsDebugOutput", true);
     }
 
     /**
@@ -431,6 +432,26 @@ public final class MercurySettings extends HashMap<String, Object> {
     public void setRequiredExtensions(String... requiredExtensions) {
         Validator.nonNull(requiredExtensions, "The required extensions can't be null!");
         put("RequiredExtensions", requiredExtensions);
+    }
+    
+    /**
+     * Return whether to enable debug output from the graphics API, by setting up a 
+     * callback to pretty print debug messages.
+     * 
+     * @return Whether to enable graphics debugging.
+     */
+    public boolean isGraphicsDebugOutput() {
+        return getBoolean("GraphicsDebugOutput");
+    }
+
+    /**
+     * Set whether to enable debug output from the graphics API, by setting up a 
+     * callback to pretty print debug messages.
+     * 
+     * @param value Whether to enable graphics debugging (default&rarr;false).
+     */
+    public void setGraphicsDebugOutput(boolean value) {
+        addBoolean("GraphicsDebugOutput", value);
     }
 
     /**

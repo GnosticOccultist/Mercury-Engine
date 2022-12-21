@@ -18,6 +18,11 @@ public class PhysicalDevice extends AbstractApplicationService {
      * The application logger.
      */
     private static final Logger logger = FactoryLogger.getLogger("mercury.app");
+    
+    /**
+     * The extension for OpenGL debug output callback.
+     */
+    public static final String GL_DEBUG_OUTPUT_EXT = "GL_ARB_debug_output";
 
     /**
      * The company responsible for the graphics API implementation.
@@ -97,6 +102,14 @@ public class PhysicalDevice extends AbstractApplicationService {
     
     private String versionOnly() {
         return version.split(" ")[0];
+    }
+    
+    public boolean supportsGLDebug() {
+        return hasExtension(GL_DEBUG_OUTPUT_EXT);
+    }
+    
+    public boolean hasExtension(String extension) {
+        return Arrays.asList(extensions).contains(extension);
     }
 
     public int majorVersion() {
