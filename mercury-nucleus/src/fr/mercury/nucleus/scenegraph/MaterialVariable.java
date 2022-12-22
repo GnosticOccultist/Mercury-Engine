@@ -2,7 +2,7 @@ package fr.mercury.nucleus.scenegraph;
 
 import fr.alchemy.utilities.Validator;
 
-public class MaterialData {
+public class MaterialVariable {
 
     /**
      * The name of the material data.
@@ -12,16 +12,30 @@ public class MaterialData {
      * The internal data.
      */
     volatile Object value;
+    
+    ValueType valueType;
+    
+    MaterialVariable(String name, Object value) {
+        this(name, value, ValueType.UNIFORM_VALUE);
+    }
 
-    MaterialData(String name, Object value) {
+    MaterialVariable(String name, Object value, ValueType valueType) {
         Validator.nonEmpty(name, "The name can't be empty or null!");
-        Validator.nonNull(value, "The material data value can't be null!");
         this.name = name;
         this.value = value;
+        this.valueType = valueType;
     }
 
     public Object value() {
         return value;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public ValueType getValueType() {
+        return valueType;
     }
 
     @Override
@@ -33,5 +47,14 @@ public class MaterialData {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "[name= " + name + ", value= " + value + "]";
+    }
+    
+    public enum ValueType {
+        
+        UNIFORM_VALUE,
+        
+        RENDERER_MATRIX,
+        
+        PREFAB_UNIFORMS;
     }
 }

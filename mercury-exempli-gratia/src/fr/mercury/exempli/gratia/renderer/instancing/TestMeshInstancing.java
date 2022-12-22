@@ -76,7 +76,7 @@ public class TestMeshInstancing extends MercuryApplication {
         Material[] materials = assetManager.loadMaterial("/materials/unlit.json");
         assert materials[4] != null;
         cube.setMaterial(materials[4]);
-        cube.getMaterial().addData("texture_sampler", atlas);
+        cube.getMaterial().addVariable("texture_sampler", atlas);
 
         /*
          * Tell the mesh that it needs to be rendered using an instanced draw call, by

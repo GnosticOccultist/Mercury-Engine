@@ -80,15 +80,15 @@ public class TestOBJLoader extends MercuryApplication {
         materials[3].getFirstShader();
         cube.setMaterial(materials[3]);
         // Set the texture of the cube to the loaded texture atlas.
-        cube.getMaterial().addData("texture_sampler", atlas);
+        cube.getMaterial().addVariable("texture_sampler", atlas);
 
         teapot.setMaterial(materials[3].copyShader());
         // Set the texture of the teapot to the loaded texture atlas.
-        teapot.getMaterial().addData("texture_sampler", atlas);
+        teapot.getMaterial().addVariable("texture_sampler", atlas);
 
         capricorn.setMaterial(materials[3].copyShader());
         // Set the texture of the capricorn to the loaded texture atlas.
-        capricorn.getMaterial().addData("texture_sampler", atlas);
+        capricorn.getMaterial().addVariable("texture_sampler", atlas);
 
         scene.setRenderStates(new DepthBufferState(), new BlendState(),
                 new FaceCullingState().setFace(Face.BACK).enable());

@@ -64,7 +64,7 @@ public class TestTextureAtlas extends MercuryApplication {
         assert materials[3] != null;
         cube.setMaterial(materials[3]);
         // Set the texture of the cube to the loaded texture atlas.
-        cube.getMaterial().addData("texture_sampler", atlas);
+        cube.getMaterial().addVariable("texture_sampler", atlas);
 
         // Finally, attach the cube to the main scene.
         scene.attach(cube);

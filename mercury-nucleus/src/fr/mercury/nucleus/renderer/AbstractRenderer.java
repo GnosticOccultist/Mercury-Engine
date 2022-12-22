@@ -448,12 +448,12 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
         Validator.nonNull(shader, "The shader program can't be null!");
         Validator.nonNull(shader, "The physica-mundi can't be null!");
 
-        var matrixUniforms = physica.getMaterial().getPrefabUniforms();
+        var matrixVars = physica.getMaterial().getMatrixVariables();
 
         for (MatrixType type : MatrixType.values()) {
-            var name = type.name();
+            var name = type.getUniformName();
 
-            if (matrixUniforms.contains(name)) {
+            if (matrixVars.contains(name)) {
                 setupMatrixUniforms(shader, type);
             }
         }
@@ -487,12 +487,13 @@ public abstract class AbstractRenderer extends AbstractApplicationService implem
      * @param physica The physica-mundi requesting the prefab uniforms.
      */
     protected void setupPrefabUniforms(ShaderProgram shader, PhysicaMundi physica) {
-        var prefabUniforms = physica.getMaterial().getPrefabUniforms();
+        var prefabVars = physica.getMaterial().getPrefabVariables();
 
-        for (int i = 0; i < prefabUniforms.size(); i++) {
+        for (int i = 0; i < prefabVars.size(); i++) {
 
-            var prefabName = prefabUniforms.get(i);
-            if ("CAMERA_POS".equals(prefabName)) {
+            var prefabName = prefabVars.get(i);
+            
+            if ("cameraPos".equals(prefabName)) {
                 shader.addUniform("cameraPos", UniformType.VECTOR3F, camera.getLocation());
             }
 

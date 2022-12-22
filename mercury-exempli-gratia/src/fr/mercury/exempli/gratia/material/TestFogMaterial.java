@@ -64,9 +64,9 @@ public class TestFogMaterial extends MercuryApplication {
         Material[] materials = assetManager.loadMaterial("/materials/unlit.json");
         materials[1].getFirstShader();
         cube1.setMaterial(materials[1]);
-        cube1.getMaterial().addData("texture_sampler", texture);
+        cube1.getMaterial().addVariable("texture_sampler", texture);
         cube2.setMaterial(materials[1].copyShader());
-        cube2.getMaterial().addData("texture_sampler", texture);
+        cube2.getMaterial().addVariable("texture_sampler", texture);
 
         // Rotate the camera towards the first cube.
         var translation = cube1.getLocalTransform().getTranslation();

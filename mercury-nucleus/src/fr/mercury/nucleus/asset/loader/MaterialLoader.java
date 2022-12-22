@@ -3,8 +3,6 @@ package fr.mercury.nucleus.asset.loader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Optional;
-
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
@@ -20,6 +18,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexAttribute;
 import fr.mercury.nucleus.scenegraph.Material;
+import fr.mercury.nucleus.scenegraph.MaterialVariable.ValueType;
 import fr.mercury.nucleus.utils.MercuryException;
 
 public class MaterialLoader implements AssetLoader<Material[]> {
@@ -93,7 +92,7 @@ public class MaterialLoader implements AssetLoader<Material[]> {
             loadShaders(mat, matObj);
 
             // Load the possibly declared uniforms.
-            loadUniforms(mat, matObj);
+            loadVariables(mat, matObj);
 
             // Load the attributes used in the shaders.
             loadAttributes(mat, matObj);
@@ -159,24 +158,50 @@ public class MaterialLoader implements AssetLoader<Material[]> {
     }
 
     /**
-     * Loads the declared uniforms, if any, from the provided material
+     * Loads the declared variables, if any, from the provided material
      * {@link JSONObject} and add them to the given {@link Material}.
      * 
-     * @param mat    The material to add the uniforms to.
+     * @param mat    The material to add the variables to.
      * @param matObj The material JSON object that can possibly contain the defines.
      */
-    private void loadUniforms(Material mat, JSONObject matObj) {
-        // Try accessing the uniforms object and the prefab uniforms array.
-        var uniformsOpt = matObj.getOptional("uniforms").map(JSONObject.class::cast);
-        var prefabsOpt = uniformsOpt.isPresent() ? uniformsOpt.get().getOptional("prefabs").map(JSONArray.class::cast)
-                : Optional.empty().map(JSONArray.class::cast);
-
-        if (prefabsOpt.isPresent() && !prefabsOpt.get().isEmpty()) {
-            // Hurrah, some prefab uniform are present.
-            var prefabs = prefabsOpt.get();
-            // Add them to the material, to be later asked to the renderer.
-            for (int i = 0; i < prefabs.size(); i++) {
-                mat.getPrefabUniforms().add(prefabs.get(i).asString());
+    private void loadVariables(Material mat, JSONObject matObj) {
+        // Try accessing the variables object and the prefab uniforms array.
+        var variablesOpt = matObj.getOptional("variables").map(JSONObject.class::cast);
+        
+        if (!variablesOpt.isPresent()) {
+            // No variables defined for the material.
+            return;
+        }
+        
+        var variables = variablesOpt.get();
+        // Look for each value type.
+        for (var type : ValueType.values()) {
+            
+            var varsOpt = variables.getOptional(type.name()).map(JSONArray.class::cast);
+            if (varsOpt.isPresent() && !varsOpt.get().isEmpty()) {
+                // Hurrah, some variables are present.
+                var vars = varsOpt.get();
+                // Add them to the material, to be later asked from the renderer.
+                for (int i = 0; i < vars.size(); i++) {
+                    var variable = vars.get(i);
+                    
+                    String name = null;
+                    Object def = null;
+                    
+                    if (variable.isString()) {
+                        // Retrieve the name used by the variable in the shader.
+                        name = variable.asString();
+                    } else {
+                        
+                        var varObj = variable.asObject();
+                        // Retrieve the name used by the variable in the shader.
+                        name = varObj.get("name").asString();
+                        // Retrieve an optional default value used in the shader.
+                        def = varObj.getOptional("default").map(JSONValue::asString).orElse(null);
+                    }
+                    
+                    mat.addVariable(name, def, type);
+                }
             }
         }
     }

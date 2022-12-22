@@ -294,13 +294,13 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
         var physica = new PhysicaMundi(aiMesh.mName().dataString(), mesh);
         logger.info("Processing geometry " + physica);
 
-        var material = template.copyShader();
+        var material = template.copy();
         // Check if the mesh uses materials.
         var matIndex = aiMesh.mMaterialIndex();
         if (matIndex >= 0 && matIndex < materials.size()) {
             var surface = materials.get(matIndex);
             var texture = surface.diffuse;
-            material.addData("texture_sampler", texture);
+            material.addVariable("texture_sampler", texture);
 
             for (var state : surface.renderStates.values()) {
                 physica.setRenderStates(state);

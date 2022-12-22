@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.renderer.opengl.GLObject;
@@ -12,6 +13,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexAttribute;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexBuffer;
+import fr.mercury.nucleus.scenegraph.MaterialVariable.ValueType;
 import fr.mercury.nucleus.texture.Texture;
 import fr.mercury.nucleus.utils.MercuryException;
 
@@ -26,17 +28,13 @@ public class Material implements Comparable<Material> {
      */
     private String description;
     /**
-     * The prefab uniforms needed by the material, set during material-file reading.
-     */
-    private final List<String> prefabUniforms = new ArrayList<>();
-    /**
      * The attributes used to pass vertex data through the shader.
      */
     private final List<VertexAttribute> attributes = new ArrayList<>();
     /**
      * The attributes used to pass vertex data through the shader.
      */
-    private final List<MaterialData> materialData = new ArrayList<>();
+    private final List<MaterialVariable> variables = new ArrayList<>();
     /**
      * The set of the shader sources for the material.
      */
@@ -69,8 +67,12 @@ public class Material implements Comparable<Material> {
     }
 
     public void setupData(ShaderProgram program) {
-        materialData.forEach(data -> {
+        variables.forEach(data -> {
             var value = data.value;
+            if (value == null) {
+                return;
+            }
+            
             program.register(value);
 
             if (value instanceof Texture) {
@@ -80,14 +82,19 @@ public class Material implements Comparable<Material> {
             }
         });
     }
-
-    public <D> Material addData(String name, D data) {
-        this.materialData.add(new MaterialData(name, data));
+    
+    public <D> Material addVariable(String name, D value) {
+        this.variables.add(new MaterialVariable(name, value));
         return this;
     }
 
-    public Material setData(String name, Object value) {
-        this.materialData.stream().filter(d -> name.equals(d.name)).forEach(d -> d.value = value);
+    public <D> Material addVariable(String name, D value, ValueType type) {
+        this.variables.add(new MaterialVariable(name, value, type));
+        return this;
+    }
+
+    public Material setVariable(String name, Object value) {
+        this.variables.stream().filter(d -> name.equals(d.name)).forEach(d -> d.value = value);
         return this;
     }
 
@@ -156,8 +163,18 @@ public class Material implements Comparable<Material> {
         return sources.get(name);
     }
 
-    public List<String> getPrefabUniforms() {
-        return prefabUniforms;
+    public List<String> getMatrixVariables() {
+        return variables.stream()
+                .filter(v -> ValueType.RENDERER_MATRIX.equals(v.getValueType()))
+                .map(MaterialVariable::getName)
+                .collect(Collectors.toList());
+    }
+    
+    public List<String> getPrefabVariables() {
+        return variables.stream()
+                .filter(v -> ValueType.PREFAB_UNIFORMS.equals(v.getValueType()))
+                .map(MaterialVariable::getName)
+                .collect(Collectors.toList());
     }
 
     public List<VertexAttribute> getAttributes() {
@@ -180,8 +197,8 @@ public class Material implements Comparable<Material> {
 
     public void cleanup() {
         shaders.values().forEach(ShaderProgram::cleanup);
-        materialData.stream()
-                .map(MaterialData::value)
+        variables.stream()
+                .map(MaterialVariable::value)
                 .filter(GLObject.class::isInstance)
                 .map(GLObject.class::cast)
                 .forEach(GLObject::cleanup);
@@ -189,7 +206,6 @@ public class Material implements Comparable<Material> {
 
     public Material copyShader() {
         var copy = new Material(name, description);
-        copy.prefabUniforms.addAll(prefabUniforms);
         copy.shaders.putAll(shaders);
         copy.attributes.addAll(attributes);
 
@@ -198,7 +214,7 @@ public class Material implements Comparable<Material> {
 
     public Material copy() {
         var copy = copyShader();
-        copy.materialData.addAll(materialData);
+        copy.variables.addAll(variables);
 
         return copy;
     }
@@ -219,6 +235,6 @@ public class Material implements Comparable<Material> {
     @Override
     public String toString() {
         String descr = description != null ? ": " + description : "";
-        return "[" + name + "]" + descr + " " + prefabUniforms;
+        return "[" + name + "]" + descr + " " + variables;
     }
 }

@@ -98,12 +98,12 @@ public class TestRenderState extends MercuryApplication {
 
         box.setMaterial(materials[2]);
         // Set the texture of the cube to the loaded texture atlas.
-        box.getMaterial().addData("texture_sampler", textureOcto);
+        box.getMaterial().addVariable("texture_sampler", textureOcto);
 
         var transparentMat = materials[2].copyShader();
         cube.setMaterial(transparentMat);
         // Set the texture of the cube to the loaded texture atlas.
-        cube.getMaterial().addData("texture_sampler", texture);
+        cube.getMaterial().addVariable("texture_sampler", texture);
         teapot.setMaterial(transparentMat);
         capricorn.setMaterial(transparentMat);
 
