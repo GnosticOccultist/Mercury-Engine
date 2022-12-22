@@ -305,12 +305,10 @@ public class MercuryContext implements Runnable {
             window.show();
         }
 
-        var glfwWindow = (GLFWWindow) window;
-
-        var mouseInput = new GLFWMouseInput(glfwWindow);
+        var mouseInput = new GLFWMouseInput(window);
         mouseInput.initialize();
 
-        var keyInput = new GLFWKeyInput(glfwWindow);
+        var keyInput = new GLFWKeyInput(window);
         keyInput.initialize();
 
         // Initialize input processor with window input handlers.

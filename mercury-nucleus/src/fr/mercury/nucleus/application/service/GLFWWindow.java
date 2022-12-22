@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.application.service;
 
 import static org.lwjgl.glfw.GLFW.GLFW_CLIENT_API;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_DEBUG_CONTEXT;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_API;
@@ -102,6 +103,10 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
         // Set the refresh rate of the window (frequency).
         glfwWindowHint(GLFW_REFRESH_RATE, settings.getFrequency());
         glfwWindowHint(GLFW_SAMPLES, settings.getSamples());
+        
+        if (settings.isGraphicsDebugOutput()) {
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+        }
 
         var version = settings.getGraphicsAPI();
         var hints = getVersionHints(version);
