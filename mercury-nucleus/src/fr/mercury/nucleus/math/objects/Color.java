@@ -131,6 +131,33 @@ public final class Color implements ReadableColor, Comparable<Color>, Reusable {
         this.a = other.a();
         return this;
     }
+    
+    /**
+     * Multiplies the RGB components of this <code>Color</code> by the provided factor.
+     * 
+     * @param factor The factor to multiply by.
+     * @return       The color with its new components values.
+     */
+    public Color mulRGB(float factor) {
+        this.r *= factor;
+        this.g *= factor;
+        this.b *= factor;
+        return this;
+    }
+
+    /**
+     * Multiplies the RGBA components of this <code>Color</code> by the provided factor.
+     * 
+     * @param factor The factor to multiply by.
+     * @return       The color with its new components values.
+     */
+    public Color mulRGBA(float factor) {
+        this.r *= factor;
+        this.g *= factor;
+        this.b *= factor;
+        this.a *= factor;
+        return this;
+    }
 
     /**
      * Transform this <code>Color</code> to a <code>Vector3f</code> using the red,

@@ -199,15 +199,18 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
      * @param right  The right frustum plane distance from the camera.
      * @param top    The top frustum plane distance from the camera.
      * @param bottom The bottom frustum plane distance from the camera.
+     * @return       The modified projection matrix (not null).
      */
-    public void projection(Camera.GraphicalProjectionMode mode, float near, float far, float left, float right,
+    public Matrix4f projection(Camera.GraphicalProjectionMode mode, float near, float far, float left, float right,
             float top, float bottom) {
         Validator.nonNull(mode, "The projection mode can't be null!");
 
         if (mode == GraphicalProjectionMode.PERSPECTIVE) {
-            perspective(near, far, left, right, top, bottom);
+            return perspective(near, far, left, right, top, bottom);
         } else if (mode == GraphicalProjectionMode.ORTHOGRAPHIC) {
-            orthographic(near, far, left, right, top, bottom);
+            return orthographic(near, far, left, right, top, bottom);
+        } else {
+            throw new IllegalArgumentException("Invalid projection mode: " + mode);
         }
     }
 
@@ -223,8 +226,9 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
      * @param right  The right frustum plane distance from the camera.
      * @param top    The top frustum plane distance from the camera.
      * @param bottom The bottom frustum plane distance from the camera.
+     * @return       The modified matrix with perspective projection (not null).
      */
-    public void perspective(float near, float far, float left, float right, float top, float bottom) {
+    public Matrix4f perspective(float near, float far, float left, float right, float top, float bottom) {
         identity();
 
         m00 = (2.0f * near) / (right - left);
@@ -235,6 +239,8 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
         m23 = -1.0F;
         m32 = -(2.0F * far * near) / (far - near);
         m33 = 0.0F;
+        
+        return this;
     }
 
     /**
@@ -249,8 +255,9 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
      * @param right  The right frustum plane distance from the camera.
      * @param top    The top frustum plane distance from the camera.
      * @param bottom The bottom frustum plane distance from the camera.
+     * @return       The modified matrix with orthographic projection (not null).
      */
-    public void orthographic(float near, float far, float left, float right, float top, float bottom) {
+    public Matrix4f orthographic(float near, float far, float left, float right, float top, float bottom) {
         identity();
 
         m00 = 2.0f / (right - left);
@@ -259,6 +266,8 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
         m30 = -((right + left) / (right - left));
         m31 = -((top + bottom) / (top - bottom));
         m32 = -((far + near) / (far - near));
+        
+        return this;
     }
 
     /**
