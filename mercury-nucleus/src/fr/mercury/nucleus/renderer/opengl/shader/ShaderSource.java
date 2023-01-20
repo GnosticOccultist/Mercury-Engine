@@ -79,8 +79,9 @@ public final class ShaderSource extends GLObject {
 
         GL20.glShaderSource(id, generateSource());
         GL20.glCompileShader(id);
-
-        if (GL20.glGetShaderi(id, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
+        
+        var compileStatus = GL20.glGetShaderi(id, GL20.GL_COMPILE_STATUS);
+        if (compileStatus == GL11.GL_FALSE) {
             throw new MercuryException("Error while compiling shader code: " + GL20.glGetShaderInfoLog(id, 1024));
         }
     }

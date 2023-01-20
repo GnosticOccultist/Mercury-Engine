@@ -101,7 +101,8 @@ public final class ShaderProgram extends GLObject {
             GL20.glLinkProgram(id);
 
             // If failed, show info log.
-            if (GL20.glGetProgrami(id, GL20.GL_LINK_STATUS) == GL11.GL_FALSE) {
+            var linkStatus = GL20.glGetShaderi(id, GL20.GL_LINK_STATUS);
+            if (linkStatus == GL11.GL_FALSE) {
                 throw new GLException("Error while linking shader program: " + GL20.glGetProgramInfoLog(id, 1024));
             } else {
                 logger.info("Successfully linked shader program!");
