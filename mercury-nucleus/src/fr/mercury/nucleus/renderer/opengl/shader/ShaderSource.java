@@ -18,8 +18,9 @@ import fr.mercury.nucleus.utils.OpenGLCall;
  * <code>ShaderSource</code> is a specific {@link ShaderProgram} part which is
  * defined by its {@link ShaderType}.
  * <p>
- * Attaching multiple <code>ShaderSource</code> to a <code>ShaderProgram</code> will construct
- * a graphics pipeline used to render an object in the scene-graph.
+ * Attaching multiple <code>ShaderSource</code> to a <code>ShaderProgram</code>
+ * will construct a graphics pipeline used to render an object in the
+ * scene-graph.
  * 
  * @author GnosticOccultist
  */
@@ -79,10 +80,11 @@ public final class ShaderSource extends GLObject {
 
         GL20.glShaderSource(id, generateSource());
         GL20.glCompileShader(id);
-        
+
         var compileStatus = GL20.glGetShaderi(id, GL20.GL_COMPILE_STATUS);
         if (compileStatus == GL11.GL_FALSE) {
-            throw new MercuryException("Error while compiling shader code: " + GL20.glGetShaderInfoLog(id, 1024));
+            var errorSource = GL20.glGetShaderInfoLog(id, 1024);
+            throw new MercuryException("Error while compiling shader code: \n" + formatInfoLog(errorSource));
         }
     }
 
@@ -169,6 +171,32 @@ public final class ShaderSource extends GLObject {
         return () -> GL20.glDeleteShader(id);
     }
 
+    @Override
+    public String toString() {
+        return "ShaderSource [type=" + type + ", source=" + buffer.toString() + "]";
+    }
+    
+    /**
+     * Format the provided shader info log obtained from compiling the <code>ShaderSource</code>.
+     * 
+     * @param log The shader compiling info log.
+     * @return    A formatted string representing the shader compiling log.
+     */
+    String formatInfoLog(String log) {
+        var sourceLines = buffer.toString().split("\n");
+        var lineNumber = 1;
+        var out = new StringBuilder(); 
+        
+        for (var line : sourceLines) {
+            out.append(lineNumber++).append("\t").append(line).append("\n");
+        }
+        
+        out.append("\n");
+        out.append(log);
+        
+        return out.toString();
+    }
+
     /**
      * <code>ShaderType</code> represents the type of OpenGL Shader, which control
      * its own pipeline.
@@ -218,7 +246,7 @@ public final class ShaderSource extends GLObject {
          * Return the <code>ShaderType</code> from an extension.
          * 
          * @param extension The extension.
-         * @return          The shader type or null.
+         * @return The shader type or null.
          */
         public static ShaderType fromExtension(String extension) {
             for (int i = 0; i < ShaderType.values().length; i++) {
