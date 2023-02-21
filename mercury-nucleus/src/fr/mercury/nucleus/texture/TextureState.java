@@ -8,10 +8,11 @@ import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Color;
 
 /**
- * <code>TextureState</code> is a utility class used to keep track of a loaded {@link Texture} parameters inside 
- * the OpenGL context.
+ * <code>TextureState</code> is a utility class used to keep track of a loaded
+ * {@link Texture} parameters inside the OpenGL context.
  * <p>
- * It prevents changing unused or unchanged state of the {@link Texture} in order to save on performance.
+ * It prevents changing unused or unchanged state of the {@link Texture} in
+ * order to save on performance.
  * 
  * @author GnosticOccultist
  */
@@ -39,6 +40,10 @@ public class TextureState implements Comparable<TextureState> {
      * {@link WrapMode#CLAMP_BORDER} is set (default&rarr;[-1, -1, -1, -1]).
      */
     protected Color borderColor = new Color(-1, -1, -1, -1);
+    /**
+     * The anisotropic filtering level to use.
+     */
+    protected int anisotropicFilter = 1;
     /**
      * Whether the mipmaps are needed.
      */
@@ -71,8 +76,28 @@ public class TextureState implements Comparable<TextureState> {
         this.minFilter = source.minFilter;
         this.compareMode = source.compareMode;
         this.borderColor = new Color(borderColor);
+        this.anisotropicFilter = source.anisotropicFilter;
         this.needMipmaps = source.needMipmaps;
         this.generatedMipMaps = source.generatedMipMaps;
+    }
+
+    /**
+     * Return the anisotropic filtering level to use.
+     * 
+     * @return The anisotropic filtering level (&ge;1).
+     */
+    public int getAnisotropicFilter() {
+        return anisotropicFilter;
+    }
+
+    /**
+     * Sets the anisotropic filtering level to use. By default level is set to 1,
+     * which means no filtering will be applied.
+     * 
+     * @param level The anisotropic filtering level (&ge;1).
+     */
+    public void setAnisotropicFilter(int level) {
+        this.anisotropicFilter = Math.max(1, level);
     }
 
     /**
@@ -126,6 +151,8 @@ public class TextureState implements Comparable<TextureState> {
         generatedMipMaps = false;
 
         compareMode = CompareMode.NONE;
+
+        anisotropicFilter = 1;
 
         borderColor.set(-1, -1, -1, -1);
     }

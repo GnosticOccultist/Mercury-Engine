@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.function.Consumer;
 
+import org.lwjgl.opengl.EXTTextureFilterAnisotropic;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL13;
@@ -194,6 +195,11 @@ public abstract class Texture extends GLObject {
 
             MemoryUtil.memFree(buffer);
             currentState.borderColor = toApply.borderColor;
+        }
+        
+        if (currentState.anisotropicFilter != toApply.anisotropicFilter) {
+            GL11C.glTexParameterf(getOpenGLType(), EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, toApply.anisotropicFilter);
+            currentState.setAnisotropicFilter(toApply.anisotropicFilter) ;
         }
 
         if (!toApply.isGeneratedMipMaps() && toApply.isNeedMipmaps()) {
