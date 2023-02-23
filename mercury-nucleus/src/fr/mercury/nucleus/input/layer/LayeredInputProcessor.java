@@ -10,6 +10,7 @@ import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.input.Axis;
 import fr.mercury.nucleus.input.Button;
 import fr.mercury.nucleus.input.InputProcessor;
+import fr.mercury.nucleus.input.InputState;
 import fr.mercury.nucleus.input.KeyEvent;
 import fr.mercury.nucleus.input.MouseEvent;
 import fr.mercury.nucleus.utils.OpenGLCall;
@@ -156,11 +157,27 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
 
         listeners.trigger(layer, value);
     }
+    
+    protected void notify(InputLayer layer, InputState state) {
+        var listeners = getListeners(layer, false);
+        if (listeners == null) {
+            return;
+        }
 
-    public void listen(InputListener listener, InputLayer... layers) {
+        listeners.trigger(layer, state);
+    }
+
+    public void listen(InputValueListener listener, InputLayer... layers) {
         for (var layer : layers) {
             var listeners = getListeners(layer, true);
-            listeners.listeners.add(listener);
+            listeners.valueListeners.add(listener);
+        }
+    }
+    
+    public void listen(InputStateListener listener, InputLayer... layers) {
+        for (var layer : layers) {
+            var listeners = getListeners(layer, true);
+            listeners.stateListeners.add(listener);
         }
     }
 
@@ -268,6 +285,7 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
 
         InputLayer layer;
         double lastValue;
+        InputState lastState;
         double factor;
         Object stateValue;
 
@@ -284,6 +302,17 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
             }
 
             this.lastValue = scaled;
+            var state = InputState.fromValue(lastValue);
+            updateState(state);
+        }
+        
+        void updateState(InputState state) {
+            if (lastState == state) {
+                return;
+            }
+
+            this.lastState = state;
+            LayeredInputProcessor.this.notify(layer, lastState);
         }
 
         @Override
@@ -294,35 +323,62 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
 
     private class Listeners {
 
-        final Array<InputListener> listeners = Array.ofType(InputListener.class);
+        final Array<InputValueListener> valueListeners = Array.ofType(InputValueListener.class);
+        final Array<InputStateListener> stateListeners = Array.ofType(InputStateListener.class);
 
         void trigger(InputLayer layer, double value) {
-            for (var listener : listeners) {
+            for (var listener : valueListeners) {
                 listener.trigger(layer, value);
+            }
+        }
+        
+        void trigger(InputLayer layer, InputState state) {
+            for (var listener : stateListeners) {
+                listener.trigger(layer, state);
             }
         }
 
         @Override
         public String toString() {
-            return listeners.toString();
+            return valueListeners.toString() + "\n " + stateListeners.toString();
         }
     }
 
     /**
-     * <code>InputListener</code> is an interface to implement listener for input
-     * mappings.
+     * <code>InputValueListener</code> is an interface to implement listener for input
+     * mappings translated into a numeric value.
      * 
      * @author GnosticOccultist
      */
     @FunctionalInterface
-    public interface InputListener {
+    public interface InputValueListener {
 
         /**
-         * Trigger the <code>InputListener</code> for the given {@link InputLayer}.
+         * Trigger the <code>InputValueListener</code> for the given {@link InputLayer}, with
+         * the numeric value.
          * 
          * @param layer The input layer triggered (not null).
          * @param value The new value after the input was triggered.
          */
         void trigger(InputLayer layer, double value);
+    }
+    
+    /**
+     * <code>InputStateListener</code> is an interface to implement listener for input
+     * mappings translated into a trinary value state.
+     * 
+     * @author GnosticOccultist
+     */
+    @FunctionalInterface
+    public interface InputStateListener {
+
+        /**
+         * Trigger the <code>InputStateListener</code> for the given {@link InputLayer}, with
+         * the new state of input.
+         * 
+         * @param layer The input layer triggered (not null).
+         * @param state The new state after the input was triggered.
+         */
+        void trigger(InputLayer layer, InputState state);
     }
 }
