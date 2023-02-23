@@ -9,7 +9,7 @@ import fr.mercury.nucleus.input.Input;
 import fr.mercury.nucleus.input.control.CameraControl;
 import fr.mercury.nucleus.input.layer.InputLayer;
 import fr.mercury.nucleus.input.layer.LayeredInputProcessor;
-import fr.mercury.nucleus.input.layer.LayeredInputProcessor.InputListener;
+import fr.mercury.nucleus.input.layer.LayeredInputProcessor.InputValueListener;
 import fr.mercury.nucleus.renderer.logic.state.BlendState;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
@@ -25,7 +25,7 @@ import fr.mercury.nucleus.utils.ReadableTimer;
  * 
  * @author GnosticOccultist
  */
-public class TestAssimpLoader extends MercuryApplication implements InputListener {
+public class TestAssimpLoader extends MercuryApplication implements InputValueListener {
     
     public static final InputLayer CAM_LOOK_X = InputLayer.function("camera", "look-x");
     
@@ -36,6 +36,8 @@ public class TestAssimpLoader extends MercuryApplication implements InputListene
     public static final InputLayer CAM_MOVE = InputLayer.function("camera", "move");
     
     public static final InputLayer CAM_STRAFE = InputLayer.function("camera", "strafe");
+    
+    public static final InputLayer CAM_ELEVATE = InputLayer.function("camera", "elevate");
 
     /**
      * The physica-mundi to represent the sponza model in the scene.
@@ -74,7 +76,9 @@ public class TestAssimpLoader extends MercuryApplication implements InputListene
         layeredInput.map(CAM_MOVE, -1, Input.Keys.KEY_S);
         layeredInput.map(CAM_STRAFE, -1, Input.Keys.KEY_D);
         layeredInput.map(CAM_STRAFE, Input.Keys.KEY_A);
-        layeredInput.listen(this, CAM_LOOK_X, CAM_LOOK_Y, CAM_FOCUS, CAM_MOVE, CAM_STRAFE);
+        layeredInput.map(CAM_ELEVATE, Input.Keys.KEY_SPACE);
+        layeredInput.map(CAM_ELEVATE, -1, Input.Keys.KEY_LEFT_SHIFT);
+        layeredInput.listen(this, CAM_LOOK_X, CAM_LOOK_Y, CAM_FOCUS, CAM_MOVE, CAM_STRAFE, CAM_ELEVATE);
         
         // Load and prepare the cube in the scene.
         // TODO: Allow to add config flags when loading a model.
@@ -119,6 +123,10 @@ public class TestAssimpLoader extends MercuryApplication implements InputListene
         
         if (layer == CAM_STRAFE) {
             camControl.move(0, 0, value);
+        }
+        
+        if (layer == CAM_ELEVATE) {
+            camControl.move(0, value, 0);
         }
     }
 }
