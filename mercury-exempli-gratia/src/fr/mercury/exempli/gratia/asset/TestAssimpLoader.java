@@ -6,9 +6,11 @@ import fr.mercury.nucleus.input.Axis;
 import fr.mercury.nucleus.input.Button;
 import fr.mercury.nucleus.input.DelegateInputProcessor;
 import fr.mercury.nucleus.input.Input;
+import fr.mercury.nucleus.input.InputState;
 import fr.mercury.nucleus.input.control.CameraControl;
 import fr.mercury.nucleus.input.layer.InputLayer;
 import fr.mercury.nucleus.input.layer.LayeredInputProcessor;
+import fr.mercury.nucleus.input.layer.LayeredInputProcessor.InputStateListener;
 import fr.mercury.nucleus.input.layer.LayeredInputProcessor.InputValueListener;
 import fr.mercury.nucleus.renderer.logic.state.BlendState;
 import fr.mercury.nucleus.renderer.logic.state.DepthBufferState;
@@ -25,7 +27,7 @@ import fr.mercury.nucleus.utils.ReadableTimer;
  * 
  * @author GnosticOccultist
  */
-public class TestAssimpLoader extends MercuryApplication implements InputValueListener {
+public class TestAssimpLoader extends MercuryApplication implements InputValueListener, InputStateListener {
     
     public static final InputLayer CAM_LOOK_X = InputLayer.function("camera", "look-x");
     
@@ -78,7 +80,8 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
         layeredInput.map(CAM_STRAFE, Input.Keys.KEY_A);
         layeredInput.map(CAM_ELEVATE, Input.Keys.KEY_SPACE);
         layeredInput.map(CAM_ELEVATE, -1, Input.Keys.KEY_LEFT_SHIFT);
-        layeredInput.listen(this, CAM_LOOK_X, CAM_LOOK_Y, CAM_FOCUS, CAM_MOVE, CAM_STRAFE, CAM_ELEVATE);
+        layeredInput.listenValue(this, CAM_LOOK_X, CAM_LOOK_Y, CAM_MOVE, CAM_STRAFE, CAM_ELEVATE);
+        layeredInput.listenState(this, CAM_FOCUS);
         
         // Load and prepare the cube in the scene.
         // TODO: Allow to add config flags when loading a model.
@@ -102,20 +105,13 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
     @Override
     public void trigger(InputLayer layer, double value) {
         var input = getService(DelegateInputProcessor.class);
+        
         if (layer == CAM_LOOK_X && !input.isCursorVisible()) {
             camControl.rotate(value, 0);
         } 
         if (layer == CAM_LOOK_Y && !input.isCursorVisible()) {
             camControl.rotate(0, value);
         }
-        if (layer == CAM_FOCUS) {
-            if (value == 1.0f) {
-                input.setCursorVisible(false);
-            } else {
-                input.setCursorVisible(true);
-            }
-        }
-        
         
         if (layer == CAM_MOVE) {
             camControl.move(value, 0, 0);
@@ -127,6 +123,25 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
         
         if (layer == CAM_ELEVATE) {
             camControl.move(0, value, 0);
+        }
+    }
+
+    @Override
+    public void trigger(InputLayer layer, InputState state) {
+        var input = getService(DelegateInputProcessor.class);
+        
+        if (layer == CAM_FOCUS) {
+            switch (state) {
+                case OFF:
+                    input.setCursorVisible(true);
+                    break;
+                case POSITIVE:
+                case NEGATIVE:
+                    input.setCursorVisible(false);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

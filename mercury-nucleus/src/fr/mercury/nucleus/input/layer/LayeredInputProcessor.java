@@ -102,7 +102,7 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
         for (var state : activeStates) {
             var value = getStates(state.stateValue, false).lastValue;
             state.updateValue(value);
-            notify(state.layer, state.lastValue);
+            notifyValue(state.layer, state.lastValue);
         }
     }
 
@@ -128,7 +128,7 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
             }
 
             var value = event.getType() == MouseEvent.MOUSE_PRESSED ? 1.0 : 0.0;
-            states.updateValue(value);
+            states.updateDelayed(value);
         }
     }
 
@@ -139,7 +139,8 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
             return;
         }
 
-        var value = (event.getType() == KeyEvent.KEY_PRESSED || event.getType() == KeyEvent.KEY_REPEATED) ? 1.0 : 0.0;
+        var value = (event.getType() == KeyEvent.KEY_PRESSED || 
+                event.getType() == KeyEvent.KEY_REPEATED) ? 1.0 : 0.0;
 
         states.updateDelayed(value);
     }
@@ -149,7 +150,7 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
 
     }
 
-    protected void notify(InputLayer layer, double value) {
+    protected void notifyValue(InputLayer layer, double value) {
         var listeners = getListeners(layer, false);
         if (listeners == null) {
             return;
@@ -158,7 +159,7 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
         listeners.trigger(layer, value);
     }
     
-    protected void notify(InputLayer layer, InputState state) {
+    protected void notifyState(InputLayer layer, InputState state) {
         var listeners = getListeners(layer, false);
         if (listeners == null) {
             return;
@@ -167,14 +168,14 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
         listeners.trigger(layer, state);
     }
 
-    public void listen(InputValueListener listener, InputLayer... layers) {
+    public void listenValue(InputValueListener listener, InputLayer... layers) {
         for (var layer : layers) {
             var listeners = getListeners(layer, true);
             listeners.valueListeners.add(listener);
         }
     }
     
-    public void listen(InputStateListener listener, InputLayer... layers) {
+    public void listenState(InputStateListener listener, InputLayer... layers) {
         for (var layer : layers) {
             var listeners = getListeners(layer, true);
             listeners.stateListeners.add(listener);
@@ -255,8 +256,13 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
                 value *= state.factor;
 
                 state.lastValue = value;
+                var inputState = InputState.fromValue(lastValue);
 
                 listeners.trigger(state.layer, value);
+                listeners.trigger(state.layer, inputState);
+                
+                // Only send to the first found listener.
+                break;
             }
         }
 
@@ -271,6 +277,14 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
             if (lastValue != 0.0) {
                 activeStates.addAll(states);
             } else {
+                
+                for (var state : states) {
+                    // Reset to an inactive state.
+                    state.lastValue = 0;
+                    state.lastState = InputState.OFF;
+                    notifyState(state.layer, state.lastState);
+                }
+                
                 activeStates.removeAll(states);
             }
         }
@@ -312,7 +326,7 @@ public class LayeredInputProcessor extends AbstractApplicationService implements
             }
 
             this.lastState = state;
-            LayeredInputProcessor.this.notify(layer, lastState);
+            LayeredInputProcessor.this.notifyState(layer, lastState);
         }
 
         @Override
