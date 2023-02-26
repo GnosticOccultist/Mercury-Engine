@@ -5,11 +5,12 @@ import fr.alchemy.utilities.collections.pool.Reusable;
 import fr.mercury.nucleus.math.readable.ReadableColor;
 
 /**
- * <code>Color</code> is a mathematical object defined of a red, green, blue and alpha component exprimed
- *  by floating point numbers.
+ * <code>Color</code> is a mathematical object defined of a red, green, blue and
+ * alpha component exprimed by floating point numbers.
  * <p>
- * The first three components caracterize the percentage of each in the total color, the alpha caracterize the 
- * opacity of the color (0 &rarr; invisible, 1 &rarr; opaque).
+ * The first three components caracterize the percentage of each in the total
+ * color, the alpha caracterize the opacity of the color (0 &rarr; invisible, 1
+ * &rarr; opaque).
  * <p>
  * The components are stored in linear color space.
  * 
@@ -20,11 +21,11 @@ public final class Color implements ReadableColor, Comparable<Color>, Reusable {
     /**
      * The white color (1,1,1,1).
      */
-    public static final ReadableColor WHITE = new Color();
+    public static final ReadableColor WHITE = new Color(1.0f, 1.0f, 1.0f, 1.0f);
     /**
      * The black color (0,0,0,1).
      */
-    public static final ReadableColor BLACK = new Color();
+    public static final ReadableColor BLACK = new Color(0.0f, 0.0f, 0.0f, 1.0f);
 
     /**
      * The red component.
@@ -131,12 +132,13 @@ public final class Color implements ReadableColor, Comparable<Color>, Reusable {
         this.a = other.a();
         return this;
     }
-    
+
     /**
-     * Multiplies the RGB components of this <code>Color</code> by the provided factor.
+     * Multiplies the RGB components of this <code>Color</code> by the provided
+     * factor.
      * 
      * @param factor The factor to multiply by.
-     * @return       The color with its new components values.
+     * @return The color with its new components values.
      */
     public Color mulRGB(float factor) {
         this.r *= factor;
@@ -146,10 +148,11 @@ public final class Color implements ReadableColor, Comparable<Color>, Reusable {
     }
 
     /**
-     * Multiplies the RGBA components of this <code>Color</code> by the provided factor.
+     * Multiplies the RGBA components of this <code>Color</code> by the provided
+     * factor.
      * 
      * @param factor The factor to multiply by.
-     * @return       The color with its new components values.
+     * @return The color with its new components values.
      */
     public Color mulRGBA(float factor) {
         this.r *= factor;
@@ -157,6 +160,26 @@ public final class Color implements ReadableColor, Comparable<Color>, Reusable {
         this.b *= factor;
         this.a *= factor;
         return this;
+    }
+
+    /**
+     * Return the strength of the <code>Color</code>. It corresponds to the square
+     * root of the sum of each component multiplied by itself.
+     * 
+     * @return The strength of the color.
+     */
+    public float strength() {
+        return (float) Math.sqrt(strengthSqr());
+    }
+
+    /**
+     * Return the squared strength of the <code>Color</code>. It corresponds to the
+     * sum of each component multiplied by itself.
+     * 
+     * @return The squared strength of the color.
+     */
+    public float strengthSqr() {
+        return r * r + g * g + b * b;
     }
 
     /**
@@ -246,8 +269,8 @@ public final class Color implements ReadableColor, Comparable<Color>, Reusable {
      * compare the R-component, then the G-component and so on.
      * 
      * @param other The other color to compare with (not null).
-     * @return      0 &rarr; the 2 colors are equal, negative &rarr; this color comes
-     *              before the other, negative &rarr; this color comes after the other.
+     * @return 0 &rarr; the 2 colors are equal, negative &rarr; this color comes
+     *         before the other, negative &rarr; this color comes after the other.
      */
     @Override
     public int compareTo(Color other) {
