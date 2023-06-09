@@ -206,7 +206,7 @@ public abstract class MercuryApplication implements Application {
     public void postFrame() {
         var count = Allocator.stackFrameIndex();
         if (count > 0) {
-            logger.warning(count + " pushed stack on the current frame. Consider " + "popping them when no longer used!");
+            logger.warning(count + " pushed stack on the current frame. Consider popping them when no longer used!");
         }
 
         NativeObjectCleaner.cleanUnused();

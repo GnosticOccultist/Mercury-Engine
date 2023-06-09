@@ -284,7 +284,7 @@ public class MercuryContext implements Runnable {
          * Once we have set the current OpenGL context we can access informations about
          * our device.
          */
-        PhysicalDevice physicalDevice = createPhysicalDevice(capabilities);
+        var physicalDevice = createPhysicalDevice(capabilities);
 
         logger.info("Using physical device: \n" + physicalDevice);
         physicalDevice.check(settings);
@@ -325,13 +325,13 @@ public class MercuryContext implements Runnable {
     private PhysicalDevice createPhysicalDevice(GLCapabilities capabilites) {
         Validator.nonNull(capabilites, "The capabilities of the OpenGL context can't be null!");
 
-        Vendor vendor = Vendor.fromGLVendor(GL11C.glGetString(GL11C.GL_VENDOR));
-        String device = GL11C.glGetString(GL11C.GL_RENDERER);
-        String version = GL11C.glGetString(GL11C.GL_VERSION);
-        String shadingVersion = GL11C.glGetString(GL20C.GL_SHADING_LANGUAGE_VERSION);
+        var vendor = Vendor.fromGLVendor(GL11C.glGetString(GL11C.GL_VENDOR));
+        var device = GL11C.glGetString(GL11C.GL_RENDERER);
+        var version = GL11C.glGetString(GL11C.GL_VERSION);
+        var shadingVersion = GL11C.glGetString(GL20C.GL_SHADING_LANGUAGE_VERSION);
 
-        int count = GL11C.glGetInteger(GL30C.GL_NUM_EXTENSIONS);
-        String[] extensions = new String[count];
+        var count = GL11C.glGetInteger(GL30C.GL_NUM_EXTENSIONS);
+        var extensions = new String[count];
         for (int i = 0; i < count; i++) {
             extensions[i] = GL30C.glGetStringi(GL11C.GL_EXTENSIONS, i);
         }
