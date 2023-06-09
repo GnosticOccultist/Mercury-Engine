@@ -24,7 +24,7 @@ import fr.mercury.nucleus.scenegraph.Mesh.Mode;
 import fr.mercury.nucleus.scenegraph.PhysicaMundi;
 import fr.mercury.nucleus.utils.data.BufferUtils;
 
-public class OBJLoader implements AssetLoader<PhysicaMundi> {
+public class OBJLoader implements AssetLoader<PhysicaMundi, VoidLoaderConfig> {
 
     /**
      * The obj asset loader descriptor.
@@ -73,7 +73,7 @@ public class OBJLoader implements AssetLoader<PhysicaMundi> {
     private final MeshStore store = new MeshStore();
 
     @Override
-    public PhysicaMundi load(AssetData data) {
+    public PhysicaMundi load(AssetData data, VoidLoaderConfig config) {
         try {
             // Clear the store for the new loaded OBJ file.
             store.clear();

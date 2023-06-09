@@ -1,7 +1,7 @@
 package fr.mercury.exempli.gratia.asset;
 
 import fr.mercury.nucleus.application.MercuryApplication;
-import fr.mercury.nucleus.asset.loader.AssimpLoader;
+import fr.mercury.nucleus.asset.loader.assimp.AssimpLoader;
 import fr.mercury.nucleus.input.Axis;
 import fr.mercury.nucleus.input.Button;
 import fr.mercury.nucleus.input.DelegateInputProcessor;

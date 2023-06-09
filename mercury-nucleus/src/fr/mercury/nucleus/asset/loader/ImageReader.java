@@ -23,7 +23,7 @@ import fr.mercury.nucleus.utils.MercuryException;
  * 
  * @author GnosticOccultist
  */
-public class ImageReader implements AssetLoader<Image> {
+public class ImageReader implements AssetLoader<Image, VoidLoaderConfig> {
 
     /**
      * The logger of the application.
@@ -38,7 +38,7 @@ public class ImageReader implements AssetLoader<Image> {
     );
 
     @Override
-    public Image load(AssetData data) {
+    public Image load(AssetData data, VoidLoaderConfig config) {
 
         Image image = null;
 

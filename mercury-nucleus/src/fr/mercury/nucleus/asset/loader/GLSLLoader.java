@@ -22,7 +22,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
  * 
  * @author GnosticOccultist
  */
-public final class GLSLLoader implements AssetLoader<ShaderSource> {
+public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderConfig> {
 
     /**
      * The logger of the application.
@@ -56,11 +56,12 @@ public final class GLSLLoader implements AssetLoader<ShaderSource> {
     /**
      * Load the <code>ShaderSource</code> from the provided file path.
      * 
-     * @param path The asset data of the file to read.
-     * @return     The readed shader source code.
+     * @param path   The asset data of the file to read.
+     * @param config The void configuration (not used).
+     * @return       The readed shader source code.
      */
     @Override
-    public ShaderSource load(AssetData data) {
+    public ShaderSource load(AssetData data, VoidLoaderConfig config) {
 
         StringBuilder sb = new StringBuilder();
         read(data, sb);

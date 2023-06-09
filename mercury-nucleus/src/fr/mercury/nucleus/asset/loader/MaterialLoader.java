@@ -21,7 +21,7 @@ import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.MaterialVariable.ValueType;
 import fr.mercury.nucleus.utils.MercuryException;
 
-public class MaterialLoader implements AssetLoader<Material[]> {
+public class MaterialLoader implements AssetLoader<Material[], VoidLoaderConfig> {
 
     /**
      * The logger of the application.
@@ -49,7 +49,7 @@ public class MaterialLoader implements AssetLoader<Material[]> {
     private final StringBuffer buffer = new StringBuffer(MAX_DEFINES);
 
     @Override
-    public Material[] load(AssetData data) {
+    public Material[] load(AssetData data, VoidLoaderConfig config) {
         var extension = FileUtils.getExtension(data.getName());
 
         if (FileExtensions.JSON_FORMAT.equals(extension)) {

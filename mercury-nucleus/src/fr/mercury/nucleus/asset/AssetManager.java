@@ -21,12 +21,13 @@ import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.asset.loader.AssetLoader;
+import fr.mercury.nucleus.asset.loader.AssetLoader.Config;
 import fr.mercury.nucleus.asset.loader.AssetLoaderDescriptor;
-import fr.mercury.nucleus.asset.loader.AssimpLoader;
 import fr.mercury.nucleus.asset.loader.GLSLLoader;
 import fr.mercury.nucleus.asset.loader.ImageReader;
 import fr.mercury.nucleus.asset.loader.MaterialLoader;
 import fr.mercury.nucleus.asset.loader.OBJLoader;
+import fr.mercury.nucleus.asset.loader.assimp.AssimpLoader;
 import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.asset.loader.data.PathAssetData;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
@@ -57,7 +58,7 @@ public class AssetManager extends AbstractApplicationService {
     /**
      * The table containing the asset loaders ordered by their descriptor.
      */
-    private final Map<AssetLoaderDescriptor<?>, AssetLoader<?>> loaders = new HashMap<>();
+    private final Map<AssetLoaderDescriptor<?>, AssetLoader<?, ?>> loaders = new HashMap<>();
     /**
      * The table containing the asset loaders ordered by their descriptor.
      */
@@ -99,7 +100,7 @@ public class AssetManager extends AbstractApplicationService {
      * @param descriptor The asset loader descriptor (not null).
      * @return           The asset manager for chaining purposes.
      */
-    public <A extends AssetLoader<?>> AssetManager registerLoader(AssetLoaderDescriptor<A> descriptor) {
+    public <A extends AssetLoader<?, ?>> AssetManager registerLoader(AssetLoaderDescriptor<A> descriptor) {
         registerLoader(descriptor, null);
         return this;
     }
@@ -113,7 +114,7 @@ public class AssetManager extends AbstractApplicationService {
      *                    instantiation.
      * @return            The asset manager for chaining purposes.
      */
-    public <A extends AssetLoader<?>> AssetManager registerLoader(AssetLoaderDescriptor<A> descriptor, A assetLoader) {
+    public <A extends AssetLoader<?, ?>> AssetManager registerLoader(AssetLoaderDescriptor<A> descriptor, A assetLoader) {
         Validator.nonNull(descriptor, "The descriptor can't be null!");
         loaders.put(descriptor, assetLoader);
         return this;
@@ -128,7 +129,7 @@ public class AssetManager extends AbstractApplicationService {
      * @return           The removed asset loader or null if none.
      */
     @SuppressWarnings("unchecked")
-    public <A extends AssetLoader<?>> A unregisterLoader(AssetLoaderDescriptor<A> descriptor) {
+    public <A extends AssetLoader<?, ?>> A unregisterLoader(AssetLoaderDescriptor<A> descriptor) {
         return (A) loaders.remove(descriptor);
     }
 
@@ -169,7 +170,7 @@ public class AssetManager extends AbstractApplicationService {
      * @return         The loaded model or null.
      */
     public <A extends AnimaMundi> CompletableFuture<Void> loadAnimaMundiAsync(String path, Executor executor, Consumer<A> listener) {
-        AssetLoader<A> loader = acquireLoader(path);
+        AssetLoader<A, ?> loader = acquireLoader(path);
         if (loader != null) {
             return loader.loadFuture(new PathAssetData(Paths.get(path)), executor, listener);
         }
@@ -276,13 +277,24 @@ public class AssetManager extends AbstractApplicationService {
      * <p>
      * If no loader is found it will throw an exception.
      * 
-     * @param data       The data of the asset to load (not null).
-     * @param executor   The synchronous executor to run the listener on main thread.
-     * @param listener   The listener to call once the model has been loaded.
-     * @return           The loaded asset or null.
+     * @param data The data of the asset to load (not null).
+     * @return     The loaded asset or null.
      */
     public <T> T load(AssetData data) {
-        return load(data, null);
+        return load(data, null, null);
+    }
+    
+    /**
+     * Loads the provided asset using an {@link AssetLoader} described by the extension of the given {@link AssetData}.
+     * <p>
+     * If no loader is found it will throw an exception.
+     * 
+     * @param data   The data of the asset to load (not null).
+     * @param config The loader configuration, or null for none.
+     * @return       The loaded asset or null.
+     */
+    public <T, C extends Config> T load(AssetData data, C config) {
+        return load(data, config, null);
     }
     
     /**
@@ -291,18 +303,22 @@ public class AssetManager extends AbstractApplicationService {
      * If no loader is found it will throw an exception.
      * 
      * @param data       The data of the asset to load (not null).
+     * @param config     The loader configuration, or null for none.
      * @param descriptor The asset loader descriptor to use (not null).
-     * @param executor   The synchronous executor to run the listener on main thread.
-     * @param listener   The listener to call once the model has been loaded.
      * @return           The loaded asset or null.
      */
-    public <T, A extends AssetLoader<T>> T load(AssetData data, AssetLoaderDescriptor<A> descriptor) {
-        AssetLoader<T> loader = descriptor == null ? acquireLoader(data.getName()) : instantiateNewLoader(descriptor);
+    public <T, C extends Config, A extends AssetLoader<T, C>> T load(AssetData data, C config, AssetLoaderDescriptor<A> descriptor) {
+        AssetLoader<T, C> loader = descriptor == null ? acquireLoader(data.getName()) : instantiateNewLoader(descriptor);
         if (loader != null) {
             // Try resolving asset path with registered roots.
             var resoved = tryResolving(data);
             if (resoved != null) {
-                return loader.load(resoved);
+                
+                if (config == null) {
+                    return loader.load(resoved);
+                } else {
+                    return loader.load(resoved, config);
+                }
             }
             
             logger.error("Couldn't resolve '" + data + "' with the roots registered!");
@@ -318,11 +334,12 @@ public class AssetManager extends AbstractApplicationService {
      * If no loader is found it will throw an exception.
      * 
      * @param data       The data of the asset to load (not null).
+     * @param config     The loader configuration, or null for none.
      * @param executor   The synchronous executor to run the listener on main thread.
      * @param listener   The listener to call once the model has been loaded.
      * @return           The loaded asset or null.
      */
-    public <T> CompletableFuture<Void> loadAsync(AssetData data, Executor executor, Consumer<T> listener) {
+    public <T, C extends Config> CompletableFuture<Void> loadAsync(AssetData data, C config, Executor executor, Consumer<T> listener) {
         return loadAsync(data, null, executor, listener);
     }
     
@@ -332,18 +349,24 @@ public class AssetManager extends AbstractApplicationService {
      * If no loader is found it will throw an exception.
      * 
      * @param data       The data of the asset to load (not null).
+     * @param config     The loader configuration, or null for none.
      * @param descriptor The asset loader descriptor to use (not null).
      * @param executor   The synchronous executor to run the listener on main thread.
      * @param listener   The listener to call once the model has been loaded.
      * @return           The loaded asset or null.
      */
-    public <T, A extends AssetLoader<T>> CompletableFuture<Void> loadAsync(AssetData data, AssetLoaderDescriptor<A> descriptor, Executor executor, Consumer<T> listener) {
-        AssetLoader<T> loader = descriptor == null ? acquireLoader(data.getName()) : instantiateNewLoader(descriptor);
+    public <T, C extends Config, A extends AssetLoader<T, C>> CompletableFuture<Void> loadAsync(AssetData data, C config, AssetLoaderDescriptor<A> descriptor, Executor executor, Consumer<T> listener) {
+        AssetLoader<T, C> loader = descriptor == null ? acquireLoader(data.getName()) : instantiateNewLoader(descriptor);
         if (loader != null) {
             // Try resolving asset path with registered roots.
             var resoved = tryResolving(data);
             if (resoved != null) {
-                return loader.loadFuture(data, executor, listener);
+                
+                if (config == null) {
+                    return loader.loadFuture(data, executor, listener);
+                } else {
+                    return loader.loadFuture(data, config, executor, listener);
+                }
             }
             
             logger.error("Couldn't resolve '" + data + "' with the roots registered!");
@@ -361,7 +384,7 @@ public class AssetManager extends AbstractApplicationService {
      * @return     The corresponding asset loader or null.
      */
     @SuppressWarnings("unchecked")
-    public <A extends AssetLoader<?>> A acquireLoader(String path) {
+    public <A extends AssetLoader<?, ?>> A acquireLoader(String path) {
         String extension = FileUtils.getExtension(path);
 
         List<AssetLoaderDescriptor<?>> descriptors = new ArrayList<>();
@@ -414,8 +437,8 @@ public class AssetManager extends AbstractApplicationService {
     }
 
     @SuppressWarnings("unchecked")
-    private <A extends AssetLoader<?>> A instantiateNewLoader(AssetLoaderDescriptor<A> descriptor) {
-        AssetLoader<?> instance = null;
+    private <A extends AssetLoader<?, ?>> A instantiateNewLoader(AssetLoaderDescriptor<A> descriptor) {
+        AssetLoader<?, ?> instance = null;
         try {
             instance = descriptor.supply();
         } catch (Exception ex) {
