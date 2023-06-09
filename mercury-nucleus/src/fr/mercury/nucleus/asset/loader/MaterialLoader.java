@@ -47,6 +47,11 @@ public class MaterialLoader implements AssetLoader<Material[], VoidLoaderConfig>
      * The buffer used to append defines.
      */
     private final StringBuffer buffer = new StringBuffer(MAX_DEFINES);
+    
+    @Override
+    public Material[] load(AssetData data) {
+        return load(data, VoidLoaderConfig.get());
+    }
 
     @Override
     public Material[] load(AssetData data, VoidLoaderConfig config) {

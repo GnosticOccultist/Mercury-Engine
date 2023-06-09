@@ -36,6 +36,11 @@ public class ImageReader implements AssetLoader<Image, VoidLoaderConfig> {
             ImageReader::new,
             FileExtensions.TEXTURE_FILE_EXTENSION
     );
+    
+    @Override
+    public Image load(AssetData data) {
+        return load(data, VoidLoaderConfig.get());
+    }
 
     @Override
     public Image load(AssetData data, VoidLoaderConfig config) {

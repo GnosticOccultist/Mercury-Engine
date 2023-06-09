@@ -71,6 +71,11 @@ public class OBJLoader implements AssetLoader<PhysicaMundi, VoidLoaderConfig> {
      * The store used for storing the loaded data.
      */
     private final MeshStore store = new MeshStore();
+    
+    @Override
+    public PhysicaMundi load(AssetData data) {
+        return load(data, VoidLoaderConfig.get());
+    }
 
     @Override
     public PhysicaMundi load(AssetData data, VoidLoaderConfig config) {

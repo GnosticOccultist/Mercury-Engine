@@ -4,6 +4,12 @@ import org.lwjgl.assimp.Assimp;
 
 import fr.mercury.nucleus.asset.loader.AssetLoader;
 
+/**
+ * <code>AssimpLoaderConfig</code> is an implementation of {@link AssetLoader.Config} to define
+ * a set of parameters to use when loading a scene/model file using the {@link AssimpLoader}.
+ * 
+ * @author GnosticOccultist
+ */
 public class AssimpLoaderConfig implements AssetLoader.Config {
 
     /**
@@ -31,10 +37,20 @@ public class AssimpLoaderConfig implements AssetLoader.Config {
      */
     private int flags;
 
+    /**
+     * Instantiates a new <code>AssimpLoaderConfig</code> with the default parameters.
+     */
     public AssimpLoaderConfig() {
         this(DEFAULT_ASSIMP_FLAGS, true, true);
     }
 
+    /**
+     * Instantiates a new <code>AssimpLoaderConfig</code> to use with the {@link AssimpLoader}.
+     * 
+     * @param flags          The assimp flags to use when loading scene file.
+     * @param ignoreRootNode Whether to ignore the root-node.
+     * @param loadTextures   Whether to load and apply texture to the scene.
+     */
     public AssimpLoaderConfig(int flags, boolean ignoreRootNode, boolean loadTextures) {
         this.flags = flags;
         this.ignoreRootNode = ignoreRootNode;

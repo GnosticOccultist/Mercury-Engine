@@ -52,6 +52,17 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
             GLSLLoader::new,
             FileExtensions.SHADER_FILE_EXTENSIONS
     );
+    
+    /**
+     * Load the <code>ShaderSource</code> from the provided file path.
+     * 
+     * @param path   The asset data of the file to read.
+     * @return       The readed shader source code.
+     */
+    @Override
+    public ShaderSource load(AssetData data) {
+        return load(data, VoidLoaderConfig.get());
+    }
 
     /**
      * Load the <code>ShaderSource</code> from the provided file path.

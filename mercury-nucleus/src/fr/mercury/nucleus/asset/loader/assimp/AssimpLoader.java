@@ -98,7 +98,6 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
 
                 file.ReadProc((pFile, pBuffer, size, count) -> {
                     var max = Math.min(data.remaining(), size * count);
-                    System.out.println("path :" + filePath);
                     MemoryUtil.memCopy(MemoryUtil.memAddress(data) + data.position(), pBuffer, max);
                     return max;
                 });
@@ -132,8 +131,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
         io.set(openProc, (pFileIO, pFile) -> {
         }, MemoryUtil.NULL);
 
-        // TODO: Allow the user to choose its own tags.
-        AIScene scene = Assimp.aiImportFile(data.getPath(), config.flags());
+        var scene = Assimp.aiImportFile(data.getPath(), config.flags());
         if (scene == null) {
             throw new MercuryException("Error while loading model '" + data + "': " + Assimp.aiGetErrorString());
         }
