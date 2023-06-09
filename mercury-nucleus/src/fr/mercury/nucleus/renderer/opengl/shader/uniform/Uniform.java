@@ -91,7 +91,7 @@ public class Uniform {
         if (location == UNKNOWN_LOCATION) {
             var location = GL20.glGetUniformLocation(program.getID(), name);
             if (location < 0) {
-                setLocation(-1);
+                setLocation(UNDEFINED_LOCATION);
                 logger.warning("The uniform '" + name + "' isn't declared in the shader: " + program + ".");
                 return;
             }
