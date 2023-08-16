@@ -71,7 +71,7 @@ public abstract class Texture extends GLObject {
      */
     public static void unbind(TextureType type) {
         Validator.nonNull(type, "The texture type can't be null!");
-        GL15.glBindBuffer(Texture.getOpenGLType(type), 0);
+        GL15.glBindTexture(Texture.getOpenGLType(type), 0);
     }
 
     /**

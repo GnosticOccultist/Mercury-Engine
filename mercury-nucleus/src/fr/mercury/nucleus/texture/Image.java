@@ -12,9 +12,11 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.utils.data.BufferUtils;
 
 /**
- * <code>Image</code> is a wrapper class containing the data of a graphical  image. It is define with a {@link Format}, the byte data 
- * as well as the width and height of the image. This class is mainly used to upload data into a {@link Texture} object which will actually 
- * be usable inside a {@link ShaderProgram}.
+ * <code>Image</code> is a wrapper class containing the data of a graphical
+ * image. It is define with a {@link Format}, the byte data as well as the width
+ * and height of the image. This class is mainly used to upload data into a
+ * {@link Texture} object which will actually be usable inside a
+ * {@link ShaderProgram}.
  * 
  * @author GnosticOccultist
  */
@@ -44,7 +46,7 @@ public class Image {
     /**
      * Instantiates a new <code>Image</code> with the provided width and height.
      * <p>
-     * The image format is set to {@link Format#RGB8}.
+     * The image format is set to {@link Format#RGBA8}.
      * 
      * @param width  The width of the image (&gt 0).
      * @param height The height of the image (&gt 0).
@@ -70,7 +72,7 @@ public class Image {
      * internal buffer of the image copies the pixel data from the provided byte
      * buffer.
      * <p>
-     * The image format is set to {@link Format#RGB8}.
+     * The image format is set to {@link Format#RGBA8}.
      * 
      * @param width  The width of the image (&gt 0).
      * @param height The height of the image (&gt 0).
@@ -253,12 +255,14 @@ public class Image {
     }
 
     /**
-     * <code>Format</code> represents the format use for the <code>Texture</code> creation.
+     * <code>Format</code> represents the format use for the <code>Texture</code>
+     * creation.
      * <p>
-     * This can be used to describe the way the data are stored inside a <code>Texture</code>.
+     * This can be used to describe the way the data are stored inside a
+     * <code>Texture</code>.
      * <p>
-     * There are three basic kinds of image formats : color, depth or depth/stencil with different 
-     * bits depth per component (8, 16, 24, 32, etc...).
+     * There are three basic kinds of image formats : color, depth or depth/stencil
+     * with different bits depth per component (8, 16, 24, 32, etc...).
      */
     public enum Format {
         /**
@@ -343,15 +347,11 @@ public class Image {
     public int determineFormat() {
         switch (format) {
         case RGB8:
-            return GL11.GL_RGB;
-        case RGBA8:
-            return GL11.GL_RGBA;
         case RGB16F:
-            return GL11.GL_RGB;
-        case RGBA16F:
-            return GL11.GL_RGBA;
         case RGB32F:
             return GL11.GL_RGB;
+        case RGBA8:
+        case RGBA16F:
         case RGBA32F:
             return GL11.GL_RGBA;
         case DEPTH16:
