@@ -75,9 +75,9 @@ public class ImageReader implements AssetLoader<Image, VoidLoaderConfig> {
             IntBuffer h = stack.mallocInt(1);
             IntBuffer channels = stack.mallocInt(1);
 
-            // Decode texture image into a byte buffer.
+            // Decode texture image into a byte buffer, by not enforcing pixel channels.
             ByteBuffer decodedImage = STBImage.stbi_load_from_memory(
-                    FileUtils.toByteBuffer(data.openStream(), buffer, this::resize), w, h, channels, 4);
+                    FileUtils.toByteBuffer(data.openStream(), buffer, this::resize), w, h, channels, 0);
 
             if (decodedImage == null) {
                 throw new MercuryException("Failed to load image: " + STBImage.stbi_failure_reason());

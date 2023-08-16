@@ -336,6 +336,30 @@ public class Image {
         public int getBitsPerPixel() {
             return bitsPerPixel;
         }
+
+        /**
+         * Return whether the <code>Format</code> has an alpha channel.
+         * 
+         * @return Whether the format has an alpha channel.
+         */
+        public boolean hasAlpha() {
+            if (isDepthFormat()) {
+                return false;
+            }
+
+            switch (this) {
+                case RGB8:
+                case RGB16F:
+                case RGB32F:
+                    return false;
+                case RGBA8:
+                case RGBA16F:
+                case RGBA32F:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 
     /**
