@@ -23,15 +23,19 @@ import fr.mercury.nucleus.utils.data.Allocator;
 import fr.mercury.nucleus.utils.gc.NativeObjectCleaner;
 
 /**
- * <code>MercuryApplication</code> is an abstract implementation of a usable {@link Application} using the <code>Mercury-Engine</code>.
- * It implements the initialization, updating and cleaning methods as well as managing the {@link MercurySettings} and a set of {@link ApplicationModule}
- * extending its basic capabilities depending on the user needs.
+ * <code>MercuryApplication</code> is an abstract implementation of a usable
+ * {@link Application} using the <code>Mercury-Engine</code>. It implements the
+ * initialization, updating and cleaning methods as well as managing the
+ * {@link MercurySettings} and a set of {@link ApplicationModule} extending its
+ * basic capabilities depending on the user needs.
  * <p>
- * Such application is capable of rendering a 3D scene described by a hierarchy of {@link AnimaMundi} extending from the {@link #scene root-node}
- * using its own {@link Camera} and {@link DefaultRenderer}.
+ * Such application is capable of rendering a 3D scene described by a hierarchy
+ * of {@link AnimaMundi} extending from the {@link #scene root-node} using its
+ * own {@link Camera} and {@link DefaultRenderer}.
  * <p>
- * An {@link AssetManager} and an {@link InputProcessor} are contained within the application in order to handle asset loading and being 
- * notified about inputs related events.
+ * An {@link AssetManager} and an {@link InputProcessor} are contained within
+ * the application in order to handle asset loading and being notified about
+ * inputs related events.
  * 
  * @see #getScene()
  * @see #getService(Class)
@@ -79,8 +83,9 @@ public abstract class MercuryApplication implements Application {
     protected AssetManager assetManager = new AssetManager();
 
     /**
-     * Starts the <code>MercuryApplication</code> and creates the {@link MercuryContext}. 
-     * While initializing the context, it will start the main application loop and show the configured window.
+     * Starts the <code>MercuryApplication</code> and creates the
+     * {@link MercuryContext}. While initializing the context, it will start the
+     * main application loop and show the configured window.
      * <p>
      * If no {@link MercurySettings} are set, it will use the default ones.
      */
@@ -114,15 +119,15 @@ public abstract class MercuryApplication implements Application {
                 // Initialize the camera.
                 camera = new Camera(settings.getWidth(), settings.getHeight());
                 camera.setLocation(0f, 0f, 0f);
-                camera.setFrustumPerspective(45F, (float) camera.getWidth() / camera.getHeight(), 1f, 1000f);
+                camera.setFrustumPerspective(45F, camera.getAspect(), 1f, 1000f);
             }
-            
+
             // Try initializing the renderer from settings.
             var type = settings.getRendererType();
 
             try {
                 this.renderer = Instantiator.fromNameImplements(type, Renderer.class, null, camera);
-                
+
             } catch (Exception ex) {
                 logger.error("Unable to instantiate Renderer implementation from class '" + type
                         + "'! Switching to DefaultRenderer instead.", ex);
@@ -266,14 +271,16 @@ public abstract class MercuryApplication implements Application {
     }
 
     /**
-     * Return an {@link ApplicationModule} matching the provided type linked to the <code>MercuryApplication</code>.
+     * Return an {@link ApplicationModule} matching the provided type linked to the
+     * <code>MercuryApplication</code>.
      * <p>
-     * This function is supposed to be used to access the module, however it shouldn't be used to detach it 
-     * from the application, use {@link #unlinkService(ApplicationModule)} instead.
+     * This function is supposed to be used to access the module, however it
+     * shouldn't be used to detach it from the application, use
+     * {@link #unlinkService(ApplicationModule)} instead.
      * 
      * @param type The type of module to return (not null).
-     * @return     A module matching the given type, or null if none is linked to the
-     *             application.
+     * @return A module matching the given type, or null if none is linked to the
+     *         application.
      * 
      * @see #unlinkService(ApplicationModule)
      * @see #getOptionalService(Class)
@@ -291,8 +298,9 @@ public abstract class MercuryApplication implements Application {
     }
 
     /**
-     * Links the provided {@link ApplicationService} to the <code>MercuryApplication</code>. 
-     * Note that the service will be initialized during the next update cycle if it hasn't been yet.
+     * Links the provided {@link ApplicationService} to the
+     * <code>MercuryApplication</code>. Note that the service will be initialized
+     * during the next update cycle if it hasn't been yet.
      * 
      * @param module The module to be linked (not null).
      */
@@ -304,8 +312,9 @@ public abstract class MercuryApplication implements Application {
     }
 
     /**
-     * Unlinks the provided {@link ApplicationService} from the <code>MercuryApplication</code> 
-     * and terminate the service by calling the {@link ApplicationModule#cleanup()} method.
+     * Unlinks the provided {@link ApplicationService} from the
+     * <code>MercuryApplication</code> and terminate the service by calling the
+     * {@link ApplicationModule#cleanup()} method.
      * 
      * @param module The service which is to be cleaned up and removed (not null).
      */
@@ -321,10 +330,11 @@ public abstract class MercuryApplication implements Application {
     }
 
     /**
-     * Return the {@link NucleusMundi} representing the root-node of the scene meaning all scenegraph 
-     * elements are expanding down from this one.
+     * Return the {@link NucleusMundi} representing the root-node of the scene
+     * meaning all scenegraph elements are expanding down from this one.
      * <p>
-     * In order to attach an {@link AnimaMundi} to this one, call the method {@link NucleusMundi#attach(AnimaMundi)}.
+     * In order to attach an {@link AnimaMundi} to this one, call the method
+     * {@link NucleusMundi#attach(AnimaMundi)}.
      * 
      * @return The root-node of the scene.
      */

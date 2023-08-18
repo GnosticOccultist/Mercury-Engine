@@ -17,9 +17,11 @@ import fr.mercury.nucleus.renderer.queue.RenderLayer;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
 
 /**
- * <code>Camera</code> represents a mathematical object designed to render objects correctly in 3D space using matrices.
+ * <code>Camera</code> represents a mathematical object designed to render
+ * objects correctly in 3D space using matrices.
  * <p>
- * It can also provides culling of objects outside of the frustum of the camera, to save on performance.
+ * It can also provides culling of objects outside of the frustum of the camera,
+ * to save on performance.
  * 
  * @author GnosticOccultist
  */
@@ -148,7 +150,7 @@ public final class Camera {
      * 
      * @param width  The new width of the camera.
      * @param height The new height of the camera.
-     * @return       Whether the camera has been actually resized.
+     * @return Whether the camera has been actually resized.
      */
     public boolean resize(int width, int height) {
         // Prevent useless computations.
@@ -159,7 +161,7 @@ public final class Camera {
         this.width = width;
         this.height = height;
 
-        setFrustumPerspective((float) width / height, frustumNear, frustumFar);
+        setFrustumPerspective(getAspect(), frustumNear, frustumFar);
         return true;
     }
 
@@ -173,7 +175,7 @@ public final class Camera {
      *               by the height (&ge;0, &le;1).
      * @param near   The near plane frustum distance from the camera (&ge;0).
      * @param far    The far plane frustum distance from the camera (&ge;0).
-     * @return       The camera with the updated frustum for chaining purposes.
+     * @return The camera with the updated frustum for chaining purposes.
      */
     public Camera setFrustumPerspective(float aspect, float near, float far) {
         return setFrustumPerspective(fov, aspect, near, far);
@@ -185,12 +187,12 @@ public final class Camera {
      * projection matrix will be computed and applied on the next call of
      * {@link #prepare(AbstractRenderer)}.
      * 
-     * @param fovY   The field of view of the camera.
+     * @param fovY   The field of view of the camera in degrees.
      * @param aspect The aspect ratio of the view, usually the display width divided
      *               by the height (&ge;0, &le;1).
      * @param near   The near plane frustum distance from the camera (&ge;0).
      * @param far    The far plane frustum distance from the camera (&ge;0).
-     * @return       The camera with the updated frustum for chaining purposes.
+     * @return The camera with the updated frustum for chaining purposes.
      */
     public Camera setFrustumPerspective(float fovY, float aspect, float near, float far) {
         Validator.nonNegative(near, "The near plane value can't be negative!");
@@ -358,6 +360,16 @@ public final class Camera {
     }
 
     /**
+     * Return the aspect ratio of the <code>Camera</code>.
+     * 
+     * @return The width divided by the height (&gt;0).
+     */
+    public float getAspect() {
+        var result = (float) width / (float) height;
+        return result;
+    }
+
+    /**
      * Return the field of view in the Y-axis of the <code>Camera</code> exprimed in
      * degrees. The value is only used when the camera is in
      * {@link GraphicalProjectionMode#PERSPECTIVE}.
@@ -453,7 +465,7 @@ public final class Camera {
      * computed and applied on the next call of {@link #prepare(AbstractRenderer)}.
      * 
      * @param left The desired left-axis vector (not null).
-     * @return     The updated camera for chaining purposes.
+     * @return The updated camera for chaining purposes.
      */
     public Camera setLeft(ReadableVector3f left) {
         this.left.set(left);
@@ -477,7 +489,7 @@ public final class Camera {
      * computed and applied on the next call of {@link #prepare(AbstractRenderer)}.
      * 
      * @param up The desired up-axis vector (not null).
-     * @return   The updated camera for chaining purposes.
+     * @return The updated camera for chaining purposes.
      */
     public Camera setUp(ReadableVector3f up) {
         this.up.set(up);
@@ -502,7 +514,7 @@ public final class Camera {
      * {@link #prepare(AbstractRenderer)}.
      * 
      * @param direction The desired direction vector (not null).
-     * @return          The updated camera for chaining purposes.
+     * @return The updated camera for chaining purposes.
      */
     public Camera setDirection(ReadableVector3f direction) {
         this.direction.set(direction);
@@ -649,7 +661,7 @@ public final class Camera {
      * present on the layer.
      * 
      * @param layer The layer to check with the camera.
-     * @return      Whether the layer is queued and rendered by the camera.
+     * @return Whether the layer is queued and rendered by the camera.
      */
     public boolean checkLayer(RenderLayer layer) {
         return layers.contains(layer);

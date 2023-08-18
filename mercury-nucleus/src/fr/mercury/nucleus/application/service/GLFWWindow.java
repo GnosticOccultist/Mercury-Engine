@@ -332,6 +332,16 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
     public int getHeight() {
         return application.getSettings().getHeight();
     }
+    
+    /**
+     * Return the aspect ratio of the window framebuffer.
+     * 
+     * @return The width divided by the height (&gt;0).
+     */
+    public float getAspect() {
+        var result = (float) getWidth() / (float) getHeight();
+        return result;
+    }
 
     /**
      * Return the identifier of the <code>GLFWWindow</code>.
