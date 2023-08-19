@@ -271,7 +271,7 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
     }
 
     /**
-     * Populates the given {@link FloatBuffer} with the data from the <code>Matrix4f</code> in column major order.
+     * Populates the given {@link FloatBuffer} with the data from the <code>Matrix4f</code> in row-major order.
      * <p>
      * The method is using relative put method, meaning the float data is written at the current buffer's position 
      * and the position is incremented by 16.
@@ -297,10 +297,10 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
      * The method is using relative put method, meaning the float data is written at the current buffer's position 
      * and the position is incremented by 16.
      * <p>
-     * The populated buffer can be used safely to transfer data to shaders as mat4 uniforms.
+     * The populated buffer can be used safely to transfer data to shaders as mat4 uniforms using a row-major order.
      * 
      * @param store       The buffer to populate with the data (not null).
-     * @param columnMajor Whether to write the data in column or row major order.
+     * @param columnMajor Whether to write the data in column or row-major order.
      * @return            The given store populated with the matrix data.
      * 
      * @throws BufferOverflowException Thrown if there isn't enough space to write all 16 floats.

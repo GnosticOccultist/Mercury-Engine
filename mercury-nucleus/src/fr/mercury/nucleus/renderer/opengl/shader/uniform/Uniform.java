@@ -20,17 +20,25 @@ import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.data.Allocator;
 
 /**
- * <code>Uniform</code> defines a variable inside a "glsl" file (<i>for example a shader</i>), to which the user can 
- * attribute a value to pass through the {@link ShaderProgram}.
- * There multiple ways to declare a uniform inside a shader program:
- * <ul><li>Invoke the basic method from an existing program {@link ShaderProgram#addUniform(String, UniformType, Object)}.</li>
- * <li>Register all uniforms declared in a class using {@link ShaderProgram#register(Object)}.</li>
- * <li>Create a structure class composed of uniforms which implements {@link UniformStructure}.</li></ul>
- * In this last case, you must declare the structure in a material file as a prefab, for an example look at the {@link Fog} class.
+ * <code>Uniform</code> defines a variable inside a "glsl" file (<i>for example
+ * a shader</i>), to which the user can attribute a value to pass through the
+ * {@link ShaderProgram}. There multiple ways to declare a uniform inside a
+ * shader program:
+ * <ul>
+ * <li>Invoke the basic method from an existing program
+ * {@link ShaderProgram#addUniform(String, UniformType, Object)}.</li>
+ * <li>Register all uniforms declared in a class using
+ * {@link ShaderProgram#register(Object)}.</li>
+ * <li>Create a structure class composed of uniforms which implements
+ * {@link UniformStructure}.</li>
+ * </ul>
+ * In this last case, you must declare the structure in a material file as a
+ * prefab, for an example look at the {@link Fog} class.
  * 
  * <p>
- * Note that the uniform is the same within a particular rendering call for each shader stage (rendering pipeline), 
- * but you can change its value between each invocation.
+ * Note that the uniform is the same within a particular rendering call for each
+ * shader stage (rendering pipeline), but you can change its value between each
+ * invocation.
  * 
  * @see ShaderProgram
  * @see UniformField
@@ -206,26 +214,26 @@ public class Uniform {
                 if (value.equals(this.value)) {
                     return;
                 }
-
+    
                 this.value = value;
                 break;
             case VECTOR2F:
                 if (value.equals(this.value)) {
                     return;
                 }
-
+    
                 if (this.value == null) {
                     this.value = new Vector2f((Vector2f) value);
                 } else {
                     ((Vector2f) this.value).set((Vector2f) value);
                 }
-
+    
                 break;
             case VECTOR3F:
                 if (value.equals(this.value)) {
                     return;
                 }
-
+    
                 if (value instanceof Vector3f && !(this.value instanceof Vector3f)) {
                     this.value = new Vector3f((Vector3f) value);
                     break;
@@ -233,20 +241,20 @@ public class Uniform {
                     this.value = new Color((Color) value);
                     break;
                 }
-
+    
                 if (value instanceof Vector3f) {
                     ((Vector3f) this.value).set((Vector3f) value);
                 }
                 if (value instanceof Color) {
                     ((Color) this.value).set((Color) value);
                 }
-
+    
                 break;
             case VECTOR4F:
                 if (value.equals(this.value)) {
                     return;
                 }
-
+    
                 if (value instanceof Vector4f && !(this.value instanceof Vector4f)) {
                     this.value = new Vector4f((Vector4f) value);
                     break;
@@ -254,20 +262,20 @@ public class Uniform {
                     this.value = new Color((Color) value);
                     break;
                 }
-
+    
                 if (value instanceof Vector4f) {
                     ((Vector4f) this.value).set((Vector4f) value);
                 }
                 if (value instanceof Color) {
                     ((Color) this.value).set((Color) value);
                 }
-
+    
                 break;
             case MATRIX3F:
                 if (value.equals(this.value)) {
                     return;
                 }
-
+    
                 var matrix3 = (Matrix3f) value;
                 if (buffer == null) {
                     buffer = Allocator.allocFloat(9);
@@ -281,20 +289,20 @@ public class Uniform {
                 } else {
                     ((Matrix3f) this.value).set(matrix3);
                 }
-
+    
                 break;
             case MATRIX4F:
                 if (value.equals(this.value)) {
                     return;
                 }
-
+    
                 var matrix4 = (Matrix4f) value;
                 if (buffer == null) {
                     buffer = Allocator.allocFloat(16);
                 } else {
                     buffer.clear();
                 }
-                matrix4.populate(buffer, false);
+                matrix4.populate(buffer);
                 buffer.flip();
                 if (this.value == null) {
                     this.value = new Matrix4f(matrix4);
