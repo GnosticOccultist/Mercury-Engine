@@ -10,6 +10,7 @@ import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.asset.loader.AssetLoader.Config;
 import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.texture.ColorSpace;
 import fr.mercury.nucleus.texture.Image;
@@ -19,9 +20,11 @@ import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.data.Allocator;
 
 /**
- * <code>ImageReader</code> is an implementation of {@link AssetLoader} designed
- * to load a texture file, present on the disk, into an {@link Image} which is
- * turned into a {@link Texture} to be used with the rendering context.
+ * <code>STBImageReader</code> is an implementation of {@link AssetLoader}
+ * designed to read a texture file present on the disk using the
+ * <code>STB</code> library. The loader returns an {@link Image} containing
+ * pixel data and a format, which can later be turned into a {@link Texture} to
+ * be used inside a rendering context.
  * 
  * @author GnosticOccultist
  */
@@ -42,11 +45,27 @@ public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
      */
     private AssetManager assetManager;
 
+    /**
+     * Loads the texture file from the specified {@link AssetData} into an
+     * {@link Image}, to use in the application.
+     * 
+     * @param data The asset data to load (not null).
+     * @return The loaded image object.
+     */
     @Override
     public Image load(AssetData data) {
         return load(data, VoidLoaderConfig.get());
     }
 
+    /**
+     * Loads the texture file from the specified {@link AssetData} into an
+     * {@link Image}, to use in the application. <br>
+     * The loader doesn't use support any {@link Config}.
+     * 
+     * @param data   The asset data to load (not null).
+     * @param config The loader configuration, or null for none.
+     * @return The loaded image object.
+     */
     @Override
     public Image load(AssetData data, VoidLoaderConfig config) {
 

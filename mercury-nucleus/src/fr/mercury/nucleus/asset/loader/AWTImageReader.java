@@ -18,10 +18,20 @@ import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.texture.ColorSpace;
 import fr.mercury.nucleus.texture.Image;
+import fr.mercury.nucleus.texture.Texture;
 import fr.mercury.nucleus.texture.Image.Format;
 import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.data.Allocator;
 
+/**
+ * <code>AWTImageReader</code> is an implementation of {@link AssetLoader}
+ * designed to read a texture file present on the disk using <code>AWT</code>
+ * and {@link BufferedImage}. The loader returns an {@link Image} containing
+ * pixel data and a format, which can later be turned into a {@link Texture} to
+ * be used inside a rendering context.
+ * 
+ * @author GnosticOccultist
+ */
 public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
 
     /**
@@ -29,7 +39,7 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
      */
     private static final Logger logger = FactoryLogger.getLogger("mercury.app");
     /**
-     * The image STB asset loader descriptor.
+     * The image AWT asset loader descriptor.
      */
     public static final AssetLoaderDescriptor<AWTImageReader> DESCRIPTOR = new AssetLoaderDescriptor<>(
             AWTImageReader::new, FileExtensions.TEXTURE_FILE_EXTENSION);
@@ -39,11 +49,27 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
      */
     private AssetManager assetManager;
 
+    /**
+     * Loads the texture file from the specified {@link AssetData} into an {@link Image}, to use in the
+     * application.
+     * 
+     * @param data   The asset data to load (not null).
+     * @return       The loaded image object.
+     */
     @Override
     public Image load(AssetData data) {
         return load(data, VoidLoaderConfig.get());
     }
 
+    /**
+     * Loads the texture file from the specified {@link AssetData} into an
+     * {@link Image}, to use in the application. <br>
+     * The loader doesn't use support any {@link Config}.
+     * 
+     * @param data   The asset data to load (not null).
+     * @param config The loader configuration, or null for none.
+     * @return The loaded image object.
+     */
     @Override
     public Image load(AssetData data, VoidLoaderConfig config) {
         var ext = data.getExtension();
@@ -112,6 +138,15 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
         return image;
     }
 
+    /**
+     * Handle known data format such as 8-bits ABGR and 8-bits BGR, which are often
+     * used in Windows systems.
+     * 
+     * @param data   The asset data to load (not null).
+     * @param img    The read buffered image (not null).
+     * @param buffer An empty byte buffer to contain the pixel data.
+     * @return An image or null if it isn't a standard format.
+     */
     private Image handleKnownFormat(AssetData data, BufferedImage img, ByteBuffer buffer) {
         var type = img.getType();
         Image image = null;
@@ -145,6 +180,13 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
         return image;
     }
 
+    /**
+     * Return an array containing the pixel data of the given {@link BufferedImage}.
+     * 
+     * @param data The asset data to load (not null).
+     * @param img  The read buffered image (not null).
+     * @return An array containing the pixel data, either in byte or short values.
+     */
     private Object getDataArray(AssetData data, BufferedImage img) {
         var buffer = img.getRaster().getDataBuffer();
         switch (buffer.getDataType()) {
