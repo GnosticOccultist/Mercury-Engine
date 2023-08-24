@@ -23,43 +23,49 @@ import fr.mercury.nucleus.utils.OpenGLCall;
  */
 public class DefaultRenderLogic implements RenderLogic {
 
-	@Override
-	@OpenGLCall
-	public void begin(PhysicaMundi physica) {
-		
-		var mesh = physica.getMesh();
-		mesh.bind();
-		
-		var material = physica.getMaterial();
-		material.getAttributes().forEach(VertexAttribute::enable);
-	}
+    @Override
+    @OpenGLCall
+    public void begin(PhysicaMundi physica) {
 
-	@Override
-	@OpenGLCall
-	public void render(PhysicaMundi physica) {
-		
-		var mesh = physica.getMesh();
-		
-		// Check that our mesh as an indices buffer setup to draw elements, otherwise draw arrays.
-		if(mesh.hasIndices()) {
-			if(mesh.isInstanced()) {
-				drawElementsInstanced(mesh);
-			} else {
-				drawElements(mesh);
-			}
-		} else {
-			drawArrays(mesh);
-		}
-	}
+        var mesh = physica.getMesh();
+        mesh.bind();
 
-	@Override
-	@OpenGLCall
-	public void end(PhysicaMundi physica) {
-		
-		var material = physica.getMaterial();
-		material.getAttributes().forEach(VertexAttribute::disable);
-		
-		var mesh = physica.getMesh();
-		mesh.unbind();
-	}
+        var material = physica.getMaterial();
+        material.getAttributes().forEach(VertexAttribute::enable);
+    }
+
+    @Override
+    @OpenGLCall
+    public void render(PhysicaMundi physica) {
+
+        var mesh = physica.getMesh();
+
+        // Check that our mesh as an indices buffer setup to draw elements, otherwise
+        // draw arrays.
+        if (mesh.hasIndices()) {
+            // Check if our mesh request instancing and if so, use instanced drawing.
+            if (mesh.isInstanced()) {
+                drawElementsInstanced(mesh);
+            } else {
+                drawElements(mesh);
+            }
+        } else {
+            if (mesh.isInstanced()) {
+                drawArraysInstanced(mesh);
+            } else {
+                drawArrays(mesh);
+            }
+        }
+    }
+
+    @Override
+    @OpenGLCall
+    public void end(PhysicaMundi physica) {
+
+        var material = physica.getMaterial();
+        material.getAttributes().forEach(VertexAttribute::disable);
+
+        var mesh = physica.getMesh();
+        mesh.unbind();
+    }
 }

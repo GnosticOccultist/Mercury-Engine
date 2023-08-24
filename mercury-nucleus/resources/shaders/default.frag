@@ -1,7 +1,7 @@
 #version 330 core
 
 #ifdef USE_FOG
-#import "/shaders/Fog.glsl"
+#import "/lib/Fog.glsl"
 #endif
 
 out vec4 frag_Color;

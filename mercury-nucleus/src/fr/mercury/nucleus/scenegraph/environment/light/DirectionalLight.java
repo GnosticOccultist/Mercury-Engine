@@ -5,6 +5,7 @@ import fr.mercury.nucleus.math.objects.Vector3f;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.Uniform.UniformType;
 import fr.mercury.nucleus.renderer.opengl.shader.uniform.UniformField;
+import fr.mercury.nucleus.scenegraph.AnimaMundi;
 
 /**
  * <code>DirectionalLight</code> is an implementation of {@link Light}, to describe a light which
@@ -28,6 +29,14 @@ public class DirectionalLight extends Light {
 		this.direction = new Vector3f(Vector3f.UNIT_Z);
 	}
 	
+	@Override
+	protected float computeInfluence(AnimaMundi animaMundi) {
+		/*
+		 * The distance isn't affecting the influence of the light, only its intensity.
+		 */
+		return getColor().strengthSqr() * getIntensity();
+	}
+	
 	/**
 	 * Return the direction in which the <code>DirectionalLight</code>'s rays are propagating.
 	 * 
@@ -48,19 +57,14 @@ public class DirectionalLight extends Light {
 		Validator.nonNull(direction);
 		direction.set(direction);
 	}
-	
-	@Override
-	public void uniforms(ShaderProgram program) {
-		// TODO Auto-generated method stub
 
-	}
+    @Override
+    public void uniforms(ShaderProgram program) {
+        
+    }
 
-	@Override
-	public String name() {
-		
-		// TODO: Since there can be multiple lights in a scene, we would needs
-		// multiple uniform names, i.e. light[0], light[1], ..., light[i].
-		
-		return null;
-	}
+    @Override
+    public String name() {
+        return null;
+    }
 }

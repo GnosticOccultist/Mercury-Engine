@@ -1,6 +1,6 @@
 #version 330 core
 
-#import "/shaders/Transform.glsl"
+#import "/lib/Transform.glsl"
 
 layout (location = 0) in vec3 position;
 #ifdef USE_TEXTURE

@@ -20,19 +20,19 @@ package fr.mercury.nucleus.scenegraph.visitor;
  * @author GnosticOccultist
  */
 public enum VisitType {
-	/**
-	 * The visit applies to all the <code>AnimaMundi</code> within a same branch, similar to {@link VisitType#POST_ORDER},
-	 * but the concerned <code>AnimaMundi</code> is first visited, then its children (DFS).
-	 */
-	PRE_ORDER,
-	/**
-	 * The visit applies to all the <code>AnimaMundi</code> within a same branch, similar to {@link VisitType#PRE_ORDER}, 
-	 * but the concerned <code>AnimaMundi</code> is visited at last, after its children (DFS).
-	 */
-	POST_ORDER,
-	/**
-	 * The visit applies to all the <code>AnimaMundi</code> present at the same depth, before moving to
-	 * the next depth level (BFS).
-	 */
-	DEPTH_LAYER;
+    /**
+     * The visit applies to all the <code>AnimaMundi</code> within a same branch, similar to {@link VisitType#POST_ORDER}, 
+     * but the concerned <code>AnimaMundi</code> is first visited, then its children (DFS).
+     */
+    PRE_ORDER,
+    /**
+     * The visit applies to all the <code>AnimaMundi</code> within a same branch, similar to {@link VisitType#PRE_ORDER}, 
+     * but the concerned <code>AnimaMundi</code> is visited at last, after its children (DFS).
+     */
+    POST_ORDER,
+    /**
+     * The visit applies to all the <code>AnimaMundi</code> present at the same depth, before moving to the next depth 
+     * level (BFS).
+     */
+    DEPTH_LAYER;
 }

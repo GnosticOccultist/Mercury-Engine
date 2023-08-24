@@ -10,9 +10,12 @@
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": [] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": [] }
 		],
-		"uniforms": {
-			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
-		}
+		"variables": {
+			"RENDERER_MATRIX": [
+				{ "name": "modelMatrix" },
+				{ "name": "viewMatrix" },
+				{ "name": "projectionMatrix" }
+		]}
 	},
 	
 	"Unlit": {
@@ -26,9 +29,12 @@
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_FOG", "USE_TEXTURE"] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_FOG", "USE_TEXTURE"] }
 		],
-		"uniforms": {
-			"prefabs": ["FOG", "MODEL", "VIEW", "PROJECTION"]
-		}
+		"variables": {
+			"RENDERER_MATRIX": [
+				{ "name": "modelMatrix" },
+				{ "name": "viewMatrix" },
+				{ "name": "projectionMatrix" }
+		]}
 	},
 	
 	"Unlit_no_fog": {
@@ -42,9 +48,12 @@
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_TEXTURE"] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE"] }
 		],
-		"uniforms": {
-			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
-		}
+		"variables": {
+			"RENDERER_MATRIX": [
+				"modelMatrix",
+				"viewMatrix",
+				"projectionMatrix"
+		]}
 	},
 	
 	"Unlit_atlas": {
@@ -58,9 +67,12 @@
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_FOG", "USE_ATLAS", "USE_TEXTURE"] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_FOG", "USE_ATLAS", "USE_TEXTURE"] }
 		],
-		"uniforms": {
-			"prefabs": ["FOG", "MODEL", "VIEW", "PROJECTION"]
-		}
+		"variables": {
+			"RENDERER_MATRIX": [
+				{ "name": "modelMatrix" },
+				{ "name": "viewMatrix" },
+				{ "name": "projectionMatrix" }
+		]}
 	},
 	
 	"Unlit_no_fog_instanced": {
@@ -75,9 +87,12 @@
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_TEXTURE", "INSTANCING"] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE", "INSTANCING"] }
 		],
-		"uniforms": {
-			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
-		}
+		"variables": {
+			"RENDERER_MATRIX": [
+				{ "name": "modelMatrix" },
+				{ "name": "viewMatrix" },
+				{ "name": "projectionMatrix" }
+		]}
 	},
 	
 	"Unlit_no_fog_interleaved": {
@@ -91,8 +106,11 @@
 			{ "type": "VERTEX", "source": "/shaders/default.vert", "defines": ["USE_TEXTURE"] },
 			{ "type": "FRAGMENT", "source": "/shaders/default.frag", "defines": ["USE_TEXTURE"] }
 		],
-		"uniforms": {
-			"prefabs": ["MODEL", "VIEW", "PROJECTION"]
-		}
+		"variables": {
+			"RENDERER_MATRIX": [
+				{ "name": "modelMatrix" },
+				{ "name": "viewMatrix" },
+				{ "name": "projectionMatrix" }
+		]}
 	}
 }

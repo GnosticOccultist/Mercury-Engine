@@ -13,7 +13,7 @@ public class NanoTimer implements Timer {
 	/**
 	 * The resolution of the nano-timer, converting seconds to nanoseconds.
 	 */
-	protected static final long TIMER_RESOLUTION = 1_000_000_000L;
+	public static final long TIMER_RESOLUTION = 1_000_000_000L;
 	
 	/**
 	 * The time at the start.

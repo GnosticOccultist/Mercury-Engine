@@ -8,6 +8,7 @@ import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.collections.pool.Reusable;
 import fr.mercury.nucleus.math.MercuryMath;
 import fr.mercury.nucleus.math.readable.ReadableMatrix4f;
+import fr.mercury.nucleus.renderer.AbstractRenderer;
 import fr.mercury.nucleus.renderer.Camera;
 import fr.mercury.nucleus.renderer.Camera.GraphicalProjectionMode;
 
@@ -28,90 +29,114 @@ import fr.mercury.nucleus.renderer.Camera.GraphicalProjectionMode;
  * @author GnosticOccultist
  */
 public final class Matrix4f implements ReadableMatrix4f, Reusable {
-	
-	/**
-	 * The <code>Matrix4f</code> identity &rarr; {@link #identity()}.
-	 */
-	public static final ReadableMatrix4f IDENTITY_MATRIX = new Matrix4f();
-	
+
+    /**
+     * The <code>Matrix4f</code> identity &rarr; {@link #identity()}.
+     */
+    public static final ReadableMatrix4f IDENTITY_MATRIX = new Matrix4f();
+
     public float m00, m01, m02, m03;
     public float m10, m11, m12, m13;
     public float m20, m21, m22, m23;
     public float m30, m31, m32, m33;
-    
+
     /**
-     * Instantiates a new <code>Matrix4f</code> with the identity 
-     * values ({@link #identity()}).
+     * Instantiates a new <code>Matrix4f</code> with the identity values
+     * ({@link #identity()}).
      */
     public Matrix4f() {
-		identity();
-	}
-    
+        identity();
+    }
+
     /**
-	 * Instantiates a new <code>Matrix4f</code> with the provided
-	 * matrixes components.
-	 * 
-	 * @param other The other matrix to get the components.
-	 */
+     * Instantiates a new <code>Matrix4f</code> with the provided matrixes
+     * components.
+     * 
+     * @param other The other matrix to get the components.
+     */
     public Matrix4f(ReadableMatrix4f other) {
-		set(other);
-	}
+        set(other);
+    }
 
     /**
-	 * Set the components values of the provided matrix to this 
-	 * <code>Matrix4f</code> components.
-	 * <p>
-	 * The provided matrix cannot be null.
-	 * 
-	 * @param other The other matrix to copy from.
-	 */
-	public Matrix4f set(ReadableMatrix4f other) {
-		Validator.nonNull(other, "The matrix cannot be null!");
-		
-		m00 = other.m00(); m01 = other.m01(); m02 = other.m02(); m03 = other.m03();
-		m10 = other.m10(); m11 = other.m11(); m12 = other.m12(); m13 = other.m13();
-		m20 = other.m20(); m21 = other.m21(); m22 = other.m22(); m23 = other.m23();
-		m30 = other.m30(); m31 = other.m31(); m32 = other.m32(); m33 = other.m33();
-		
-		return this;
-	}
-	
-	/**
-	 * Set the components values of the provided matrix to this 
-	 * <code>Matrix4f</code> components.
-	 * <p>
-	 * The provided matrix cannot be null.
-	 * 
-	 * @param other The other matrix to copy from.
-	 */
-	public Matrix4f set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, 
-			float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33) {
-		this.m00 = m00;
-		this.m01 = m01;
-		this.m02 = m02;
-		this.m03 = m03;
-		
-		this.m10 = m10;
-		this.m11 = m11;
-		this.m12 = m12;
-		this.m13 = m13;
-		
-		this.m20 = m20;
-		this.m21 = m21;
-		this.m22 = m22;
-		this.m23 = m23;
-		
-		this.m30 = m30;
-		this.m31 = m31;
-		this.m32 = m32;
-		this.m33 = m33;
-		
-		return this;
-	}
+     * Set the components values of the provided matrix to this <code>Matrix4f</code> components.
+     * 
+     * @param other The other matrix to copy from (not null).
+     * @return      The matrix with its new components values, used for chaining methods.
+     */
+    public Matrix4f set(ReadableMatrix4f other) {
+        Validator.nonNull(other, "The matrix cannot be null!");
 
-	/**
-     * Set the <code>Matrix4f</code> to its identity values.
-     * It is all zeros except the diagonal values which are set to 1.
+        m00 = other.m00();
+        m01 = other.m01();
+        m02 = other.m02();
+        m03 = other.m03();
+        m10 = other.m10();
+        m11 = other.m11();
+        m12 = other.m12();
+        m13 = other.m13();
+        m20 = other.m20();
+        m21 = other.m21();
+        m22 = other.m22();
+        m23 = other.m23();
+        m30 = other.m30();
+        m31 = other.m31();
+        m32 = other.m32();
+        m33 = other.m33();
+
+        return this;
+    }
+
+    /**
+     * Set the provided components values to this <code>Matrix4f</code> components.
+     * 
+     * @param m00 The desired row 0 - column 0 component.
+     * @param m01 The desired row 0 - column 1 component.
+     * @param m02 The desired row 0 - column 2 component.
+     * @param m03 The desired row 0 - column 3 component.
+     * @param m10 The desired row 1 - column 0 component.
+     * @param m11 The desired row 1 - column 1 component.
+     * @param m12 The desired row 1 - column 2 component.
+     * @param m13 The desired row 1 - column 3 component.
+     * @param m20 The desired row 2 - column 0 component.
+     * @param m21 The desired row 2 - column 1 component.
+     * @param m22 The desired row 2 - column 2 component.
+     * @param m23 The desired row 2 - column 3 component.
+     * @param m30 The desired row 3 - column 0 component.
+     * @param m31 The desired row 3 - column 1 component.
+     * @param m32 The desired row 3 - column 2 component.
+     * @param m33 The desired row 3 - column 3 component.
+     * @return    The matrix with its new components values, used for chaining methods.
+     */
+    public Matrix4f set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
+            float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33) {
+        this.m00 = m00;
+        this.m01 = m01;
+        this.m02 = m02;
+        this.m03 = m03;
+
+        this.m10 = m10;
+        this.m11 = m11;
+        this.m12 = m12;
+        this.m13 = m13;
+
+        this.m20 = m20;
+        this.m21 = m21;
+        this.m22 = m22;
+        this.m23 = m23;
+
+        this.m30 = m30;
+        this.m31 = m31;
+        this.m32 = m32;
+        this.m33 = m33;
+
+        return this;
+    }
+
+    /**
+     * Set the <code>Matrix4f</code> to its identity values. It is all zeros except
+     * the diagonal values which are set to 1.
+     * 
      * <pre>
      * | 1 | 0 | 0 | 0 |
      * | 0 | 1 | 0 | 0 |
@@ -125,68 +150,23 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
         m20 = m21 = m23 = 0.0f;
         m30 = m31 = m32 = 0.0f;
         m00 = m11 = m22 = m33 = 1.0f;
-	}
+    }
 
     /**
-     * Build the view <code>Matrix4f</code> with the provided location and rotation
-     * of the <code>Camera</code>. 
-     * <pre>X component &rarr; roll.<p>Y component &rarr; pitch.<p>Z component &rarr; yaw.</pre>
+     * Set the components of the <code>Matrix4f</code> to represent a view matrix based on the
+     * provided vectors.
      * <p>
-     * It is used in the shader to adjust the <code>Transform</code> of an object depending
-     * on the <code>Camera</code> position or rotation.
+     * This method is used by the {@link Camera} to update its view matrix and send it as uniform
+     * through an {@link AbstractRenderer} implementation.
      * 
-     * @param location The location of the camera.
-     * @param rotation The rotation of the camera.
-     * 
-     * @return The builded view matrix.
+     * @param location  The location of the view (not null).
+     * @param left      The direction of the left-side view vector (not null).
+     * @param up        The direction of the up-side view vector (not null).
+     * @param direction The view direction vector (not null).
+     * @return          The modified matrix for chaining purposes.
      */
-	public Matrix4f view(Vector3f location, Quaternion rotation) {
-		
-        float sinX = (float) Math.sin(rotation.x);
-        float cosX = (float) Math.cos(rotation.x);
-        float sinY = (float) Math.sin(rotation.y);
-        float cosY = (float) Math.cos(rotation.y);
-        float sinZ = (float) Math.sin(rotation.z);
-        float cosZ = (float) Math.cos(rotation.z);
-        
-        float negSinX = -sinX;
-        float negSinY = -sinY;
-        float negSinZ = -sinZ;
-
-        // Rotate on the X-axis.
-        float nm11 = cosX;
-        float nm12 = sinX;
-        float nm21 = negSinX;
-        float nm22 = cosX;
-        
-        // Rotate on the Y-axis.
-        float nm00 = cosY;
-        float nm01 = nm21 * negSinY;
-        float nm02 = nm22 * negSinY;
-        
-        m20 = sinY;
-        m21 = nm21 * cosY;
-        m22 = nm22 * cosY;
-        
-        // Rotate on the Z-axis.
-        m00 = nm00 * cosZ;
-        m01 = nm01 * cosZ + nm11 * sinZ;
-        m02 = nm02 * cosZ + nm12 * sinZ;
-        m10 = nm00 * negSinZ;
-        m11 = nm01 * negSinZ + nm11 * cosZ;
-        m12 = nm02 * negSinZ + nm12 * cosZ;
-        
-        // Set last column to identity.
-        m30 = 0.0f;
-        m31 = 0.0f;
-        m32 = 0.0f;
-        
-        setTranslation(-location.x, -location.y, -location.z);
-        return this;
-    }
-	
-	public Matrix4f view(Vector3f location, Vector3f left, Vector3f up, Vector3f direction) {
-		identity();
+    public Matrix4f view(Vector3f location, Vector3f left, Vector3f up, Vector3f direction) {
+        identity();
         m00 = -left.x();
         m10 = -left.y();
         m20 = -left.z();
@@ -202,183 +182,194 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
         m30 = left.dot(location);
         m31 = -up.dot(location);
         m32 = direction.dot(location);
+
+        return this;
+    }
+
+    /**
+     * Build a projection <code>Matrix4f</code> matching the given {@link GraphicalProjectionMode} 
+     * and using each provided frustum plane distance from the {@link Camera}.
+     * <p>
+     * It is used in the shader to adjust an object depending on the window size.
+     * 
+     * @param mode   The projection mode to use for the matrix (not null).
+     * @param near   The near frustum plane distance from the camera.
+     * @param far    The far frustum plane distance from the camera.
+     * @param left   The left frustum plane distance from the camera.
+     * @param right  The right frustum plane distance from the camera.
+     * @param top    The top frustum plane distance from the camera.
+     * @param bottom The bottom frustum plane distance from the camera.
+     * @return       The modified projection matrix (not null).
+     */
+    public Matrix4f projection(Camera.GraphicalProjectionMode mode, float near, float far, float left, float right,
+            float top, float bottom) {
+        Validator.nonNull(mode, "The projection mode can't be null!");
+
+        if (mode == GraphicalProjectionMode.PERSPECTIVE) {
+            return perspective(near, far, left, right, top, bottom);
+        } else if (mode == GraphicalProjectionMode.ORTHOGRAPHIC) {
+            return orthographic(near, far, left, right, top, bottom);
+        } else {
+            throw new IllegalArgumentException("Invalid projection mode: " + mode);
+        }
+    }
+
+    /**
+     * Build the perspective projection <code>Matrix4f</code> with each frustum plane distance 
+     * from the {@link Camera}.
+     * <p>
+     * It is used in the shader to adjust an object depending on the window size.
+     * 
+     * @param near   The near frustum plane distance from the camera.
+     * @param far    The far frustum plane distance from the camera.
+     * @param left   The left frustum plane distance from the camera.
+     * @param right  The right frustum plane distance from the camera.
+     * @param top    The top frustum plane distance from the camera.
+     * @param bottom The bottom frustum plane distance from the camera.
+     * @return       The modified matrix with perspective projection (not null).
+     */
+    public Matrix4f perspective(float near, float far, float left, float right, float top, float bottom) {
+        identity();
+
+        m00 = (2.0f * near) / (right - left);
+        m11 = (2.0f * near) / (top - bottom);
+        m20 = (right + left) / (right - left);
+        m21 = (top + bottom) / (top - bottom);
+        m22 = -(far + near) / (far - near);
+        m23 = -1.0F;
+        m32 = -(2.0F * far * near) / (far - near);
+        m33 = 0.0F;
         
         return this;
-	}
+    }
 
-	/**
-	 * Build a projection <code>Matrix4f</code> matching the given {@link GraphicalProjectionMode} and using 
-	 * each provided frustum plane distance from the {@link Camera}.
-	 * <p>
-	 * It is used in the shader to adjust an object depending on the window size.
-	 * 
-	 * @param mode   The projection mode to use for the matrix (not null).
-	 * @param near   The near frustum plane distance from the camera.
-	 * @param far    The far frustum plane distance from the camera.
-	 * @param left   The left frustum plane distance from the camera.
-	 * @param right  The right frustum plane distance from the camera.
-	 * @param top    The top frustum plane distance from the camera.
-	 * @param bottom The bottom frustum plane distance from the camera.
-	 */
-	public void projection(Camera.GraphicalProjectionMode mode, float near, float far, float left, float right, float top, float bottom) {
-		Validator.nonNull(mode, "The projection mode can't be null!");
-	
-		if(mode == GraphicalProjectionMode.PERSPECTIVE) {
-			perspective(near, far, left, right, top, bottom);
-		} else if(mode == GraphicalProjectionMode.ORTHOGRAPHIC) {
-			orthographic(near, far, left, right, top, bottom);
-		}
-	}
-	
-	/**
-	 * Build the perspective projection <code>Matrix4f</code> with each frustum plane distance 
-	 * from the {@link Camera}. 
-	 * <p>
-	 * It is used in the shader to adjust an object depending on the window size.
-	 * 
-	 * @param near   The near frustum plane distance from the camera.
-	 * @param far    The far frustum plane distance from the camera.
-	 * @param left   The left frustum plane distance from the camera.
-	 * @param right  The right frustum plane distance from the camera.
-	 * @param top    The top frustum plane distance from the camera.
-	 * @param bottom The bottom frustum plane distance from the camera.
-	 */
-	public void perspective(float near, float far, float left, float right, float top, float bottom) {
-		identity();
-		
-		m00 = (2.0f * near) / (right - left);
-		m11 = (2.0f * near) / (top - bottom);
-		m20 = (right + left) / (right - left);
-		m21 = (top + bottom) / (top - bottom);
-		m22 = -(far + near) / (far - near);
-		m23 = -1.0F;
-		m32 = -(2.0F * far * near) / (far - near);
-		m33 = 0.0F;
-	}
-	
-	/**
-	 * Build the orthographic projection <code>Matrix4f</code> with each frustum plane distance 
-	 * from the {@link Camera}. 
-	 * <p>
-	 * It is used in the shader to adjust an object depending on the window size.
-	 * 
-	 * @param near   The near frustum plane distance from the camera.
-	 * @param far    The far frustum plane distance from the camera.
-	 * @param left   The left frustum plane distance from the camera.
-	 * @param right  The right frustum plane distance from the camera.
-	 * @param top    The top frustum plane distance from the camera.
-	 * @param bottom The bottom frustum plane distance from the camera.
-	 */
-	public void orthographic(float near, float far, float left, float right, float top, float bottom) {
-		identity();
-		
+    /**
+     * Build the orthographic projection <code>Matrix4f</code> with each frustum plane distance 
+     * from the {@link Camera}.
+     * <p>
+     * It is used in the shader to adjust an object depending on the window size.
+     * 
+     * @param near   The near frustum plane distance from the camera.
+     * @param far    The far frustum plane distance from the camera.
+     * @param left   The left frustum plane distance from the camera.
+     * @param right  The right frustum plane distance from the camera.
+     * @param top    The top frustum plane distance from the camera.
+     * @param bottom The bottom frustum plane distance from the camera.
+     * @return       The modified matrix with orthographic projection (not null).
+     */
+    public Matrix4f orthographic(float near, float far, float left, float right, float top, float bottom) {
+        identity();
+
         m00 = 2.0f / (right - left);
         m11 = 2.0f / (top - bottom);
         m22 = -2.0f / (far - near);
         m30 = -((right + left) / (right - left));
         m31 = -((top + bottom) / (top - bottom));
         m32 = -((far + near) / (far - near));
-	}
-	
-	/**
-	 * Populates the given {@link FloatBuffer} with the data from the <code>Matrix4f</code> in column 
-	 * major order.
-	 * <p>
-	 * The method is using relative put method, meaning the float data is written at the current 
-	 * buffer's position and the position is incremented by 16.
-	 * <p>
-	 * The populated buffer can be used safely to transfer data to shaders as mat4 uniforms.
-	 * 
-	 * @param store The buffer to populate with the data (not null). 
-	 * @return 		The given store populated with the matrix data.
-	 * 
-	 * @throws BufferOverflowException Thrown if there isn't enough space to write all 16 floats.
-	 * 
-	 * @see #populate(FloatBuffer, boolean)
-	 */
-	@Override
-	public FloatBuffer populate(FloatBuffer store) {
-		Validator.nonNull(store, "The float buffer can't be null!");
-		return populate(store, false);
-	}
-	
-	/**
-	 * Populates the given {@link FloatBuffer} with the data from the <code>Matrix4f</code>.
-	 * <p>
-	 * The method is using relative put method, meaning the float data is written at the current 
-	 * buffer's position and the position is incremented by 16.
-	 * <p>
-	 * The populated buffer can be used safely to transfer data to shaders as mat4 uniforms.
-	 * 
-	 * @param store 	  The buffer to populate with the data (not null). 
-	 * @param columnMajor Whether to write the data in column or row major order.
-	 * @return 			  The given store populated with the matrix data.
-	 * 
-	 * @throws BufferOverflowException Thrown if there isn't enough space to write all 16 floats.
-	 * 
-	 * @see #populate(FloatBuffer)
-	 */
-	public FloatBuffer populate(FloatBuffer store, boolean columnMajor) {
-		Validator.nonNull(store, "The float buffer can't be null!");
-		
-		if(columnMajor) {
-			store.put(m00);
-			store.put(m10);
-			store.put(m20);
-			store.put(m30);
-			store.put(m01);
-			store.put(m11);
-			store.put(m21);
-			store.put(m31);
-			store.put(m02);
-			store.put(m12);
-			store.put(m22);
-			store.put(m32);
-			store.put(m03);
-			store.put(m13);
-			store.put(m23);
-			store.put(m33);
-		} else {
-			store.put(m00);
-			store.put(m01);
-			store.put(m02);
-			store.put(m03);
-			store.put(m10);
-			store.put(m11);
-			store.put(m12);
-			store.put(m13);
-			store.put(m20);
-			store.put(m21);
-			store.put(m22);
-			store.put(m23);
-			store.put(m30);
-			store.put(m31);
-			store.put(m32);
-			store.put(m33);
-		}
-		
-		return store;
-	}
+        
+        return this;
+    }
 
-	/**
-	 * Fill the float array with the <code>Matrix4f</code> values.
-	 * It can be ordered in column major order or row major ordered.
-	 * 
-	 * @param array		  The float array to fill with the matrix (length left &ge;16).
-	 * @param columnMajor Whether to fill in column major order or in row major order.
-	 */
-	public void fillFloatArray(float[] array, boolean columnMajor) {
+    /**
+     * Populates the given {@link FloatBuffer} with the data from the <code>Matrix4f</code> in row-major order.
+     * <p>
+     * The method is using relative put method, meaning the float data is written at the current buffer's position 
+     * and the position is incremented by 16.
+     * <p>
+     * The populated buffer can be used safely to transfer data to shaders as mat4 uniforms.
+     * 
+     * @param store The buffer to populate with the data (not null).
+     * @return      The given store populated with the matrix data.
+     * 
+     * @throws BufferOverflowException Thrown if there isn't enough space to write all 16 floats.
+     * 
+     * @see #populate(FloatBuffer, boolean)
+     */
+    @Override
+    public FloatBuffer populate(FloatBuffer store) {
+        Validator.nonNull(store, "The float buffer can't be null!");
+        return populate(store, false);
+    }
+
+    /**
+     * Populates the given {@link FloatBuffer} with the data from the <code>Matrix4f</code>.
+     * <p>
+     * The method is using relative put method, meaning the float data is written at the current buffer's position 
+     * and the position is incremented by 16.
+     * <p>
+     * The populated buffer can be used safely to transfer data to shaders as mat4 uniforms using a row-major order.
+     * 
+     * @param store       The buffer to populate with the data (not null).
+     * @param columnMajor Whether to write the data in column or row-major order.
+     * @return            The given store populated with the matrix data.
+     * 
+     * @throws BufferOverflowException Thrown if there isn't enough space to write all 16 floats.
+     * 
+     * @see #populate(FloatBuffer)
+     */
+    public FloatBuffer populate(FloatBuffer store, boolean columnMajor) {
+        Validator.nonNull(store, "The float buffer can't be null!");
+
         if (columnMajor) {
-            array[ 0] = m00;
-            array[ 1] = m10;
-            array[ 2] = m20;
-            array[ 3] = m30;
-            array[ 4] = m01;
-            array[ 5] = m11;
-            array[ 6] = m21;
-            array[ 7] = m31;
-            array[ 8] = m02;
-            array[ 9] = m12;
+            store.put(m00);
+            store.put(m10);
+            store.put(m20);
+            store.put(m30);
+            store.put(m01);
+            store.put(m11);
+            store.put(m21);
+            store.put(m31);
+            store.put(m02);
+            store.put(m12);
+            store.put(m22);
+            store.put(m32);
+            store.put(m03);
+            store.put(m13);
+            store.put(m23);
+            store.put(m33);
+        } else {
+            store.put(m00);
+            store.put(m01);
+            store.put(m02);
+            store.put(m03);
+            store.put(m10);
+            store.put(m11);
+            store.put(m12);
+            store.put(m13);
+            store.put(m20);
+            store.put(m21);
+            store.put(m22);
+            store.put(m23);
+            store.put(m30);
+            store.put(m31);
+            store.put(m32);
+            store.put(m33);
+        }
+
+        return store;
+    }
+
+    /**
+     * Fill the float array with the <code>Matrix4f</code> values. It can be ordered in column 
+     * major order or row major ordered.
+     * 
+     * @param array       The float array to fill with the matrix (length left
+     *                    &ge;16).
+     * @param columnMajor Whether to fill in column major order or in row major
+     *                    order.
+     */
+    public void fillFloatArray(float[] array, boolean columnMajor) {
+        if (columnMajor) {
+            array[0] = m00;
+            array[1] = m10;
+            array[2] = m20;
+            array[3] = m30;
+            array[4] = m01;
+            array[5] = m11;
+            array[6] = m21;
+            array[7] = m31;
+            array[8] = m02;
+            array[9] = m12;
             array[10] = m22;
             array[11] = m32;
             array[12] = m03;
@@ -386,16 +377,16 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
             array[14] = m23;
             array[15] = m33;
         } else {
-            array[ 0] = m00;
-            array[ 1] = m01;
-            array[ 2] = m02;
-            array[ 3] = m03;
-            array[ 4] = m10;
-            array[ 5] = m11;
-            array[ 6] = m12;
-            array[ 7] = m13;
-            array[ 8] = m20;
-            array[ 9] = m21;
+            array[0] = m00;
+            array[1] = m01;
+            array[2] = m02;
+            array[3] = m03;
+            array[4] = m10;
+            array[5] = m11;
+            array[6] = m12;
+            array[7] = m13;
+            array[8] = m20;
+            array[9] = m21;
             array[10] = m22;
             array[11] = m23;
             array[12] = m30;
@@ -403,31 +394,31 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
             array[14] = m32;
             array[15] = m33;
         }
-	}
-	
-	/**
-	 * Reads value from the provided {@link FloatBuffer} and store them
-	 * into the <code>Matrix4f</code> as row major order.
-	 * 
-	 * @param fb The float buffer to read data from (size &ge;16).
-	 * @return	 The filled matrix with the data of the float buffer.
-	 */
-	public Matrix4f readFloatBuffer(FloatBuffer fb) {
-		return readFloatBuffer(fb, false);
-	}
-	
-	/**
-	 * Reads value from the provided {@link FloatBuffer} and store them
-	 * into the <code>Matrix4f</code>.
-	 * 
-	 * @param fb		  The float buffer to read data from (size &ge;16).
-	 * @param columnMajor Whether to fill the matrix with column major data or row major data.
-	 * @return			  The filled matrix with the data of the float buffer.
-	 */
-	public Matrix4f readFloatBuffer(FloatBuffer fb, boolean columnMajor) {
-		Validator.nonNull(fb);
-		
-		if(columnMajor) {
+    }
+
+    /**
+     * Reads value from the provided {@link FloatBuffer} and store them into the <code>Matrix4f</code> 
+     * as row major order.
+     * 
+     * @param fb The float buffer to read data from (size &ge;16).
+     * @return   The filled matrix with the data of the float buffer.
+     */
+    public Matrix4f readFloatBuffer(FloatBuffer fb) {
+        return readFloatBuffer(fb, false);
+    }
+
+    /**
+     * Reads value from the provided {@link FloatBuffer} and store them into the <code>Matrix4f</code>.
+     * 
+     * @param fb          The float buffer to read data from (size &ge;16).
+     * @param columnMajor Whether to fill the matrix with column major data or row
+     *                    major data.
+     * @return            The filled matrix with the data of the float buffer.
+     */
+    public Matrix4f readFloatBuffer(FloatBuffer fb, boolean columnMajor) {
+        Validator.nonNull(fb);
+
+        if (columnMajor) {
             m00 = fb.get();
             m10 = fb.get();
             m20 = fb.get();
@@ -444,7 +435,7 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
             m13 = fb.get();
             m23 = fb.get();
             m33 = fb.get();
-		} else {
+        } else {
             m00 = fb.get();
             m01 = fb.get();
             m02 = fb.get();
@@ -461,18 +452,18 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
             m31 = fb.get();
             m32 = fb.get();
             m33 = fb.get();
-		}
-		return this;
-	}
-	
-	/**
-	 * Multiplies the <code>Matrix4f</code> with the provided one.
-	 * The result is stored inside the second provided matrix or a new one if null.
-	 * 
-	 * @param other The other matrix to do the multiplication.
-	 * @param store The matrix to store the result.
-	 * @return		The resulting matrix.
-	 */
+        }
+        return this;
+    }
+
+    /**
+     * Multiplies the <code>Matrix4f</code> with the provided one. The result is stored inside the second 
+     * provided matrix or a new one if null.
+     * 
+     * @param other The other matrix to do the multiplication.
+     * @param store The matrix to store the result.
+     * @return      The resulting matrix.
+     */
     public Matrix4f mult(ReadableMatrix4f other, Matrix4f store) {
         if (store == null) {
             store = new Matrix4f();
@@ -483,73 +474,25 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
         float temp20, temp21, temp22, temp23;
         float temp30, temp31, temp32, temp33;
 
-        temp00 = m00 * other.m00()
-                 + m01 * other.m10()
-                 + m02 * other.m20()
-                 + m03 * other.m30();
-        temp01 = m00 * other.m01()
-                 + m01 * other.m11()
-                 + m02 * other.m21()
-                 + m03 * other.m31();
-        temp02 = m00 * other.m02()
-                 + m01 * other.m12()
-                 + m02 * other.m22()
-                 + m03 * other.m32();
-        temp03 = m00 * other.m03()
-                 + m01 * other.m13()
-                 + m02 * other.m23()
-                 + m03 * other.m33();
+        temp00 = m00 * other.m00() + m01 * other.m10() + m02 * other.m20() + m03 * other.m30();
+        temp01 = m00 * other.m01() + m01 * other.m11() + m02 * other.m21() + m03 * other.m31();
+        temp02 = m00 * other.m02() + m01 * other.m12() + m02 * other.m22() + m03 * other.m32();
+        temp03 = m00 * other.m03() + m01 * other.m13() + m02 * other.m23() + m03 * other.m33();
 
-        temp10 = m10 * other.m00()
-                 + m11 * other.m10()
-                 + m12 * other.m20()
-                 + m13 * other.m30();
-        temp11 = m10 * other.m01()
-                 + m11 * other.m11()
-                 + m12 * other.m21()
-                 + m13 * other.m31();
-        temp12 = m10 * other.m02()
-                 + m11 * other.m12()
-                 + m12 * other.m22()
-                 + m13 * other.m32();
-        temp13 = m10 * other.m03()
-                 + m11 * other.m13()
-                 + m12 * other.m23()
-                 + m13 * other.m33();
+        temp10 = m10 * other.m00() + m11 * other.m10() + m12 * other.m20() + m13 * other.m30();
+        temp11 = m10 * other.m01() + m11 * other.m11() + m12 * other.m21() + m13 * other.m31();
+        temp12 = m10 * other.m02() + m11 * other.m12() + m12 * other.m22() + m13 * other.m32();
+        temp13 = m10 * other.m03() + m11 * other.m13() + m12 * other.m23() + m13 * other.m33();
 
-        temp20 = m20 * other.m00()
-                 + m21 * other.m10()
-                 + m22 * other.m20()
-                 + m23 * other.m30();
-        temp21 = m20 * other.m01()
-                 + m21 * other.m11()
-                 + m22 * other.m21()
-                 + m23 * other.m31();
-        temp22 = m20 * other.m02()
-                 + m21 * other.m12()
-                 + m22 * other.m22()
-                 + m23 * other.m32();
-        temp23 = m20 * other.m03()
-                 + m21 * other.m13()
-                 + m22 * other.m23()
-                 + m23 * other.m33();
+        temp20 = m20 * other.m00() + m21 * other.m10() + m22 * other.m20() + m23 * other.m30();
+        temp21 = m20 * other.m01() + m21 * other.m11() + m22 * other.m21() + m23 * other.m31();
+        temp22 = m20 * other.m02() + m21 * other.m12() + m22 * other.m22() + m23 * other.m32();
+        temp23 = m20 * other.m03() + m21 * other.m13() + m22 * other.m23() + m23 * other.m33();
 
-        temp30 = m30 * other.m00()
-                 + m31 * other.m10()
-                 + m32 * other.m20()
-                 + m33 * other.m30();
-        temp31 = m30 * other.m01()
-                 + m31 * other.m11()
-                 + m32 * other.m21()
-                 + m33 * other.m31();
-        temp32 = m30 * other.m02()
-                 + m31 * other.m12()
-                 + m32 * other.m22()
-                 + m33 * other.m32();
-        temp33 = m30 * other.m03()
-                 + m31 * other.m13()
-                 + m32 * other.m23()
-                 + m33 * other.m33();
+        temp30 = m30 * other.m00() + m31 * other.m10() + m32 * other.m20() + m33 * other.m30();
+        temp31 = m30 * other.m01() + m31 * other.m11() + m32 * other.m21() + m33 * other.m31();
+        temp32 = m30 * other.m02() + m31 * other.m12() + m32 * other.m22() + m33 * other.m32();
+        temp33 = m30 * other.m03() + m31 * other.m13() + m32 * other.m23() + m33 * other.m33();
 
         store.m00 = temp00;
         store.m01 = temp01;
@@ -570,58 +513,58 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
 
         return store;
     }
-	
+
     /**
-	 * Set the translation components of the <code>Matrix4f</code> to the ones
-	 * provided.
-	 * 
-	 * @param x The X-component of the translation.
-	 * @param y The Y-component of the translation.
-	 * @param z The Z-component of the translation.
-	 */
+     * Set the translation components of the <code>Matrix4f</code> to the ones
+     * provided.
+     * 
+     * @param x The X-component of the translation.
+     * @param y The Y-component of the translation.
+     * @param z The Z-component of the translation.
+     */
     public void setTranslation(float x, float y, float z) {
         m03 = x;
         m13 = y;
         m23 = z;
     }
-    
-	/**
-	 * Set the translation components of the <code>Matrix4f</code> to the ones
-	 * specified in the provided <code>Vector3f</code>.
-	 * 
-	 * @param translation The translation vector to set.
-	 */
+
+    /**
+     * Set the translation components of the <code>Matrix4f</code> to the ones
+     * specified in the provided <code>Vector3f</code>.
+     * 
+     * @param translation The translation vector to set.
+     */
     public void setTranslation(Vector3f translation) {
-       setTranslation(translation.x, translation.y, translation.z);
+        setTranslation(translation.x, translation.y, translation.z);
     }
-    
+
     /**
      * Set the rotation components of the <code>Matrix4f</code> to the ones
-	 * specified in the provided <code>Quaternion</code>.
+     * specified in the provided <code>Quaternion</code>.
      * 
      * @param quaternion The rotation quaternion to set.
      */
     public void setRotation(Quaternion quaternion) {
-		quaternion.toRotationMatrix(this);
-	}
-	
+        quaternion.toRotationMatrix(this);
+    }
+
     /**
-     * Set the scaling components of the <code>Matrix4f</code> to the ones
-     * specified in the provided <code>Vector3f</code>.
+     * Set the scaling components of the <code>Matrix4f</code> to the ones specified
+     * in the provided <code>Vector3f</code>.
      * 
      * @param scale The scaling vector to set.
      */
-	public void setScale(Vector3f scale) {
+    public void setScale(Vector3f scale) {
         setScale(scale.x, scale.y, scale.z);
-	}
-	
-	 /**
+    }
+
+    /**
      * Set the scaling components of the <code>Matrix4f</code> to the ones
      * specified.
      * 
      * @param scale The scaling vector to set.
      */
-	public void setScale(float x, float y, float z) {
+    public void setScale(float x, float y, float z) {
         float length = m00 * m00 + m10 * m10 + m20 * m20;
         if (length != 0f) {
             length = length == 1 ? x : (x / MercuryMath.sqrt(length));
@@ -637,7 +580,7 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
             m11 *= length;
             m21 *= length;
         }
-        
+
         length = m02 * m02 + m12 * m12 + m22 * m22;
         if (length != 0f) {
             length = length == 1 ? z : (z / MercuryMath.sqrt(length));
@@ -645,14 +588,13 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
             m12 *= length;
             m22 *= length;
         }
-	}
-	
-	/**
-	 * Apply a scale to the <code>Matrix4f</code> using the provided 
-	 * <code>Vector3f</code>.
-	 * 
-	 * @param scale The scale to apply to the matrix.
-	 */
+    }
+
+    /**
+     * Apply a scale to the <code>Matrix4f</code> using the provided {@link Vector3f}.
+     * 
+     * @param scale The scale to apply to the matrix.
+     */
     public void scale(Vector3f scale) {
         m00 *= scale.x;
         m10 *= scale.x;
@@ -667,143 +609,148 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
         m22 *= scale.z;
         m32 *= scale.z;
     }
-    
+
     /**
-     * Return a scaling <code>Vector3f</code> from the <code>Matrix4f</code>
-     * components.
+     * Return a scaling {@link Vector3f} from the <code>Matrix4f</code> components.
      * 
      * @param store The vector to store the scale into.
-     * @return		The scaling vector.
+     * @return      The scaling vector.
      */
     public Vector3f getScale(Vector3f store) {
-		float scaleX = (float) Math.sqrt(m00 * m00 + m10 * m10 + m20 * m20);
-		float scaleY = (float) Math.sqrt(m01 * m01 + m11 * m11 + m21 * m21);
-		float scaleZ = (float) Math.sqrt(m02 * m02 + m12 * m12 + m22 * m22);
+        float scaleX = (float) Math.sqrt(m00 * m00 + m10 * m10 + m20 * m20);
+        float scaleY = (float) Math.sqrt(m01 * m01 + m11 * m11 + m21 * m21);
+        float scaleZ = (float) Math.sqrt(m02 * m02 + m12 * m12 + m22 * m22);
         store.set(scaleX, scaleY, scaleZ);
         return store;
     }
-    
-    public Matrix3f toMatrix3f(Matrix3f store) {
-    	var result = store == null ? new Matrix3f() : store;
-    	
-    	result.m00 = m00;
-    	result.m01 = m01;
-    	result.m02 = m02;
-    	result.m10 = m10;
-    	result.m11 = m11;
-    	result.m12 = m12;
-    	result.m20 = m20;
-    	result.m21 = m21;
-    	result.m22 = m22;
-    	
-    	return result;
-    }
-    
-    @Override
-	public float m00() {
-		return m00;
-	}
 
-	@Override
-	public float m01() {
-		return m01;
-	}
-
-	@Override
-	public float m02() {
-		return m02;
-	}
-
-	@Override
-	public float m03() {
-		return m03;
-	}
-
-	@Override
-	public float m10() {
-		return m10;
-	}
-
-	@Override
-	public float m11() {
-		return m11;
-	}
-
-	@Override
-	public float m12() {
-		return m12;
-	}
-
-	@Override
-	public float m13() {
-		return m13;
-	}
-
-	@Override
-	public float m20() {
-		return m20;
-	}
-
-	@Override
-	public float m21() {
-		return m21;
-	}
-
-	@Override
-	public float m22() {
-		return m22;
-	}
-
-	@Override
-	public float m23() {
-		return m23;
-	}
-
-	@Override
-	public float m30() {
-		return m30;
-	}
-
-	@Override
-	public float m31() {
-		return m31;
-	}
-
-	@Override
-	public float m32() {
-		return m32;
-	}
-
-	@Override
-	public float m33() {
-		return m33;
-	}
-    
     /**
-   	 * Sets all the components of the <code>Matrix4f</code> to the {@link #identity()},
-   	 * before retrieving it from a pool.
-   	 */
-   	@Override
-   	public void reuse() {
-   		identity();
-   	}
-   	
-   	/**
-   	 * Sets all the components of the <code>Matrix4f</code> to the {@link #identity()},
-   	 * before storing it into a pool.
-   	 */
-   	@Override
-   	public void free() {
-   		identity();
-   	}
-    
+     * Converts the <code>Matrix4f</code> to a {@link Matrix3f} using the provided one.
+     * 
+     * @param store The store for the result or null for a new instance.
+     * @return      A 3x3 matrix representation of the matrix.
+     */
+    public Matrix3f toMatrix3f(Matrix3f store) {
+        var result = store == null ? new Matrix3f() : store;
+
+        result.m00 = m00;
+        result.m01 = m01;
+        result.m02 = m02;
+        result.m10 = m10;
+        result.m11 = m11;
+        result.m12 = m12;
+        result.m20 = m20;
+        result.m21 = m21;
+        result.m22 = m22;
+
+        return result;
+    }
+
+    @Override
+    public float m00() {
+        return m00;
+    }
+
+    @Override
+    public float m01() {
+        return m01;
+    }
+
+    @Override
+    public float m02() {
+        return m02;
+    }
+
+    @Override
+    public float m03() {
+        return m03;
+    }
+
+    @Override
+    public float m10() {
+        return m10;
+    }
+
+    @Override
+    public float m11() {
+        return m11;
+    }
+
+    @Override
+    public float m12() {
+        return m12;
+    }
+
+    @Override
+    public float m13() {
+        return m13;
+    }
+
+    @Override
+    public float m20() {
+        return m20;
+    }
+
+    @Override
+    public float m21() {
+        return m21;
+    }
+
+    @Override
+    public float m22() {
+        return m22;
+    }
+
+    @Override
+    public float m23() {
+        return m23;
+    }
+
+    @Override
+    public float m30() {
+        return m30;
+    }
+
+    @Override
+    public float m31() {
+        return m31;
+    }
+
+    @Override
+    public float m32() {
+        return m32;
+    }
+
+    @Override
+    public float m33() {
+        return m33;
+    }
+
+    /**
+     * Sets all the components of the <code>Matrix4f</code> to the
+     * {@link #identity()}, before retrieving it from a pool.
+     */
+    @Override
+    public void reuse() {
+        identity();
+    }
+
+    /**
+     * Sets all the components of the <code>Matrix4f</code> to the
+     * {@link #identity()}, before storing it into a pool.
+     */
+    @Override
+    public void free() {
+        identity();
+    }
+
     @Override
     public boolean equals(Object o) {
 
         if (this == o) {
             return true;
         }
-        
+
         if (!(o instanceof ReadableMatrix4f)) {
             return false;
         }
@@ -863,51 +810,51 @@ public final class Matrix4f implements ReadableMatrix4f, Reusable {
 
         return true;
     }
-    
+
     @Override
-	public String toString() {
-		var result = new StringBuffer(getClass().getSimpleName() + "\n[\n");
-	    result.append(' ');
-	    result.append(m00);
-	    result.append(' ');
-	    result.append(m01);
-	    result.append(' ');
-	    result.append(m02);
-	    result.append(' ');
-	    result.append(m03);
-	    result.append(" \n");
+    public String toString() {
+        var result = new StringBuffer(getClass().getSimpleName() + "\n[\n");
+        result.append(' ');
+        result.append(m00);
+        result.append(' ');
+        result.append(m01);
+        result.append(' ');
+        result.append(m02);
+        result.append(' ');
+        result.append(m03);
+        result.append(" \n");
 
-	    result.append(' ');
-	    result.append(m10);
-	    result.append(' ');
-	    result.append(m11);
-	    result.append(' ');
-	    result.append(m12);
-	    result.append(' ');
-	    result.append(m13);
-	    result.append(" \n");
+        result.append(' ');
+        result.append(m10);
+        result.append(' ');
+        result.append(m11);
+        result.append(' ');
+        result.append(m12);
+        result.append(' ');
+        result.append(m13);
+        result.append(" \n");
 
-	    result.append(' ');
-	    result.append(m20);
-	    result.append(' ');
-	    result.append(m21);
-	    result.append(' ');
-	    result.append(m22);
-	    result.append(' ');
-	    result.append(m23);
-	    result.append(" \n");
-	    
-	    result.append(' ');
-	    result.append(m30);
-	    result.append(' ');
-	    result.append(m31);
-	    result.append(' ');
-	    result.append(m32);
-	    result.append(' ');
-	    result.append(m33);
-	    result.append(" \n");
+        result.append(' ');
+        result.append(m20);
+        result.append(' ');
+        result.append(m21);
+        result.append(' ');
+        result.append(m22);
+        result.append(' ');
+        result.append(m23);
+        result.append(" \n");
 
-	    result.append(']');
-	    return result.toString();
-	}
+        result.append(' ');
+        result.append(m30);
+        result.append(' ');
+        result.append(m31);
+        result.append(' ');
+        result.append(m32);
+        result.append(' ');
+        result.append(m33);
+        result.append(" \n");
+
+        result.append(']');
+        return result.toString();
+    }
 }
