@@ -25,9 +25,11 @@ import fr.mercury.nucleus.utils.GLException;
 import fr.mercury.nucleus.utils.OpenGLCall;
 
 /**
- * <code>Texture</code> is an implementation of {@link GLObject} which represents a texture in OpenGL.
+ * <code>Texture</code> is an implementation of {@link GLObject} which
+ * represents a texture in OpenGL.
  * <p>
- * It is defined by a width and a height and can be bound to a specific unit to be used in a {@link ShaderProgram}.
+ * It is defined by a width and a height and can be bound to a specific unit to
+ * be used in a {@link ShaderProgram}.
  * 
  * @author GnosticOccultist
  */
@@ -50,7 +52,7 @@ public abstract class Texture extends GLObject {
      * Determines if the provided ID correspond to an OpenGL <code>Texture</code>.
      * 
      * @param id The ID of the texture to check.
-     * @return   Whether the ID correspond to a texture.
+     * @return Whether the ID correspond to a texture.
      */
     public static boolean valid(int id) {
         return GL30.glIsTexture(id);
@@ -153,8 +155,8 @@ public abstract class Texture extends GLObject {
         buffer.rewind();
 
         GL11C.glTexImage2D(getOpenGLType(), 0, image.determineInternalFormat(), image.getWidth(), image.getHeight(), 0,
-                image.determineFormat(), GL11.GL_UNSIGNED_BYTE, buffer);
-        
+                image.determineFormat(), image.determineDataType(), buffer);
+
         image.setNeedUpdate(false);
     }
 
@@ -196,10 +198,11 @@ public abstract class Texture extends GLObject {
             MemoryUtil.memFree(buffer);
             currentState.borderColor = toApply.borderColor;
         }
-        
+
         if (currentState.anisotropicFilter != toApply.anisotropicFilter) {
-            GL11C.glTexParameterf(getOpenGLType(), EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, toApply.anisotropicFilter);
-            currentState.setAnisotropicFilter(toApply.anisotropicFilter) ;
+            GL11C.glTexParameterf(getOpenGLType(), EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT,
+                    toApply.anisotropicFilter);
+            currentState.setAnisotropicFilter(toApply.anisotropicFilter);
         }
 
         if (!toApply.isGeneratedMipMaps() && toApply.isNeedMipmaps()) {
@@ -231,7 +234,8 @@ public abstract class Texture extends GLObject {
     }
 
     /**
-     * Sets the {@link MinFilter} and {@link MagFilter} for the <code>Texture</code>.
+     * Sets the {@link MinFilter} and {@link MagFilter} for the
+     * <code>Texture</code>.
      * <p>
      * For the changes to occur, {@link #upload()} needs to be invoked.
      * 
@@ -262,7 +266,7 @@ public abstract class Texture extends GLObject {
      * The generation of the mipmaps will occur when invoking {@link #upload()}.
      * 
      * @param mipmaps Whether the texture needs mipmapping.
-     * @return        The texture with the new mipmapping parameter.
+     * @return The texture with the new mipmapping parameter.
      */
     @SuppressWarnings("unchecked")
     public <T extends Texture> T setNeedMipMaps(boolean mipmaps) {
@@ -283,7 +287,7 @@ public abstract class Texture extends GLObject {
      * 
      * @param color       The color to set for the border (not null).
      * @param clampBorder Whether to clamp the border for the texture's wrap mode.
-     * @return            The texture with the new border color.
+     * @return The texture with the new border color.
      */
     @SuppressWarnings("unchecked")
     public <T extends Texture> T setBorderColor(Color color, boolean clampBorder) {
@@ -304,7 +308,7 @@ public abstract class Texture extends GLObject {
      * @param color  The color to apply inside the image.
      * @param width  The width of the modification.
      * @param height The height of the modification.
-     * @return       The colored texture.
+     * @return The colored texture.
      */
     @SuppressWarnings("unchecked")
     public <T extends Texture> T color(Color color, int width, int height) {
@@ -342,7 +346,7 @@ public abstract class Texture extends GLObject {
 
         super.restart();
     }
-    
+
     /**
      * Returns the {@link Image} contained in the <code>Texture</code>.
      * 
@@ -367,7 +371,8 @@ public abstract class Texture extends GLObject {
      * <code>Texture</code>. This method should only be used for copying purposes.
      * 
      * @param current The current texture state (not null).
-     * @param toApply The texture state to be applied on next upload call (not null).
+     * @param toApply The texture state to be applied on next upload call (not
+     *                null).
      */
     protected void setTextureState(TextureState current, TextureState toApply) {
         this.currentState = new TextureState(current);

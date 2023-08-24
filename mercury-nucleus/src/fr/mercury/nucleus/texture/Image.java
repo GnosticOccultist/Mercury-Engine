@@ -4,8 +4,8 @@ import java.nio.ByteBuffer;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
-
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Color;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderProgram;
@@ -34,6 +34,10 @@ public class Image {
      * The image format.
      */
     private Format format;
+    /**
+     * The image color space.
+     */
+    private ColorSpace colorSpace;
     /**
      * The data of the image.
      */
@@ -112,7 +116,7 @@ public class Image {
      * <code>Image</code> buffer data.
      * 
      * @param buffer The buffer to copy from (not null).
-     * @return       The image with its updated data.
+     * @return The image with its updated data.
      */
     public Image fromByteBuffer(ByteBuffer buffer) {
         Validator.nonNull(buffer, "The buffer to copy from cannot be null!");
@@ -125,7 +129,7 @@ public class Image {
      * {@link ByteBuffer} and return it.
      * 
      * @param store The store buffer to fill (not null).
-     * @return      The provided buffer filled with image data.
+     * @return The provided buffer filled with image data.
      */
     public ByteBuffer toByteBuffer(ByteBuffer store) {
         Validator.nonNull(store, "The buffer store cannot be null!");
@@ -141,7 +145,7 @@ public class Image {
      * @param x     The x coordinate of the pixel.
      * @param y     The y coordinate of the pixel.
      * @param store The store to put the pixel color into (not null).
-     * @return      The filled store color.
+     * @return The filled store color.
      */
     public Color getPixel(int x, int y, Color store) {
         Validator.nonNull(store, "The pixel color store cannot be null!");
@@ -163,7 +167,7 @@ public class Image {
      * @param x          The x coordinate of the pixel.
      * @param y          The y coordinate of the pixel.
      * @param pixelColor The color of the pixel (not null).
-     * @return           The image with the updated pixel color.
+     * @return The image with the updated pixel color.
      */
     public Image setPixel(int x, int y, Color pixelColor) {
         Validator.nonNull(pixelColor, "The pixel color cannot be null!");
@@ -216,7 +220,7 @@ public class Image {
     }
 
     /**
-     * Return the format of the <code>Image</code>.
+     * Return the {@link Format} of the <code>Image</code>.
      * 
      * @return The format of the image.
      */
@@ -225,13 +229,38 @@ public class Image {
     }
 
     /**
-     * Sets the format of the <code>Image</code>.
+     * Sets the {@link Format} of the <code>Image</code>.
      * 
-     * @param format The image's format.
+     * @param format The image's format (not null).
+     * @return The image for chaining purposes.
      */
-    public void setFormat(Format format) {
+    public Image setFormat(Format format) {
         this.format = format;
         setNeedUpdate(true);
+
+        return this;
+    }
+
+    /**
+     * Return the {@link ColorSpace} of the <code>Image</code>.
+     * 
+     * @return The image's color space.
+     */
+    public ColorSpace getColorSpace() {
+        return colorSpace;
+    }
+
+    /**
+     * Sets the {@link ColorSpace} of the <code>Image</code>.
+     * 
+     * @param format The image's color space (not null).
+     * @return The image for chaining purposes.
+     */
+    public Image setColorSpace(ColorSpace colorSpace) {
+        this.colorSpace = colorSpace;
+        setNeedUpdate(true);
+
+        return this;
     }
 
     /**
@@ -254,6 +283,12 @@ public class Image {
         this.needUpdate = needUpdate;
     }
 
+    @Override
+    public String toString() {
+        return "Image [width=" + width + ", height=" + height + ", format=" + format + ", colorSpace=" + colorSpace
+                + "]";
+    }
+
     /**
      * <code>Format</code> represents the format use for the <code>Texture</code>
      * creation.
@@ -266,11 +301,19 @@ public class Image {
      */
     public enum Format {
         /**
-         * 
+         * 8-bit blue, green and red color, often used on Windows systems.
+         */
+        BGR8(24),
+        /**
+         * 8-bit alpha, blue, green and red color, often used on Windows systems.
+         */
+        ABGR8(32),
+        /**
+         * 8-bit red, green and blue color.
          */
         RGB8(24),
         /**
-         * 
+         * 8-bit red, green, blue and alpha color.
          */
         RGBA8(32),
         /**
@@ -348,10 +391,12 @@ public class Image {
             }
 
             switch (this) {
+                case BGR8:
                 case RGB8:
                 case RGB16F:
                 case RGB32F:
                     return false;
+                case ABGR8:
                 case RGBA8:
                 case RGBA16F:
                 case RGBA32F:
@@ -370,21 +415,55 @@ public class Image {
      */
     public int determineFormat() {
         switch (format) {
-        case RGB8:
-        case RGB16F:
-        case RGB32F:
-            return GL11.GL_RGB;
-        case RGBA8:
-        case RGBA16F:
-        case RGBA32F:
-            return GL11.GL_RGBA;
-        case DEPTH16:
-        case DEPTH24:
-        case DEPTH32:
-        case DEPTH32F:
-            return GL11.GL_DEPTH_COMPONENT;
-        default:
-            throw new UnsupportedOperationException("Unknown image format: " + format);
+            case BGR8:
+                return GL20.GL_BGR;
+            case RGB8:
+            case RGB16F:
+            case RGB32F:
+                return GL11.GL_RGB;
+            case ABGR8:
+            case RGBA8:
+            case RGBA16F:
+            case RGBA32F:
+                return GL11.GL_RGBA;
+            case DEPTH16:
+            case DEPTH24:
+            case DEPTH32:
+            case DEPTH32F:
+                return GL11.GL_DEPTH_COMPONENT;
+            default:
+                throw new UnsupportedOperationException("Unknown image format: " + format);
+        }
+    }
+    
+    /**
+     * Return the corresponding OpenGL data type of the <code>Image</code>
+     * {@link Format}.
+     * 
+     * @return The OpenGL data type format.
+     */
+    public int determineDataType() {
+        switch (format) {
+            case ABGR8:
+                return GL20.GL_UNSIGNED_INT_8_8_8_8;
+            case BGR8:
+            case RGB8:
+            case RGBA8:
+                return GL11.GL_UNSIGNED_BYTE;
+            case RGB16F:
+            case RGB32F:
+            case RGBA16F:
+            case RGBA32F:
+                return GL11.GL_FLOAT;
+            case DEPTH16:
+                return GL11.GL_UNSIGNED_SHORT;
+            case DEPTH24:
+                return GL11.GL_UNSIGNED_INT;
+            case DEPTH32:
+            case DEPTH32F:
+                return GL11.GL_FLOAT;
+            default:
+                throw new UnsupportedOperationException("Unknown image format: " + format);
         }
     }
 
@@ -395,29 +474,45 @@ public class Image {
      * @return The OpenGL format of the image.
      */
     public int determineInternalFormat() {
+        if (getColorSpace() == ColorSpace.sRGB) {
+            switch (format) {
+                case BGR8:
+                case RGB8:
+                    return GL30.GL_SRGB8;
+                case ABGR8:
+                case RGBA8:
+                    return GL30.GL_SRGB8_ALPHA8;
+                default:
+                    throw new UnsupportedOperationException(
+                            "Image format " + format + ", doesn't support sRGB color space!");
+            }
+        }
+
         switch (format) {
-        case RGB8:
-            return GL11.GL_RGB8;
-        case RGBA8:
-            return GL11.GL_RGBA8;
-        case RGB16F:
-            return GL30.GL_RGB16F;
-        case RGBA16F:
-            return GL30.GL_RGBA16F;
-        case RGB32F:
-            return GL30.GL_RGB32F;
-        case RGBA32F:
-            return GL30.GL_RGBA32F;
-        case DEPTH16:
-            return GL14.GL_DEPTH_COMPONENT16;
-        case DEPTH24:
-            return GL14.GL_DEPTH_COMPONENT24;
-        case DEPTH32:
-            return GL14.GL_DEPTH_COMPONENT32;
-        case DEPTH32F:
-            return GL30.GL_DEPTH_COMPONENT32F;
-        default:
-            throw new UnsupportedOperationException("Unknown image format: " + format);
+            case BGR8:
+            case RGB8:
+                return GL11.GL_RGB8;
+            case ABGR8:
+            case RGBA8:
+                return GL11.GL_RGBA8;
+            case RGB16F:
+                return GL30.GL_RGB16F;
+            case RGBA16F:
+                return GL30.GL_RGBA16F;
+            case RGB32F:
+                return GL30.GL_RGB32F;
+            case RGBA32F:
+                return GL30.GL_RGBA32F;
+            case DEPTH16:
+                return GL14.GL_DEPTH_COMPONENT16;
+            case DEPTH24:
+                return GL14.GL_DEPTH_COMPONENT24;
+            case DEPTH32:
+                return GL14.GL_DEPTH_COMPONENT32;
+            case DEPTH32F:
+                return GL30.GL_DEPTH_COMPONENT32F;
+            default:
+                throw new UnsupportedOperationException("Unknown image format: " + format);
         }
     }
 }

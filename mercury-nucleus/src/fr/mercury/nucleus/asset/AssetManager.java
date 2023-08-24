@@ -25,9 +25,10 @@ import fr.mercury.nucleus.asset.loader.AssetLoader;
 import fr.mercury.nucleus.asset.loader.AssetLoader.Config;
 import fr.mercury.nucleus.asset.loader.AssetLoaderDescriptor;
 import fr.mercury.nucleus.asset.loader.GLSLLoader;
-import fr.mercury.nucleus.asset.loader.STBImageReader;
 import fr.mercury.nucleus.asset.loader.MaterialLoader;
 import fr.mercury.nucleus.asset.loader.OBJLoader;
+import fr.mercury.nucleus.asset.loader.STBImageReader;
+import fr.mercury.nucleus.asset.loader.VoidLoaderConfig;
 import fr.mercury.nucleus.asset.loader.assimp.AssimpLoader;
 import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.asset.loader.data.PathAssetData;
@@ -260,8 +261,8 @@ public class AssetManager extends AbstractApplicationService {
 
     /**
      * Loads the provided asset into an {@link Image} instance using a
-     * {@link STBImageReader}. Images can be wrapped around a {@link Texture} to be
-     * used during rendering of models.
+     * {@link STBImageReader} or {@link AWTImageReader}. Images can be wrapped
+     * around a {@link Texture} to be used during rendering of models.
      * <p>
      * If no loader is found it will throw an exception.
      * 
@@ -270,6 +271,24 @@ public class AssetManager extends AbstractApplicationService {
      */
     public Image loadImage(String path) {
         return load(new PathAssetData(Paths.get(path)));
+    }
+
+    /**
+     * Loads the provided asset into an {@link Image} instance using an
+     * {@link AssetLoader} described by the given {@link AssetLoaderDescriptor}.
+     * Images can be wrapped around a {@link Texture} to be used during rendering of
+     * models.
+     * <p>
+     * If no loader is found it will throw an exception.
+     * 
+     * @param path       The path of the asset to load, must be a texture file
+     *                   extension.
+     * @param descriptor The descriptor of the asset loader to use.
+     * @return The loaded image or null.
+     */
+    public <A extends AssetLoader<Image, VoidLoaderConfig>> Image loadImage(String path,
+            AssetLoaderDescriptor<A> descriptor) {
+        return load(new PathAssetData(Paths.get(path)), VoidLoaderConfig.get(), descriptor);
     }
 
     /**

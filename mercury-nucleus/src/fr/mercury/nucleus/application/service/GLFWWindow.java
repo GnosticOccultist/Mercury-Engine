@@ -52,6 +52,7 @@ import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.application.MercuryContext;
 import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.asset.loader.STBImageReader;
 import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.ReadableTimer;
@@ -192,7 +193,8 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
         }
 
         var iconPath = settings.getString("Icons");
-        var icon = application.getService(AssetManager.class).loadImage(iconPath);
+        // TODO: Support config to read and convert image into a given format.
+        var icon = application.getService(AssetManager.class).loadImage(iconPath, STBImageReader.DESCRIPTOR);
         setIcon(icon);
 
         super.initialize(settings);
