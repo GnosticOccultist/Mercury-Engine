@@ -8,6 +8,45 @@ package fr.mercury.nucleus.utils;
  * @author GnosticOccultist
  */
 public interface ReadableTimer {
+    
+    /**
+     * A dummy timer to execute some methods that requires a {@link ReadableTimer}
+     * as an argument.
+     */
+    DummyTimer DUMMY_TIMER = new DummyTimer();
+    
+    class DummyTimer implements ReadableTimer {
+
+        @Override
+        public float getTimePerFrame() {
+            return 0;
+        }
+
+        @Override
+        public float getFrameRate() {
+            return 0;
+        }
+
+        @Override
+        public float getSpeed() {
+            return 1.0f;
+        }
+
+        @Override
+        public boolean isPaused() {
+            return false;
+        }
+
+        @Override
+        public long getTime() {
+            return 0;
+        }
+
+        @Override
+        public long getResolution() {
+            return 0;
+        }
+    }
 
 	/**
 	 * Return the current time in seconds per frame of the <code>ReadableTimer</code>.
