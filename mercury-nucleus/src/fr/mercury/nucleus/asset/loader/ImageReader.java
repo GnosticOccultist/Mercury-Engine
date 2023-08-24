@@ -9,7 +9,9 @@ import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.asset.loader.data.AssetData;
+import fr.mercury.nucleus.texture.ColorSpace;
 import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.texture.Image.Format;
 import fr.mercury.nucleus.texture.Texture;
@@ -34,6 +36,11 @@ public class ImageReader implements AssetLoader<Image, VoidLoaderConfig> {
      */
     public static final AssetLoaderDescriptor<ImageReader> DESCRIPTOR = new AssetLoaderDescriptor<>(ImageReader::new,
             FileExtensions.TEXTURE_FILE_EXTENSION);
+
+    /**
+     * The asset manager.
+     */
+    private AssetManager assetManager;
 
     @Override
     public Image load(AssetData data) {
@@ -95,8 +102,13 @@ public class ImageReader implements AssetLoader<Image, VoidLoaderConfig> {
                 format = Format.RGBA8;
             }
 
+            var settings = assetManager.getApplication().getSettings();
+            // Enforce sRGB color space if gamma correction is enabled.
+            var colorSpace = settings.isGammaCorrection() ? ColorSpace.sRGB : ColorSpace.LINEAR;
+
             // Create the image and fill its data with the decoded image.
             Image image = new Image(w.get(), h.get(), format, decodedImage);
+            image.setColorSpace(colorSpace);
             // Rewind the buffer so freeing the data doesn't crash.
             decodedImage.rewind();
 
@@ -120,5 +132,10 @@ public class ImageReader implements AssetLoader<Image, VoidLoaderConfig> {
         buffer.flip();
         newBuffer.put(buffer);
         return newBuffer;
+    }
+
+    @Override
+    public void registerAssetManager(AssetManager assetManager) {
+        this.assetManager = assetManager;
     }
 }

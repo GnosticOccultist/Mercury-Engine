@@ -6,6 +6,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_API;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
+import static org.lwjgl.glfw.GLFW.GLFW_SRGB_CAPABLE;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
 import static org.lwjgl.glfw.GLFW.GLFW_REFRESH_RATE;
@@ -102,7 +103,10 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
         glfwWindowHint(GLFW_RESIZABLE, settings.isResizable() ? GL_TRUE : GL_FALSE);
         // Set the refresh rate of the window (frequency).
         glfwWindowHint(GLFW_REFRESH_RATE, settings.getFrequency());
+        // Sets the number of samples for the window framebuffer.
         glfwWindowHint(GLFW_SAMPLES, settings.getSamples());
+        // Sets the sRGB for the window framebuffer.
+        glfwWindowHint(GLFW_SRGB_CAPABLE, settings.isGammaCorrection() ? GL_TRUE : GL_FALSE);
         
         if (settings.isGraphicsDebugOutput()) {
             glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);

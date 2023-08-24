@@ -6,13 +6,16 @@ import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.application.MercuryContext.Type;
 import fr.mercury.nucleus.application.service.Window;
 import fr.mercury.nucleus.renderer.Renderer;
+import fr.mercury.nucleus.texture.ColorSpace;
 
 /**
- * <code>MercurySettings</code> stores the settings to be used by the {@link Application} for creating an appropriate 
- * {@link MercuryContext}. The settings can be loaded from default, changed and new ones can be added.
+ * <code>MercurySettings</code> stores the settings to be used by the
+ * {@link Application} for creating an appropriate {@link MercuryContext}. The
+ * settings can be loaded from default, changed and new ones can be added.
  * <p>
- * If the application settings are changed, it needs to be {@link Application#restart()} in order to apply changes and 
- * rebuild the context appropriately.
+ * If the application settings are changed, it needs to be
+ * {@link Application#restart()} in order to apply changes and rebuild the
+ * context appropriately.
  * 
  * @author GnosticOccultist
  */
@@ -24,7 +27,7 @@ public final class MercurySettings extends HashMap<String, Object> {
      * The default table with settings.
      */
     private static final MercurySettings DEFAULT = new MercurySettings(false);
-    
+
     /**
      * OpenGL graphics functionality up to 3.2 version.
      */
@@ -74,11 +77,12 @@ public final class MercurySettings extends HashMap<String, Object> {
         DEFAULT.put("Icons", "/icons/mercury-logo-x32.png");
         DEFAULT.put("Fullscreen", false);
         DEFAULT.put("Resizable", true);
+        DEFAULT.put("GammaCorrection", false);
         DEFAULT.put("VSync", true);
         DEFAULT.put("Frequency", 60);
         DEFAULT.put("FrameRate", -1);
         DEFAULT.put("ShowFPS", true);
-        DEFAULT.put("Samples", 1);
+        DEFAULT.put("Samples", 4);
         DEFAULT.put("RequiredExtensions", new String[0]);
         DEFAULT.put("GraphicsDebugOutput", true);
     }
@@ -135,10 +139,10 @@ public final class MercurySettings extends HashMap<String, Object> {
         Validator.nonNull(type, "The context type can't be null!");
         put("ContextType", type);
     }
-    
+
     /**
-     * Return the graphics API used to render the {@link MercuryApplication}.
-     * This setting is ignored if the context type is {@link Type#HEADLESS}.
+     * Return the graphics API used to render the {@link MercuryApplication}. This
+     * setting is ignored if the context type is {@link Type#HEADLESS}.
      * 
      * @return The graphics API (not null).
      */
@@ -146,12 +150,12 @@ public final class MercurySettings extends HashMap<String, Object> {
         var result = (String) get("MinGraphicsVersion");
 
         assert result != null;
-        return result; 
+        return result;
     }
-    
+
     /**
-     * Set the graphics API used to render the {@link MercuryApplication}.
-     * This setting is ignored if the context type is {@link Type#HEADLESS}.
+     * Set the graphics API used to render the {@link MercuryApplication}. This
+     * setting is ignored if the context type is {@link Type#HEADLESS}.
      * 
      * @return The graphics API (not null).
      */
@@ -159,10 +163,11 @@ public final class MercurySettings extends HashMap<String, Object> {
         Validator.nonEmpty(version, "The minimum graphics version type can't be null or empty!");
         put("GraphicsAPI", version);
     }
-    
+
     /**
-     * Return the minimum graphics version required to run the {@link MercuryApplication}.
-     * This setting is ignored if the context type is {@link Type#HEADLESS}.
+     * Return the minimum graphics version required to run the
+     * {@link MercuryApplication}. This setting is ignored if the context type is
+     * {@link Type#HEADLESS}.
      * 
      * @return The minimum required graphics version (not null).
      */
@@ -170,12 +175,13 @@ public final class MercurySettings extends HashMap<String, Object> {
         var result = (String) get("MinGraphicsVersion");
 
         assert result != null;
-        return result; 
+        return result;
     }
-    
+
     /**
-     * Set the minimum graphics version required to run the {@link MercuryApplication}.
-     * This setting is ignored if the context type is {@link Type#HEADLESS}.
+     * Set the minimum graphics version required to run the
+     * {@link MercuryApplication}. This setting is ignored if the context type is
+     * {@link Type#HEADLESS}.
      * 
      * @return The minimum required graphics version (not null).
      */
@@ -313,6 +319,30 @@ public final class MercurySettings extends HashMap<String, Object> {
     }
 
     /**
+     * Return whether to enable gamma correction (if supported), configuring
+     * display's framebuffer for {@link ColorSpace#sRGB} colors.
+     * 
+     * @return Whether to enable gamma correction.
+     * 
+     * @see ColorSpace
+     */
+    public boolean isGammaCorrection() {
+        return getBoolean("GammaCorrection");
+    }
+
+    /**
+     * Set whether to enable gamma correction (if supported), configuring display's
+     * framebuffer for {@link ColorSpace#sRGB} colors.
+     * 
+     * @param value Whether to enable gamma correction (default&rarr;false).
+     * 
+     * @see ColorSpace
+     */
+    public void setGammaCorrection(boolean value) {
+        addBoolean("GammaCorrection", value);
+    }
+
+    /**
      * Return whether to enable vertical-synchronization, limiting and synchronizing
      * every frame rendered to the monitor's refresh rate.
      * 
@@ -400,7 +430,7 @@ public final class MercurySettings extends HashMap<String, Object> {
      * Set the number of samples per pixel. If the value is &gt;1, the rendered
      * pixels will be multi-sampled.
      * 
-     * @param frameRate The number of samples to use for pixels (default&rarr;1).
+     * @param frameRate The number of samples to use for pixels (default&rarr;4).
      */
     public void setSamples(int samples) {
         Validator.inRange(samples, 1, Integer.MAX_VALUE);
@@ -433,9 +463,9 @@ public final class MercurySettings extends HashMap<String, Object> {
         Validator.nonNull(requiredExtensions, "The required extensions can't be null!");
         put("RequiredExtensions", requiredExtensions);
     }
-    
+
     /**
-     * Return whether to enable debug output from the graphics API, by setting up a 
+     * Return whether to enable debug output from the graphics API, by setting up a
      * callback to pretty print debug messages.
      * 
      * @return Whether to enable graphics debugging.
@@ -445,7 +475,7 @@ public final class MercurySettings extends HashMap<String, Object> {
     }
 
     /**
-     * Set whether to enable debug output from the graphics API, by setting up a 
+     * Set whether to enable debug output from the graphics API, by setting up a
      * callback to pretty print debug messages.
      * 
      * @param value Whether to enable graphics debugging (default&rarr;false).

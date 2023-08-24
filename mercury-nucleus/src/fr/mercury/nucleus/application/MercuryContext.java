@@ -85,7 +85,7 @@ public class MercuryContext implements Runnable {
      * 
      * @param application The application to bound the context to (not null).
      * @param settings    The settings to use for creation (not null).
-     * @return            A new context instance (not null).
+     * @return A new context instance (not null).
      */
     public static MercuryContext newContext(Application application, MercurySettings settings) {
         Validator.nonNull(application, "The application can't be null!");
@@ -119,7 +119,8 @@ public class MercuryContext implements Runnable {
      * Please use {@link #newContext(Application, MercurySettings)} to create the
      * <code>MercuryContext</code>.
      */
-    private MercuryContext() {}
+    private MercuryContext() {
+    }
 
     /**
      * Initialize the <code>MercuryContext</code> if it hasn't been already. The
@@ -272,7 +273,7 @@ public class MercuryContext implements Runnable {
             throw new MercuryException("A minimum version " + minVersion + " of the graphics API is required to run '"
                     + settings.getTitle() + "'!");
         }
-        
+
         var version = settings.getGraphicsAPI();
         if (!checkVersionSupport(capabilities, version)) {
             logger.info("Graphics version '" + version + "' not supported, defaulting to the minimum "
@@ -289,15 +290,18 @@ public class MercuryContext implements Runnable {
         logger.info("Using physical device: \n" + physicalDevice);
         physicalDevice.check(settings);
         application.linkService(physicalDevice);
-        
+
         if (settings.isGraphicsDebugOutput() && physicalDevice.supportsGLDebug()) {
             logger.info("Enabling OpenGL debug mode.");
             ARBDebugOutput.glDebugMessageCallbackARB(new OpenGLDebugOutputCallback(), 0);
         }
 
         if (settings.getInteger("Samples") > 1) {
-            // TODO: Don't know if it is useful.
             GL11C.glEnable(GL13C.GL_MULTISAMPLE);
+        }
+
+        if (settings.isGammaCorrection()) {
+            GL11C.glEnable(GL30C.GL_FRAMEBUFFER_SRGB);
         }
 
         // Finally show the window when finished.
@@ -317,10 +321,12 @@ public class MercuryContext implements Runnable {
     }
 
     /**
-     * Creates a new {@link PhysicalDevice} for the current <code>MercuryContext</code>.
+     * Creates a new {@link PhysicalDevice} for the current
+     * <code>MercuryContext</code>.
      * 
      * @param capabilites The OpenGL context capabilities (not null).
-     * @return            A new physical instance containing device and renderer infos (not null).
+     * @return A new physical instance containing device and renderer infos (not
+     *         null).
      */
     private PhysicalDevice createPhysicalDevice(GLCapabilities capabilites) {
         Validator.nonNull(capabilites, "The capabilities of the OpenGL context can't be null!");
@@ -437,7 +443,7 @@ public class MercuryContext implements Runnable {
      * 
      * @param capabilities The OpenGL capabilities (not null).
      * @param version      The version to check support for (not null, not empty).
-     * @return             Whether the version is supported.
+     * @return Whether the version is supported.
      */
     public static boolean checkVersionSupport(GLCapabilities capabilities, String version) {
         switch (version) {

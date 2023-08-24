@@ -1,6 +1,7 @@
 package fr.mercury.exempli.gratia.asset;
 
 import fr.mercury.nucleus.application.MercuryApplication;
+import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.asset.loader.assimp.AssimpLoader;
 import fr.mercury.nucleus.input.Axis;
 import fr.mercury.nucleus.input.Button;
@@ -22,23 +23,24 @@ import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
- * <code>TestAssimpLoader</code> showcase the usage of an {@link AssimpLoader} to load a {@link PhysicaMundi} in Mercury 
- * using the <code>Assimp</code> libraries via <code>LWJGL3</code> bindings.
+ * <code>TestAssimpLoader</code> showcase the usage of an {@link AssimpLoader}
+ * to load a {@link PhysicaMundi} in Mercury using the <code>Assimp</code>
+ * libraries via <code>LWJGL3</code> bindings.
  * 
  * @author GnosticOccultist
  */
 public class TestAssimpLoader extends MercuryApplication implements InputValueListener, InputStateListener {
-    
+
     public static final InputLayer CAM_LOOK_X = InputLayer.function("camera", "look-x");
-    
+
     public static final InputLayer CAM_LOOK_Y = InputLayer.function("camera", "look-y");
-    
+
     public static final InputLayer CAM_FOCUS = InputLayer.function("camera", "focus");
-    
+
     public static final InputLayer CAM_MOVE = InputLayer.function("camera", "move");
-    
+
     public static final InputLayer CAM_STRAFE = InputLayer.function("camera", "strafe");
-    
+
     public static final InputLayer CAM_ELEVATE = InputLayer.function("camera", "elevate");
 
     /**
@@ -57,6 +59,12 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
      */
     public static void main(String[] args) {
         TestAssimpLoader app = new TestAssimpLoader();
+
+        // Enable gamma correction.
+        var settings = new MercurySettings(true);
+        settings.setGammaCorrection(true);
+        app.setSettings(settings);
+
         app.start();
     }
 
@@ -64,13 +72,13 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
     @OpenGLCall
     protected void initialize() {
         camControl = CameraControl.newFirstPersonControl(camera);
-        
+
         var layeredInput = new LayeredInputProcessor();
         getService(DelegateInputProcessor.class).setDelegate(layeredInput);
-        
+
         // Activate the camera's input group.
         layeredInput.activate(InputLayer.group("camera"));
-        
+
         layeredInput.map(CAM_LOOK_X, Axis.MOUSE_X);
         layeredInput.map(CAM_LOOK_Y, Axis.MOUSE_Y);
         layeredInput.map(CAM_FOCUS, Button.MOUSE_LEFT);
@@ -82,7 +90,7 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
         layeredInput.map(CAM_ELEVATE, -1, Input.Keys.KEY_LEFT_SHIFT);
         layeredInput.listenValue(this, CAM_LOOK_X, CAM_LOOK_Y, CAM_MOVE, CAM_STRAFE, CAM_ELEVATE);
         layeredInput.listenState(this, CAM_FOCUS);
-        
+
         // Load and prepare the cube in the scene.
         // TODO: Allow to add config flags when loading a model.
         sponza = assetManager.loadAnimaMundi("resources/model/sponza/sponza.gltf");
@@ -105,22 +113,22 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
     @Override
     public void trigger(InputLayer layer, double value) {
         var input = getService(DelegateInputProcessor.class);
-        
+
         if (layer == CAM_LOOK_X && !input.isCursorVisible()) {
             camControl.rotate(value, 0);
-        } 
+        }
         if (layer == CAM_LOOK_Y && !input.isCursorVisible()) {
             camControl.rotate(0, value);
         }
-        
+
         if (layer == CAM_MOVE) {
             camControl.move(value, 0, 0);
         }
-        
+
         if (layer == CAM_STRAFE) {
             camControl.move(0, 0, value);
         }
-        
+
         if (layer == CAM_ELEVATE) {
             camControl.move(0, value, 0);
         }
@@ -129,7 +137,7 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
     @Override
     public void trigger(InputLayer layer, InputState state) {
         var input = getService(DelegateInputProcessor.class);
-        
+
         if (layer == CAM_FOCUS) {
             switch (state) {
                 case OFF:
