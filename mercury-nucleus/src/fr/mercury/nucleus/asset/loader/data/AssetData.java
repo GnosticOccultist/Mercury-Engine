@@ -22,6 +22,8 @@ public abstract class AssetData {
 
     public abstract Path getPath();
     
+    public abstract String relativize();
+    
     public String getExtension() {
         return FileUtils.getExtension(getPath());
     }

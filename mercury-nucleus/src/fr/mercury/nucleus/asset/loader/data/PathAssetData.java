@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
+import fr.alchemy.utilities.SystemUtils;
 import fr.alchemy.utilities.file.FileUtils;
 
 public class PathAssetData extends AssetData {
@@ -23,11 +23,11 @@ public class PathAssetData extends AssetData {
     @Override
     public AssetData resolve(AssetData other) {
         var resolvePath = path.resolve(other.getPath());
-        
+
         if (!Files.exists(resolvePath)) {
             return null;
         }
-        
+
         var resolved = new PathAssetData(resolvePath);
         return resolved;
     }
@@ -35,27 +35,34 @@ public class PathAssetData extends AssetData {
     public PathAssetData sub(Path other) {
         return new PathAssetData(path.resolve(format(other)));
     }
-    
+
     @Override
     public AssetData sibling(String other) {
         var sibling = path.resolveSibling(format(other));
         return new PathAssetData(sibling);
     }
-    
+
     private Path format(Path path) {
         if (path.startsWith(File.separator)) {
             path = path.subpath(0, path.getNameCount());
         }
-        
+
         return path;
     }
-    
+
     private String format(String path) {
         if (path.startsWith(File.separator) || path.startsWith("/")) {
             path = path.substring(1);
         }
-        
+
         return path;
+    }
+
+    @Override
+    public String relativize() {
+        var dir = SystemUtils.pathToWorkingDirectory();
+        var relative = dir.toUri().relativize(path.toFile().toURI()).toString();
+        return relative;
     }
 
     @Override
@@ -64,10 +71,29 @@ public class PathAssetData extends AssetData {
     }
 
     @Override
-    public String getPath() {
-        return path.toString();
+    public Path getPath() {
+        return path;
     }
-    
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+
+        if (!(obj instanceof AssetData)) {
+            return false;
+        }
+
+        if (obj instanceof PathAssetData) {
+            var other = (PathAssetData) obj;
+            return other.path.equals(path);
+        }
+
+        var other = (AssetData) obj;
+        return getPath().equals(other.getPath());
+    }
+
     @Override
     public String toString() {
         return path.toString();

@@ -5,6 +5,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Paths;
 import java.util.EnumMap;
 import java.util.function.Consumer;
 
@@ -60,14 +61,9 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
     /**
      * The assimp asset loader descriptor.
      */
-    public static final AssetLoaderDescriptor<AssimpLoader> DESCRIPTOR = new AssetLoaderDescriptor<>(
-            AssimpLoader::new,
-            0, 
-            FileExtensions.BLENDER_MODEL_FORMAT, 
-            FileExtensions.OBJ_MODEL_FORMAT, 
-            FileExtensions.GLTF_MODEL_FORMAT,
-            FileExtensions.FBX_MODEL_FORMAT
-    );
+    public static final AssetLoaderDescriptor<AssimpLoader> DESCRIPTOR = new AssetLoaderDescriptor<>(AssimpLoader::new,
+            0, FileExtensions.BLENDER_MODEL_FORMAT, FileExtensions.OBJ_MODEL_FORMAT, FileExtensions.GLTF_MODEL_FORMAT,
+            FileExtensions.FBX_MODEL_FORMAT);
 
     /**
      * The logger of the Assimp loader.
@@ -93,35 +89,36 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
                 var file = AIFile.create();
                 var filePath = MemoryUtil.memUTF8(fileName);
 
-                var buffer = BufferUtils.createByteBuffer(8192);
-                var data = FileUtils.toByteBuffer(filePath, buffer, this::resize);
+                var buffer = Allocator.alloc(8192);
+                final var dataBuffer = FileUtils.toByteBuffer(Paths.get(filePath), buffer, this::resize);
 
                 file.ReadProc((pFile, pBuffer, size, count) -> {
-                    var max = Math.min(data.remaining(), size * count);
-                    MemoryUtil.memCopy(MemoryUtil.memAddress(data) + data.position(), pBuffer, max);
+                    var max = Math.min(dataBuffer.remaining(), size * count);
+                    MemoryUtil.memCopy(MemoryUtil.memAddress(dataBuffer) + dataBuffer.position(), pBuffer, max);
                     return max;
                 });
 
                 file.SeekProc((pFile, offset, origin) -> {
                     if (origin == Assimp.aiOrigin_CUR) {
-                        data.position(data.position() + (int) offset);
+                        dataBuffer.position(dataBuffer.position() + (int) offset);
                     } else if (origin == Assimp.aiOrigin_SET) {
-                        data.position((int) offset);
+                        dataBuffer.position((int) offset);
                     } else if (origin == Assimp.aiOrigin_END) {
-                        data.position(data.limit() + (int) offset);
+                        dataBuffer.position(dataBuffer.limit() + (int) offset);
                     }
+
                     return 0;
                 });
 
                 file.FileSizeProc(pFile -> {
-                    return data.limit();
+                    return dataBuffer.limit();
                 });
 
                 return file.address();
             }
 
             private ByteBuffer resize(ByteBuffer buffer, Integer size) {
-                var newBuffer = BufferUtils.createByteBuffer(size);
+                var newBuffer = Allocator.alloc(size);
                 buffer.flip();
                 newBuffer.put(buffer);
                 return newBuffer;
@@ -131,8 +128,14 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
         io.set(openProc, (pFileIO, pFile) -> {
         }, MemoryUtil.NULL);
 
-        var scene = Assimp.aiImportFile(data.getPath(), config.flags());
-        if (scene == null) {
+        // Do not use custom IO pipeline, apparently it is broken...
+
+        // Assimp uses relative path, so relativize....
+        var c = data.relativize();
+        var scene = Assimp.aiImportFile(c, config.flags());
+        if (scene == null || scene.mRootNode() == null) {
+            // If we failed, try to release the scene.
+            Assimp.aiReleaseImport(scene);
             throw new MercuryException("Error while loading model '" + data + "': " + Assimp.aiGetErrorString());
         }
 
@@ -189,7 +192,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
             var name = aiName.dataString();
             logger.info("Loading material '" + name + "' using Assimp...");
 
-            var aiTexturePath = AIString.callocStack(stack);
+            var aiTexturePath = AIString.calloc(stack);
             Assimp.aiGetMaterialTexture(material, Assimp.aiTextureType_DIFFUSE, 0, aiTexturePath, (IntBuffer) null,
                     null, null, null, null, null);
 

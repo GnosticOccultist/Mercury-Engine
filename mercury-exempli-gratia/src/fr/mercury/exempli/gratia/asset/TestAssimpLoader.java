@@ -63,6 +63,7 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
         // Enable gamma correction.
         var settings = new MercurySettings(true);
         settings.setGammaCorrection(true);
+        settings.setVSync(false);
         app.setSettings(settings);
 
         app.start();
@@ -93,7 +94,7 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
 
         // Load and prepare the cube in the scene.
         // TODO: Allow to add config flags when loading a model.
-        sponza = assetManager.loadAnimaMundi("resources/model/sponza/sponza.gltf");
+        sponza = assetManager.loadAnimaMundi("/model/sponza/sponza.gltf");
         sponza.setName("sponza");
         sponza.setTranslation(5.0f, -2.3F, 0.0F).setScale(1f, 1f, 1f);
 

@@ -69,7 +69,7 @@ public final class MercurySettings extends HashMap<String, Object> {
 
         DEFAULT.put("ContextType", Type.WINDOW);
         DEFAULT.put("GraphicsAPI", OPENGL_43);
-        DEFAULT.put("MinGraphicsVersion", OPENGL_32);
+        DEFAULT.put("MinGraphicsVersion", OPENGL_33);
         DEFAULT.put("RendererType", "fr.mercury.nucleus.renderer.DefaultRenderer");
         DEFAULT.put("Width", 1280);
         DEFAULT.put("Height", 768);
