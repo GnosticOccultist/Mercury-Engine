@@ -25,7 +25,7 @@ import fr.mercury.nucleus.utils.data.Allocator;
  * 
  * @author GnosticOccultist
  */
-public class ImageReader implements AssetLoader<Image, VoidLoaderConfig> {
+public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
 
     /**
      * The logger of the application.
@@ -34,8 +34,8 @@ public class ImageReader implements AssetLoader<Image, VoidLoaderConfig> {
     /**
      * The image STB asset loader descriptor.
      */
-    public static final AssetLoaderDescriptor<ImageReader> DESCRIPTOR = new AssetLoaderDescriptor<>(ImageReader::new,
-            FileExtensions.TEXTURE_FILE_EXTENSION);
+    public static final AssetLoaderDescriptor<STBImageReader> DESCRIPTOR = new AssetLoaderDescriptor<>(
+            STBImageReader::new, FileExtensions.TEXTURE_FILE_EXTENSION);
 
     /**
      * The asset manager.
@@ -58,7 +58,7 @@ public class ImageReader implements AssetLoader<Image, VoidLoaderConfig> {
 
         // Prevent the user that the image has been successfully loaded.
         if (image != null) {
-            logger.info("Successfully loaded image data with image file: " + data);
+            logger.info("Successfully loaded image with STB: " + data.getName() + ", image= " + image);
         }
 
         return image;
@@ -98,7 +98,7 @@ public class ImageReader implements AssetLoader<Image, VoidLoaderConfig> {
             } else if (chan == 3) {
                 format = Format.RGB8;
             } else {
-                logger.warning("Invalid color channels in file " + data + ", channels= " + channels);
+                logger.warning("Invalid color channels in file " + data.getName() + ", channels= " + channels);
                 format = Format.RGBA8;
             }
 

@@ -1,7 +1,10 @@
 package fr.mercury.nucleus.asset.loader.data;
 
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Optional;
+
+import fr.alchemy.utilities.file.FileUtils;
 
 public abstract class AssetData {
 
@@ -17,7 +20,11 @@ public abstract class AssetData {
 
     public abstract String getName();
 
-    public abstract String getPath();
+    public abstract Path getPath();
+    
+    public String getExtension() {
+        return FileUtils.getExtension(getPath());
+    }
 
     @Override
     public String toString() {
