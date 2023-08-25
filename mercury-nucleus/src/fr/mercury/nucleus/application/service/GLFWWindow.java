@@ -80,6 +80,14 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
      * Whether the context window is focused or maximized/minimized.
      */
     private boolean focused;
+    /**
+     * The previous time for fps computation.
+     */
+    private Long previous = null;
+    /**
+     * The frame count for fps computation.
+     */
+    private int frameCount;
 
     @Override
     @OpenGLCall
@@ -108,7 +116,7 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
         glfwWindowHint(GLFW_SAMPLES, settings.getSamples());
         // Sets the sRGB for the window framebuffer.
         glfwWindowHint(GLFW_SRGB_CAPABLE, settings.isGammaCorrection() ? GL_TRUE : GL_FALSE);
-        
+
         if (settings.isGraphicsDebugOutput()) {
             glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
         }
@@ -254,13 +262,6 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
     @OpenGLCall
     public void update(ReadableTimer timer) {
         super.update(timer);
-
-        if (timer.getTime() % 1500 == 0) {
-            var settings = application.getSettings();
-            if (settings.getBoolean("ShowFPS")) {
-                setTitle(settings.getTitle() + " - " + (int) (timer.getFrameRate()) + " FPS");
-            }
-        }
     }
 
     /**
@@ -338,7 +339,7 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
     public int getHeight() {
         return application.getSettings().getHeight();
     }
-    
+
     /**
      * Return the aspect ratio of the window framebuffer.
      * 
@@ -403,12 +404,51 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
      * Finish the frame when rendering has been done on the back buffer of the
      * <code>GLFWWindow</code>. Also process all pending GLFW events causing
      * associated callbacks to be called.
+     * <p>
+     * If {@link MercurySettings#getBoolean(ShowFPS)} is enabled, then the frame per
+     * second and time per frame statistics will be updated and displayed on the
+     * <code>GLFWWindow</code>'s title bar.
      */
     @Override
     @OpenGLCall
     public void finishFrame() {
+
+        var settings = application.getSettings();
+        if (settings.getBoolean("ShowFPS")) {
+            updateFrameTime(settings);
+        }
+
         glfwSwapBuffers(window);
         glfwPollEvents();
+    }
+
+    /**
+     * Update the frame per second and time per frame statistics and display them to
+     * the <code>GLFWWindow</code>'s title bar.
+     * 
+     * @param settings The application settings (not null).
+     */
+    private void updateFrameTime(MercurySettings settings) {
+        var now = System.nanoTime();
+        if (previous == null) {
+            // First update.
+            previous = now;
+
+        } else {
+            ++frameCount;
+            var nanoseconds = now - previous;
+            var milliseconds = 1e-6 * (double) nanoseconds;
+            if (milliseconds > 200.0) {
+                // Every 200 ms, update the fps and tpf statistics in window's title.
+                var fps = (int) Math.round(1000. * frameCount / milliseconds);
+                var tpf = milliseconds / frameCount;
+                var windowTitle = String.format("%s  |  %d FPS %.2f ms", settings.getTitle(), fps, tpf);
+                setTitle(windowTitle);
+
+                frameCount = 0;
+                previous = now;
+            }
+        }
     }
 
     /**
@@ -425,11 +465,13 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
             if (window != NULL) {
                 glfwDestroyWindow(window);
                 window = NULL;
-                glfwTerminate();
             }
         } catch (Exception ex) {
             logger.error("Failed to destroy window!", ex);
         }
+
+        // Terminate GLFW, even if we have no window created.
+        glfwTerminate();
 
         cleanup();
     }
