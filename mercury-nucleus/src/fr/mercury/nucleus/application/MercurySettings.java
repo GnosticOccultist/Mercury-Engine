@@ -66,7 +66,6 @@ public final class MercurySettings extends HashMap<String, Object> {
     public static final String OPENGL_46 = "OpenGL46";
 
     static {
-
         DEFAULT.put("ContextType", Type.WINDOW);
         DEFAULT.put("GraphicsAPI", OPENGL_43);
         DEFAULT.put("MinGraphicsVersion", OPENGL_33);
@@ -84,7 +83,8 @@ public final class MercurySettings extends HashMap<String, Object> {
         DEFAULT.put("ShowFPS", true);
         DEFAULT.put("Samples", 4);
         DEFAULT.put("RequiredExtensions", new String[0]);
-        DEFAULT.put("GraphicsDebugOutput", true);
+        DEFAULT.put("GraphicsDebugOutput", false);
+        DEFAULT.put("MemoryAllocationDebug", false);
     }
 
     /**
@@ -475,13 +475,32 @@ public final class MercurySettings extends HashMap<String, Object> {
     }
 
     /**
-     * Set whether to enable debug output from the graphics API, by setting up a
+     * Set whether to enable debugging from the graphics API, by setting up a
      * callback to pretty print debug messages.
      * 
      * @param value Whether to enable graphics debugging (default&rarr;false).
      */
     public void setGraphicsDebugOutput(boolean value) {
         addBoolean("GraphicsDebugOutput", value);
+    }
+
+    /**
+     * Return whether to enable debugging for memory allocation from LWJGL stack.
+     * 
+     * @return Whether to enable memory allocation debugging.
+     */
+    public boolean isMemoryAllocationDebug() {
+        return getBoolean("MemoryAllocationDebug");
+    }
+
+    /**
+     * Set whether to enable debugging for memory allocation from LWJGL stack.
+     * 
+     * @param value Whether to enable memory allocation debugging
+     *              (default&rarr;false).
+     */
+    public void setMemoryAllocationDebug(boolean value) {
+        addBoolean("MemoryAllocationDebug", value);
     }
 
     /**

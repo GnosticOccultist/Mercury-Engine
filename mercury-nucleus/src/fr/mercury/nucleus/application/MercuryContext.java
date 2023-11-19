@@ -10,7 +10,7 @@ import org.lwjgl.opengl.GL20C;
 import org.lwjgl.opengl.GL30C;
 import org.lwjgl.opengl.GLCapabilities;
 import org.lwjgl.system.Configuration;
-import org.lwjgl.system.Platform;
+import org.lwjgl.system.MemoryUtil;
 
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
@@ -83,6 +83,10 @@ public class MercuryContext implements Runnable {
      * The frame-rate limit.
      */
     private int frameRateLimit = -1;
+    /**
+     * The OpenGL debug output callback, or null if graphics debugging is disabled.
+     */
+    private OpenGLDebugOutputCallback debugOutput;
 
     /**
      * Instantiates and return a new <code>MercuryContext</code> bound to the
@@ -275,6 +279,17 @@ public class MercuryContext implements Runnable {
             return;
         }
 
+        // Initialize LWJGL configuration.
+        var graphics = settings.isGraphicsDebugOutput();
+        Configuration.DEBUG.set(graphics);
+        Configuration.DEBUG_FUNCTIONS.set(graphics);
+        Configuration.DEBUG_LOADER.set(graphics);
+
+        var mem = settings.isMemoryAllocationDebug();
+        Configuration.DEBUG_MEMORY_ALLOCATOR.set(mem);
+        Configuration.DEBUG_MEMORY_ALLOCATOR_INTERNAL.set(mem);
+        Configuration.DEBUG_STACK.set(mem);
+
         window.initialize(settings);
 
         // Make the OpenGL context current.
@@ -309,7 +324,7 @@ public class MercuryContext implements Runnable {
 
         if (settings.isGraphicsDebugOutput() && physicalDevice.supportsGLDebug()) {
             logger.info("Enabling OpenGL debug mode.");
-            ARBDebugOutput.glDebugMessageCallbackARB(new OpenGLDebugOutputCallback(), 0);
+            ARBDebugOutput.glDebugMessageCallbackARB(this.debugOutput = new OpenGLDebugOutputCallback(), 0);
         }
 
         if (settings.getInteger("Samples") > 1) {
@@ -368,6 +383,10 @@ public class MercuryContext implements Runnable {
     private void cleanup() {
         application.cleanup();
         application.service(GLFWWindow.class, GLFWWindow::destroy);
+
+        if (debugOutput != null) {
+            MemoryUtil.nmemFree(debugOutput.address());
+        }
 
         // Reset the state of variables.
         initialized.set(false);

@@ -80,14 +80,19 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
     @Override
     public AnimaMundi load(AssetData data, AssimpLoaderConfig config) {
         // Define our own IO logic for Assimp.
-        AIFileIO io = AIFileIO.create();
+        AIFileIO io = AIFileIO.calloc();
+
+        Array<AIFile> files = Array.ofType(AIFile.class, 1);
 
         var openProc = new AIFileOpenProc() {
 
             @Override
             public long invoke(long pFileIO, long fileName, long openMode) {
-                var file = AIFile.create();
-                var filePath = MemoryUtil.memUTF8(fileName);
+                // TODO: Improve file reading and memory management.
+                var file = AIFile.calloc();
+                files.add(file);
+
+                var filePath = MemoryUtil.memUTF8Safe(fileName);
 
                 var buffer = Allocator.alloc(8192);
                 final var dataBuffer = FileUtils.toByteBuffer(Paths.get(filePath), buffer, this::resize);
@@ -148,8 +153,13 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
         var result = readScene(scene, materials[1], config);
 
         /*
-         * Release the imported scene when finished.
+         * Release the imported scene and IO logic when finished.
          */
+        for (var file : files) {
+            file.free();
+        }
+
+        io.free();
         Assimp.aiReleaseImport(scene);
 
         return result;
