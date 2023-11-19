@@ -1,5 +1,7 @@
 package fr.mercury.exempli.gratia.context;
 
+import java.awt.GraphicsEnvironment;
+
 import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.application.MercuryContext.Type;
@@ -11,7 +13,8 @@ import fr.mercury.nucleus.renderer.Renderer;
 import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
- * <code>TestOBJLoader</code> showcase the usage of a {@link Type#HEADLESS} context in an {@link Application}.
+ * <code>TestOBJLoader</code> showcase the usage of a {@link Type#HEADLESS}
+ * context in an {@link Application}.
  * 
  * @author GnosticOccultist
  */
@@ -43,6 +46,8 @@ public class TestHeadlessContext extends MercuryApplication {
         assert getService(Window.class) == null;
         assert getService(Renderer.class) == null;
         assert getService(DelegateInputProcessor.class) == null;
+        assert context.getType() == Type.HEADLESS;
+        assert GraphicsEnvironment.isHeadless();
     }
 
     @Override

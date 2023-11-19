@@ -41,6 +41,8 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.nio.IntBuffer;
 
+import org.lwjgl.Version;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWVidMode;
 
@@ -204,6 +206,10 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
         // TODO: Support config to read and convert image into a given format.
         var icon = application.getService(AssetManager.class).loadImage(iconPath, STBImageReader.DESCRIPTOR);
         setIcon(icon);
+        
+        logger.info("Created LWJGL context " + Version.getVersion() + " and running on thread "
+                + Thread.currentThread().getName() + "\n* Graphics Adapter: GLFW "
+                + GLFW.glfwGetVersionString());
 
         super.initialize(settings);
     }

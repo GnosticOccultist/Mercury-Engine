@@ -2,8 +2,6 @@ package fr.mercury.nucleus.application;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.lwjgl.Version;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.ARBDebugOutput;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11C;
@@ -11,10 +9,14 @@ import org.lwjgl.opengl.GL13C;
 import org.lwjgl.opengl.GL20C;
 import org.lwjgl.opengl.GL30C;
 import org.lwjgl.opengl.GLCapabilities;
+import org.lwjgl.system.Configuration;
+import org.lwjgl.system.Platform;
 
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
+import fr.mercury.nucleus.application.kernel.OS;
+import fr.mercury.nucleus.application.kernel.OSArch;
 import fr.mercury.nucleus.application.service.GLFWWindow;
 import fr.mercury.nucleus.input.DelegateInputProcessor;
 import fr.mercury.nucleus.input.GLFWKeyInput;
@@ -61,6 +63,10 @@ public class MercuryContext implements Runnable {
      * The type of context.
      */
     private Type type;
+    /**
+     * The OS architecture running on this machine.
+     */
+    private OSArch osArch;
     /**
      * The general settings.
      */
@@ -233,9 +239,6 @@ public class MercuryContext implements Runnable {
         try {
 
             createContext(settings);
-            logger.info("Created LWJGL context " + Version.getVersion() + " and running on thread "
-                    + Thread.currentThread().getName() + "\n* Graphics Adapter: GLFW " + GLFW.glfwGetVersionString());
-
             initialized.set(true);
 
         } catch (Exception ex) {
@@ -253,6 +256,19 @@ public class MercuryContext implements Runnable {
     }
 
     private void createContext(MercurySettings settings) {
+        this.osArch = OSArch.resolveFromJavaProperty();
+
+        logger.info("Creating context on machine: \n* OS = " + osArch + "\n* OS_VERSION = "
+                + System.getProperty("os.version") + "\n* JAVA_RUNTIME_NAME = "
+                + System.getProperty("java.runtime.name") + "\n* JAVA_VERSION = " + System.getProperty("java.version"));
+
+        // Force AWT to headless mode on Mac, to avoid conflict with GLFW.
+        if (osArch.os().equals(OS.MAC_OS) || !type.isRenderable()) {
+            // Set AWT to headless mode.
+            logger.info("Set AWT to headless mode.");
+            System.setProperty("java.awt.headless", "true");
+        }
+
         // The context doesn't need a window, nor a renderer, nor input.
         var window = application.getService(GLFWWindow.class);
         if (window == null) {
@@ -419,6 +435,15 @@ public class MercuryContext implements Runnable {
      */
     public Type getType() {
         return type;
+    }
+
+    /**
+     * Return the {@link OSArch} running on this machine.
+     * 
+     * @return The operating system architecture (not null).
+     */
+    public OSArch getOSArch() {
+        return osArch;
     }
 
     /**
