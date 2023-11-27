@@ -5,8 +5,9 @@ import org.lwjgl.assimp.Assimp;
 import fr.mercury.nucleus.asset.loader.AssetLoader;
 
 /**
- * <code>AssimpLoaderConfig</code> is an implementation of {@link AssetLoader.Config} to define
- * a set of parameters to use when loading a scene/model file using the {@link AssimpLoader}.
+ * <code>AssimpLoaderConfig</code> is an implementation of
+ * {@link AssetLoader.Config} to define a set of parameters to use when loading
+ * a scene/model file using the {@link AssimpLoader}.
  * 
  * @author GnosticOccultist
  */
@@ -22,7 +23,8 @@ public class AssimpLoaderConfig implements AssetLoader.Config {
      */
     private static final int DEFAULT_ASSIMP_FLAGS = Assimp.aiProcess_JoinIdenticalVertices
             | Assimp.aiProcess_Triangulate | Assimp.aiProcess_GenSmoothNormals | Assimp.aiProcess_SortByPType
-            | Assimp.aiProcess_PreTransformVertices | Assimp.aiProcess_FlipUVs;
+            | Assimp.aiProcess_PreTransformVertices | Assimp.aiProcess_FlipUVs | Assimp.aiProcess_ValidateDataStructure
+            | Assimp.aiProcess_OptimizeMeshes | Assimp.aiProcess_RemoveRedundantMaterials;
 
     /**
      * Whether to ignore the root-node.
@@ -38,14 +40,16 @@ public class AssimpLoaderConfig implements AssetLoader.Config {
     private int flags;
 
     /**
-     * Instantiates a new <code>AssimpLoaderConfig</code> with the default parameters.
+     * Instantiates a new <code>AssimpLoaderConfig</code> with the default
+     * parameters.
      */
     public AssimpLoaderConfig() {
         this(DEFAULT_ASSIMP_FLAGS, true, true);
     }
 
     /**
-     * Instantiates a new <code>AssimpLoaderConfig</code> to use with the {@link AssimpLoader}.
+     * Instantiates a new <code>AssimpLoaderConfig</code> to use with the
+     * {@link AssimpLoader}.
      * 
      * @param flags          The assimp flags to use when loading scene file.
      * @param ignoreRootNode Whether to ignore the root-node.
@@ -56,7 +60,7 @@ public class AssimpLoaderConfig implements AssetLoader.Config {
         this.ignoreRootNode = ignoreRootNode;
         this.loadTextures = loadTextures;
     }
-   
+
     /**
      * Return whether the loader should ignore the root-node, preventing it to be
      * added to the loaded scene. It can be useful in some cases where the user has
@@ -69,9 +73,9 @@ public class AssimpLoaderConfig implements AssetLoader.Config {
     }
 
     /**
-     * Sets whether the {@link AssimpLoader} should ignore the root-node, preventing it to be
-     * added to the loaded scene. It can be useful in some cases where the user has
-     * already a root node defined and just want the children.
+     * Sets whether the {@link AssimpLoader} should ignore the root-node, preventing
+     * it to be added to the loaded scene. It can be useful in some cases where the
+     * user has already a root node defined and just want the children.
      * 
      * @param ignoreRootNode Whether to ignore the root-node (default &rarr; true).
      * @return The assimp loader config.
@@ -82,7 +86,8 @@ public class AssimpLoaderConfig implements AssetLoader.Config {
     }
 
     /**
-     * Return whether the loader should load and apply the textures to the loaded scene.
+     * Return whether the loader should load and apply the textures to the loaded
+     * scene.
      * 
      * @return Whether to load and apply textures (default &rarr; true).
      */
@@ -91,7 +96,8 @@ public class AssimpLoaderConfig implements AssetLoader.Config {
     }
 
     /**
-     * Sets whether the {@link AssimpLoader} should load and apply the textures to the loaded scene.
+     * Sets whether the {@link AssimpLoader} should load and apply the textures to
+     * the loaded scene.
      * 
      * @param loadTextures Whether to load and apply textures (default &rarr; true).
      * @return The assimp loader config.

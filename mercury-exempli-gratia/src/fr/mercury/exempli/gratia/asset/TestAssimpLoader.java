@@ -62,6 +62,8 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
 
         // Enable gamma correction.
         var settings = new MercurySettings(true);
+        settings.setGraphicsDebugOutput(true);
+        settings.setMemoryAllocationDebug(true);
         settings.setGammaCorrection(true);
         settings.setVSync(false);
         app.setSettings(settings);
@@ -141,15 +143,15 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
 
         if (layer == CAM_FOCUS) {
             switch (state) {
-                case OFF:
-                    input.setCursorVisible(true);
-                    break;
-                case POSITIVE:
-                case NEGATIVE:
-                    input.setCursorVisible(false);
-                    break;
-                default:
-                    break;
+            case OFF:
+                input.setCursorVisible(true);
+                break;
+            case POSITIVE:
+            case NEGATIVE:
+                input.setCursorVisible(false);
+                break;
+            default:
+                break;
             }
         }
     }

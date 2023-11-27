@@ -2,17 +2,12 @@ package fr.mercury.nucleus.asset.loader.assimp;
 
 import java.io.File;
 import java.nio.Buffer;
-import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.nio.file.Paths;
 import java.util.EnumMap;
 import java.util.function.Consumer;
 
 import org.lwjgl.assimp.AIFace;
-import org.lwjgl.assimp.AIFile;
-import org.lwjgl.assimp.AIFileIO;
-import org.lwjgl.assimp.AIFileOpenProc;
 import org.lwjgl.assimp.AIMaterial;
 import org.lwjgl.assimp.AIMatrix4x4;
 import org.lwjgl.assimp.AIMesh;
@@ -21,12 +16,9 @@ import org.lwjgl.assimp.AIScene;
 import org.lwjgl.assimp.AIString;
 import org.lwjgl.assimp.AIVector3D;
 import org.lwjgl.assimp.Assimp;
-import org.lwjgl.system.MemoryUtil;
-
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.collections.array.Array;
 import fr.alchemy.utilities.file.FileExtensions;
-import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.AssetManager;
@@ -80,64 +72,14 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
     @Override
     public AnimaMundi load(AssetData data, AssimpLoaderConfig config) {
         // Define our own IO logic for Assimp.
-        AIFileIO io = AIFileIO.calloc();
-
-        Array<AIFile> files = Array.ofType(AIFile.class, 1);
-
-        var openProc = new AIFileOpenProc() {
-
-            @Override
-            public long invoke(long pFileIO, long fileName, long openMode) {
-                // TODO: Improve file reading and memory management.
-                var file = AIFile.calloc();
-                files.add(file);
-
-                var filePath = MemoryUtil.memUTF8Safe(fileName);
-
-                var buffer = Allocator.alloc(8192);
-                final var dataBuffer = FileUtils.toByteBuffer(Paths.get(filePath), buffer, this::resize);
-
-                file.ReadProc((pFile, pBuffer, size, count) -> {
-                    var max = Math.min(dataBuffer.remaining(), size * count);
-                    MemoryUtil.memCopy(MemoryUtil.memAddress(dataBuffer) + dataBuffer.position(), pBuffer, max);
-                    return max;
-                });
-
-                file.SeekProc((pFile, offset, origin) -> {
-                    if (origin == Assimp.aiOrigin_CUR) {
-                        dataBuffer.position(dataBuffer.position() + (int) offset);
-                    } else if (origin == Assimp.aiOrigin_SET) {
-                        dataBuffer.position((int) offset);
-                    } else if (origin == Assimp.aiOrigin_END) {
-                        dataBuffer.position(dataBuffer.limit() + (int) offset);
-                    }
-
-                    return 0;
-                });
-
-                file.FileSizeProc(pFile -> {
-                    return dataBuffer.limit();
-                });
-
-                return file.address();
-            }
-
-            private ByteBuffer resize(ByteBuffer buffer, Integer size) {
-                var newBuffer = Allocator.alloc(size);
-                buffer.flip();
-                newBuffer.put(buffer);
-                return newBuffer;
-            }
-        };
-
-        io.set(openProc, (pFileIO, pFile) -> {
-        }, MemoryUtil.NULL);
-
-        // Do not use custom IO pipeline, apparently it is broken...
+        var tempFileSystem = new AssimpFileSystem(assetManager);
+        var fileIO = tempFileSystem.getFileIO();
 
         // Assimp uses relative path, so relativize....
         var c = data.relativize();
-        var scene = Assimp.aiImportFile(c, config.flags());
+        var scene = Assimp.aiImportFileEx(c, config.flags(), fileIO);
+        Assimp.aiDetachAllLogStreams();
+
         if (scene == null || scene.mRootNode() == null) {
             // If we failed, try to release the scene.
             Assimp.aiReleaseImport(scene);
@@ -152,14 +94,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
 
         var result = readScene(scene, materials[1], config);
 
-        /*
-         * Release the imported scene and IO logic when finished.
-         */
-        for (var file : files) {
-            file.free();
-        }
-
-        io.free();
+        tempFileSystem.destroy();
         Assimp.aiReleaseImport(scene);
 
         return result;
