@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.asset.loader;
+package fr.mercury.nucleus.asset.loader.image;
 
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
@@ -15,6 +15,10 @@ import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.asset.loader.AssetLoader;
+import fr.mercury.nucleus.asset.loader.AssetLoaderDescriptor;
+import fr.mercury.nucleus.asset.loader.VoidLoaderConfig;
+import fr.mercury.nucleus.asset.loader.AssetLoader.Config;
 import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.texture.ColorSpace;
 import fr.mercury.nucleus.texture.Image;

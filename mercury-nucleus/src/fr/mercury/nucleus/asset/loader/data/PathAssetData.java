@@ -1,15 +1,29 @@
 package fr.mercury.nucleus.asset.loader.data;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import fr.alchemy.utilities.SystemUtils;
 import fr.alchemy.utilities.file.FileUtils;
+import fr.alchemy.utilities.logging.FactoryLogger;
+import fr.alchemy.utilities.logging.Logger;
 
 public class PathAssetData extends AssetData {
 
+    /**
+     * The logger of the asset manager.
+     */
+    protected static final Logger logger = FactoryLogger.getLogger("mercury.assets");
+
     protected final Path path;
+
+    public PathAssetData(String path) {
+        this(Paths.get(path));
+    }
 
     public PathAssetData(Path path) {
         this.path = format(path);
@@ -63,6 +77,30 @@ public class PathAssetData extends AssetData {
         var dir = SystemUtils.pathToWorkingDirectory();
         var relative = dir.toUri().relativize(path.toFile().toURI()).toString();
         return relative;
+    }
+
+    @Override
+    public byte[] getBytes() {
+        byte[] result = null;
+        try {
+            result = Files.readAllBytes(path);
+        } catch (IOException ex) {
+            logger.error("Failed to count bytes for asset '" + this + "'.");
+        }
+
+        return result;
+    }
+
+    @Override
+    public long countBytes() {
+        var result = 0L;
+        try {
+            result = Files.size(path);
+        } catch (IOException ex) {
+            logger.error("Failed to count bytes for asset '" + this + "'.");
+        }
+
+        return result;
     }
 
     @Override

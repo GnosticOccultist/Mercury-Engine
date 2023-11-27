@@ -55,7 +55,7 @@ import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.application.MercuryContext;
 import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.asset.AssetManager;
-import fr.mercury.nucleus.asset.loader.STBImageReader;
+import fr.mercury.nucleus.asset.loader.image.STBImageReader;
 import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.ReadableTimer;

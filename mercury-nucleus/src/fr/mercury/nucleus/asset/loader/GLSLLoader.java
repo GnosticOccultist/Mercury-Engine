@@ -2,6 +2,8 @@ package fr.mercury.nucleus.asset.loader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,6 +12,7 @@ import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.loader.data.AssetData;
+import fr.mercury.nucleus.asset.loader.data.PathAssetData;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
 
@@ -48,16 +51,14 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
     /**
      * The glsl asset loader descriptor.
      */
-    public static final AssetLoaderDescriptor<GLSLLoader> DESCRIPTOR = new AssetLoaderDescriptor<>(
-            GLSLLoader::new,
-            FileExtensions.SHADER_FILE_EXTENSIONS
-    );
-    
+    public static final AssetLoaderDescriptor<GLSLLoader> DESCRIPTOR = new AssetLoaderDescriptor<>(GLSLLoader::new,
+            FileExtensions.SHADER_FILE_EXTENSIONS);
+
     /**
      * Load the <code>ShaderSource</code> from the provided file path.
      * 
-     * @param path   The asset data of the file to read.
-     * @return       The readed shader source code.
+     * @param path The asset data of the file to read.
+     * @return The readed shader source code.
      */
     @Override
     public ShaderSource load(AssetData data) {
@@ -69,7 +70,7 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
      * 
      * @param path   The asset data of the file to read.
      * @param config The void configuration (not used).
-     * @return       The readed shader source code.
+     * @return The readed shader source code.
      */
     @Override
     public ShaderSource load(AssetData data, VoidLoaderConfig config) {
@@ -94,7 +95,7 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
      * 
      * @param data The asset data of the file to read.
      * @param sb   The string builder to fill.
-     * @return     The filled string builder with the file's content.
+     * @return The filled string builder with the file's content.
      */
     private StringBuilder read(AssetData data, StringBuilder sb) {
         try (final var bufferedReader = FileUtils.readBuffered(data.openStream())) {
@@ -122,7 +123,13 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
                     }
 
                     // Read the import file and inject its content in the string builder.
-                    read(data.sibling(importPath), sb);
+                    var imp = data.sibling(importPath);
+                    if (Files.exists(imp.getPath())) {
+                        read(imp, sb);
+                    } else {
+                        // Try to find from absolute path.
+                        imp = new PathAssetData(Paths.get(importPath));
+                    }
 
                     logger.info("Successfully imported: " + importPath);
                 } else if (line.startsWith(IMPORT_BEGIN_FOR)) {
