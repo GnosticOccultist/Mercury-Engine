@@ -1,19 +1,22 @@
 package fr.mercury.nucleus.application.service;
 
 import fr.mercury.nucleus.application.Application;
+import fr.mercury.nucleus.application.MercuryContext;
 import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.utils.ReadableTimer;
 
 /**
- * <code>ApplicationService</code> is an interface to implement a service to use with an {@link Application}.
+ * <code>ApplicationService</code> is an interface to implement a service to use
+ * with an {@link Application}.
  * 
  * @author GnosticOccultist
  */
 public interface ApplicationService {
 
     /**
-     * Initialize the <code>ApplicationService</code> using the specified {@link MercurySettings}. 
-     * The {@link #setApplication(Application)} method needs to be invoked before initialization.
+     * Initialize the <code>ApplicationService</code> using the specified
+     * {@link MercurySettings}. The {@link #setApplication(Application)} method
+     * needs to be invoked before initialization.
      * <p>
      * Invoked internally by the linked {@link Application}.
      * 
@@ -24,8 +27,9 @@ public interface ApplicationService {
     void initialize(MercurySettings settings);
 
     /**
-     * Update the <code>ApplicationService</code> using the specified {@link ReadableTimer}. 
-     * The class calling this method should implements the {@link Application} interface.
+     * Update the <code>ApplicationService</code> using the specified
+     * {@link ReadableTimer}. The class calling this method should implements the
+     * {@link Application} interface.
      * <p>
      * Invoked internally by the linked {@link Application}.
      * 
@@ -45,7 +49,17 @@ public interface ApplicationService {
      * @return Whether the service is initialized.
      */
     boolean isInitialized();
-    
+
+    /**
+     * Return the {@link MercuryContext} bound to the {@link Application} linked to
+     * the <code>ApplicationService</code>.
+     * 
+     * @return The context bound to the application, or null if no context is bound.
+     */
+    default MercuryContext getContext() {
+        return getApplication().getContext();
+    }
+
     /**
      * Return the {@link Application} linked to the <code>ApplicationService</code>.
      * 

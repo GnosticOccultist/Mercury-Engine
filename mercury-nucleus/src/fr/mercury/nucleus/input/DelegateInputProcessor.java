@@ -1,9 +1,9 @@
 package fr.mercury.nucleus.input;
 
 import fr.alchemy.utilities.Validator;
-import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.application.MercuryContext;
+import fr.mercury.nucleus.application.service.AbstractApplicationService;
 import fr.mercury.nucleus.application.service.ApplicationService;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.ReadableTimer;

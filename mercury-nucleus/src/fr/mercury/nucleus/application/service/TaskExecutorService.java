@@ -19,7 +19,6 @@ import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.Application;
-import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.application.MercuryContext;
 import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.utils.OpenGLCall;

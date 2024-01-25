@@ -275,7 +275,7 @@ public class MercuryContext implements Runnable {
 
         // The context doesn't need a window, nor a renderer, nor input.
         var window = application.getService(GLFWWindow.class);
-        if (window == null) {
+        if (window == null || !type.isRenderable()) {
             return;
         }
 
@@ -544,7 +544,7 @@ public class MercuryContext implements Runnable {
              * @return Always false.
              */
             @Override
-            protected boolean canShowWindow() {
+            public boolean canShowWindow() {
                 return false;
             }
         },
@@ -562,7 +562,7 @@ public class MercuryContext implements Runnable {
              * @return Always false.
              */
             @Override
-            protected boolean isRenderable() {
+            public boolean isRenderable() {
                 return false;
             }
 
@@ -572,7 +572,7 @@ public class MercuryContext implements Runnable {
              * @return Always false.
              */
             @Override
-            protected boolean canShowWindow() {
+            public boolean canShowWindow() {
                 return false;
             }
         };
@@ -583,7 +583,7 @@ public class MercuryContext implements Runnable {
          * 
          * @return Whether the context supports rendering.
          */
-        protected boolean isRenderable() {
+        public boolean isRenderable() {
             return true;
         }
 
@@ -593,7 +593,7 @@ public class MercuryContext implements Runnable {
          * 
          * @return Whether the context supports window showing.
          */
-        protected boolean canShowWindow() {
+        public boolean canShowWindow() {
             return true;
         }
     }

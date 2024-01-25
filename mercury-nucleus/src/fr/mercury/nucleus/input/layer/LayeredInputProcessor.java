@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import fr.alchemy.utilities.collections.array.Array;
-import fr.mercury.nucleus.application.AbstractApplicationService;
+import fr.mercury.nucleus.application.service.AbstractApplicationService;
 import fr.mercury.nucleus.input.Axis;
 import fr.mercury.nucleus.input.Button;
 import fr.mercury.nucleus.input.InputProcessor;

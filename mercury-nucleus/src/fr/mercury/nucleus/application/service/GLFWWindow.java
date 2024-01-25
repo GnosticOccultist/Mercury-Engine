@@ -50,7 +50,6 @@ import org.lwjgl.glfw.GLFWVidMode;
 import fr.alchemy.utilities.Validator;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
-import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.application.Application;
 import fr.mercury.nucleus.application.MercuryContext;
 import fr.mercury.nucleus.application.MercurySettings;
@@ -288,7 +287,12 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
         Validator.nonNegative(y, "The Y coordinate of the window can't be negative!");
 
         MercuryContext.checkMainThread();
-        glfwSetWindowPos(window, x, y);
+        assert getContext().getType().isRenderable();
+
+        if (getContext().getType().canShowWindow()) {
+            assert window != NULL;
+            glfwSetWindowPos(window, x, y);
+        }
     }
 
     /**
@@ -302,8 +306,11 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
      */
     @OpenGLCall
     public void setTitle(String title) {
-        if (window != NULL) {
-            MercuryContext.checkMainThread();
+        MercuryContext.checkMainThread();
+        assert getContext().getType().isRenderable();
+
+        if (getContext().getType().canShowWindow()) {
+            assert window != NULL;
             glfwSetWindowTitle(window, title);
         }
     }
@@ -374,7 +381,12 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
     @Override
     @OpenGLCall
     public void show() {
-        glfwShowWindow(window);
+        assert getContext().getType().isRenderable();
+
+        if (getContext().getType().canShowWindow()) {
+            assert window != NULL;
+            glfwShowWindow(window);
+        }
     }
 
     /**
@@ -384,6 +396,7 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
      */
     @Override
     public boolean shouldClose() {
+        assert window != NULL;
         return glfwWindowShouldClose(window);
     }
 
@@ -393,6 +406,9 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
      */
     @Override
     public void makeContextCurrent() {
+        assert window != NULL;
+        assert getContext().getType().isRenderable();
+
         glfwMakeContextCurrent(window);
     }
 
@@ -405,6 +421,7 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
     @Override
     @OpenGLCall
     public void useVSync(boolean vSync) {
+        assert getContext().getType().isRenderable();
         glfwSwapInterval(vSync ? 1 : 0);
     }
 
@@ -425,6 +442,9 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
         if (settings.getBoolean("ShowFPS")) {
             updateFrameTime(settings);
         }
+
+        assert window != NULL;
+        assert getContext().getType().isRenderable();
 
         glfwSwapBuffers(window);
         glfwPollEvents();

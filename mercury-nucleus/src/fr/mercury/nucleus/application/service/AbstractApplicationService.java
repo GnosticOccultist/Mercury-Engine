@@ -1,8 +1,9 @@
-package fr.mercury.nucleus.application;
+package fr.mercury.nucleus.application.service;
 
 import java.lang.StackWalker.Option;
 
-import fr.mercury.nucleus.application.service.ApplicationService;
+import fr.mercury.nucleus.application.Application;
+import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.utils.OpenGLCall;
 import fr.mercury.nucleus.utils.ReadableTimer;
 

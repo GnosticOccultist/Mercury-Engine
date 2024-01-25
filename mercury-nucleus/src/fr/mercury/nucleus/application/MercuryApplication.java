@@ -343,6 +343,17 @@ public abstract class MercuryApplication implements Application {
     }
 
     /**
+     * Return the {@link MercuryContext} bound to the
+     * <code>MercuryApplication</code>.
+     * 
+     * @return The context, or null if no context is bound yet.
+     */
+    @Override
+    public MercuryContext getContext() {
+        return context;
+    }
+
+    /**
      * Return the {@link MercurySettings} of the <code>MercuryApplication</code>.
      * 
      * @return The settings used to create the context (not null).

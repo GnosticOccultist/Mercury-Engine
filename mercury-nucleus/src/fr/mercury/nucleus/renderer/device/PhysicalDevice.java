@@ -9,8 +9,8 @@ import org.lwjgl.opengl.GLCapabilities;
 
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
-import fr.mercury.nucleus.application.AbstractApplicationService;
 import fr.mercury.nucleus.application.MercurySettings;
+import fr.mercury.nucleus.application.service.AbstractApplicationService;
 
 public class PhysicalDevice extends AbstractApplicationService {
 

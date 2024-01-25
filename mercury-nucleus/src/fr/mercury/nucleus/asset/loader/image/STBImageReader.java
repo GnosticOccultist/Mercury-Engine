@@ -36,7 +36,7 @@ public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
     /**
      * The logger of the application.
      */
-    private static final Logger logger = FactoryLogger.getLogger("mercury.app");
+    private static final Logger logger = FactoryLogger.getLogger("mercury.assets");
     /**
      * The image STB asset loader descriptor.
      */
