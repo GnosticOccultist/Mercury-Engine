@@ -198,14 +198,17 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
         });
 
         // Center the window.
-        if (!settings.isFullscreen()) {
-            moveWindow((videoMode.width() - settings.getWidth()) / 2, (videoMode.height() - settings.getHeight()) / 2);
-        }
+        if (getContext().getType().canShowWindow()) {
+            if (!settings.isFullscreen()) {
+                moveWindow((videoMode.width() - settings.getWidth()) / 2,
+                        (videoMode.height() - settings.getHeight()) / 2);
+            }
 
-        var iconPath = settings.getString("Icons");
-        // TODO: Support config to read and convert image into a given format.
-        var icon = application.getService(AssetManager.class).loadImage(iconPath, STBImageReader.DESCRIPTOR);
-        setIcon(icon);
+            var iconPath = settings.getString("Icons");
+            // TODO: Support config to read and convert image into a given format.
+            var icon = application.getService(AssetManager.class).loadImage(iconPath, STBImageReader.DESCRIPTOR);
+            setIcon(icon);
+        }
 
         logger.info("Created LWJGL context " + Version.getVersion() + " and running on thread "
                 + Thread.currentThread().getName() + "\n* Graphics Adapter: GLFW " + GLFW.glfwGetVersionString());
