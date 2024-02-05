@@ -168,6 +168,7 @@ public final class Color implements ReadableColor, Comparable<Color>, Reusable {
      * 
      * @return The strength of the color.
      */
+    @Override
     public float strength() {
         return (float) Math.sqrt(strengthSqr());
     }
@@ -178,6 +179,7 @@ public final class Color implements ReadableColor, Comparable<Color>, Reusable {
      * 
      * @return The squared strength of the color.
      */
+    @Override
     public float strengthSqr() {
         return r * r + g * g + b * b;
     }

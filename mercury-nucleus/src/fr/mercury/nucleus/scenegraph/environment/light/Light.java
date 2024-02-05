@@ -2,6 +2,7 @@ package fr.mercury.nucleus.scenegraph.environment.light;
 
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Color;
+import fr.mercury.nucleus.math.readable.ReadableColor;
 import fr.mercury.nucleus.scenegraph.AnimaMundi;
 import fr.mercury.nucleus.scenegraph.environment.EnvironmentElement;
 
@@ -14,12 +15,12 @@ import fr.mercury.nucleus.scenegraph.environment.EnvironmentElement;
  * components:
  * <ul>
  * <li>Ambient lighting defines the intensity or color if no lights is applied
- * to an object. A dark gray tone is ofently used for this effect to simulate
+ * to an object. A dark gray tone is oftently used for this effect to simulate
  * obscurity.
  * <li>Diffuse lighting defines the light effect on rough surfaces, where most
  * of the rays are diffused in all direction.
- * <li>Specular lighting defines the light effect on shiny surface, whre the ray
- * is mostly reflected to the opposite direction and suffers from lower
+ * <li>Specular lighting defines the light effect on shiny surface, where the
+ * ray is mostly reflected to the opposite direction and suffers from lower
  * diffusion than the <code>Diffuse lighting</code>. Its effect also depends on
  * the observer (camera) position, if the reflected ray is hitting its view.
  * </ul>
@@ -68,7 +69,7 @@ public abstract class Light implements EnvironmentElement {
      * 
      * @return The color of the light.
      */
-    public Color getColor() {
+    public ReadableColor getColor() {
         return color;
     }
 
@@ -78,7 +79,7 @@ public abstract class Light implements EnvironmentElement {
      * @param ambient The color of the light (not null).
      */
     public void setColor(Color ambient) {
-        Validator.nonNull(ambient);
+        Validator.nonNull(ambient, "The color of a light can't be null!");
         this.color.set(ambient);
     }
 
@@ -99,7 +100,7 @@ public abstract class Light implements EnvironmentElement {
      * @param intensity The intensity of the light (&ge;0).
      */
     public void setIntensity(float intensity) {
-        Validator.nonNegative(intensity);
+        Validator.nonNegative(intensity, "The intensity of a light can't be negative!");
         this.intensity = intensity;
     }
 
