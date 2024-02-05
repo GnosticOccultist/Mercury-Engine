@@ -16,6 +16,12 @@ import fr.mercury.nucleus.utils.OpenGLCall;
 public interface Application {
 
     /**
+     * Starts the <code>Application</code>, by running initializing
+     * {@link MercuryContext} and running the main-loop.
+     */
+    void start();
+
+    /**
      * Initialize the <code>Application</code> by creating the needed content to
      * run.
      * <p>
@@ -67,7 +73,7 @@ public interface Application {
      * @param height The new height in pixel coordinates (&gt;0).
      */
     void resize(int width, int height);
-    
+
     /**
      * Return the {@link MercuryContext} bound to the <code>Application</code>.
      * 
@@ -181,4 +187,10 @@ public interface Application {
      */
     default void looseFocus() {
     }
+
+    /**
+     * Stops the <code>Application</code>, by requesting the {@link MercuryContext}
+     * to terminate, shutting down the main-loop and releasing used resources.
+     */
+    void stop();
 }

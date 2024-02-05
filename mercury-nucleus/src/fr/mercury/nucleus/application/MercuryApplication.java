@@ -89,6 +89,7 @@ public abstract class MercuryApplication implements Application {
      * <p>
      * If no {@link MercurySettings} are set, it will use the default ones.
      */
+    @Override
     public void start() {
         if (settings == null) {
             settings = new MercurySettings(true);
@@ -327,6 +328,16 @@ public abstract class MercuryApplication implements Application {
             module.setApplication(null);
         }
         return result;
+    }
+
+    /**
+     * Stops the <code>MercuryApplication</code> and terminating the associated
+     * {@link MercuryContext}. The main application loop will shut down.
+     */
+    @Override
+    public void stop() {
+        context.terminate();
+        context = null;
     }
 
     /**

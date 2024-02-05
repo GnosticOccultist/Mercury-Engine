@@ -80,6 +80,10 @@ public class MercuryContext implements Runnable {
      */
     private final AtomicBoolean needRestart = new AtomicBoolean(false);
     /**
+     * The boolean to notify about a needed termination.
+     */
+    private final AtomicBoolean needTerminate = new AtomicBoolean(false);
+    /**
      * The frame-rate limit.
      */
     private int frameRateLimit = -1;
@@ -182,6 +186,10 @@ public class MercuryContext implements Runnable {
         while (true) {
 
             runLoop();
+
+            if (needTerminate.get()) {
+                break;
+            }
 
             if (application.checkService(GLFWWindow.class, w -> w.shouldClose())) {
                 break;
@@ -390,6 +398,14 @@ public class MercuryContext implements Runnable {
 
         // Reset the state of variables.
         initialized.set(false);
+    }
+
+    /**
+     * Terminate the <code>MercuryContext</code> by shutting down the main-loop and
+     * releasing any used resources.
+     */
+    public void terminate() {
+        needTerminate.set(true);
     }
 
     /**

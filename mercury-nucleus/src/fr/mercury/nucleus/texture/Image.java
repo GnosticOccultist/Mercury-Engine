@@ -104,6 +104,7 @@ public class Image {
         this.width = width;
         this.height = height;
         this.format = format;
+        this.colorSpace = ColorSpace.LINEAR;
 
         this.data = BufferUtils.createByteBuffer(buffer.capacity());
         if (buffer != null) {
@@ -391,91 +392,30 @@ public class Image {
             }
 
             switch (this) {
-                case BGR8:
-                case RGB8:
-                case RGB16F:
-                case RGB32F:
-                    return false;
-                case ABGR8:
-                case RGBA8:
-                case RGBA16F:
-                case RGBA32F:
-                    return true;
-                default:
-                    return false;
+            case BGR8:
+            case RGB8:
+            case RGB16F:
+            case RGB32F:
+                return false;
+            case ABGR8:
+            case RGBA8:
+            case RGBA16F:
+            case RGBA32F:
+                return true;
+            default:
+                return false;
             }
         }
-    }
 
-    /**
-     * Return the corresponding OpenGL texel data format of the <code>Image</code>
-     * {@link Format}.
-     * 
-     * @return The OpenGL format of the image.
-     */
-    public int determineFormat() {
-        switch (format) {
-            case BGR8:
-                return GL20.GL_BGR;
-            case RGB8:
-            case RGB16F:
-            case RGB32F:
-                return GL11.GL_RGB;
-            case ABGR8:
-            case RGBA8:
-            case RGBA16F:
-            case RGBA32F:
-                return GL11.GL_RGBA;
-            case DEPTH16:
-            case DEPTH24:
-            case DEPTH32:
-            case DEPTH32F:
-                return GL11.GL_DEPTH_COMPONENT;
-            default:
-                throw new UnsupportedOperationException("Unknown image format: " + format);
-        }
-    }
-    
-    /**
-     * Return the corresponding OpenGL data type of the <code>Image</code>
-     * {@link Format}.
-     * 
-     * @return The OpenGL data type format.
-     */
-    public int determineDataType() {
-        switch (format) {
-            case ABGR8:
-                return GL20.GL_UNSIGNED_INT_8_8_8_8;
-            case BGR8:
-            case RGB8:
-            case RGBA8:
-                return GL11.GL_UNSIGNED_BYTE;
-            case RGB16F:
-            case RGB32F:
-            case RGBA16F:
-            case RGBA32F:
-                return GL11.GL_FLOAT;
-            case DEPTH16:
-                return GL11.GL_UNSIGNED_SHORT;
-            case DEPTH24:
-                return GL11.GL_UNSIGNED_INT;
-            case DEPTH32:
-            case DEPTH32F:
-                return GL11.GL_FLOAT;
-            default:
-                throw new UnsupportedOperationException("Unknown image format: " + format);
-        }
-    }
-
-    /**
-     * Return the corresponding OpenGL internal format of the <code>Image</code>
-     * {@link Format}.
-     * 
-     * @return The OpenGL format of the image.
-     */
-    public int determineInternalFormat() {
-        if (getColorSpace() == ColorSpace.sRGB) {
-            switch (format) {
+        /**
+         * Return the corresponding OpenGL internal format of the <code>Format</code>.
+         * 
+         * @param colorSpace The color space of the format.
+         * @return The OpenGL internal format of the image.
+         */
+        public int determineInternalFormat(ColorSpace colorSpace) {
+            if (colorSpace == ColorSpace.sRGB) {
+                switch (this) {
                 case BGR8:
                 case RGB8:
                     return GL30.GL_SRGB8;
@@ -484,11 +424,11 @@ public class Image {
                     return GL30.GL_SRGB8_ALPHA8;
                 default:
                     throw new UnsupportedOperationException(
-                            "Image format " + format + ", doesn't support sRGB color space!");
+                            "Image format " + this + ", doesn't support sRGB color space!");
+                }
             }
-        }
 
-        switch (format) {
+            switch (this) {
             case BGR8:
             case RGB8:
                 return GL11.GL_RGB8;
@@ -512,7 +452,96 @@ public class Image {
             case DEPTH32F:
                 return GL30.GL_DEPTH_COMPONENT32F;
             default:
-                throw new UnsupportedOperationException("Unknown image format: " + format);
+                throw new UnsupportedOperationException("Unknown image format: " + this);
+            }
         }
+
+        /**
+         * Return the corresponding OpenGL texel data format of the <code>Format</code>.
+         * 
+         * @return The OpenGL format of the image.
+         */
+        public int determineFormat() {
+            switch (this) {
+            case BGR8:
+                return GL20.GL_BGR;
+            case RGB8:
+            case RGB16F:
+            case RGB32F:
+                return GL11.GL_RGB;
+            case ABGR8:
+            case RGBA8:
+            case RGBA16F:
+            case RGBA32F:
+                return GL11.GL_RGBA;
+            case DEPTH16:
+            case DEPTH24:
+            case DEPTH32:
+            case DEPTH32F:
+                return GL11.GL_DEPTH_COMPONENT;
+            default:
+                throw new UnsupportedOperationException("Unknown image format: " + this);
+            }
+        }
+
+        /**
+         * Return the corresponding OpenGL data type of the <code>Format</code>.
+         * 
+         * @return The OpenGL data type format.
+         */
+        public int determineDataType() {
+            switch (this) {
+            case ABGR8:
+                return GL20.GL_UNSIGNED_INT_8_8_8_8;
+            case BGR8:
+            case RGB8:
+            case RGBA8:
+                return GL11.GL_UNSIGNED_BYTE;
+            case RGB16F:
+            case RGB32F:
+            case RGBA16F:
+            case RGBA32F:
+                return GL11.GL_FLOAT;
+            case DEPTH16:
+                return GL11.GL_UNSIGNED_SHORT;
+            case DEPTH24:
+                return GL11.GL_UNSIGNED_INT;
+            case DEPTH32:
+            case DEPTH32F:
+                return GL11.GL_FLOAT;
+            default:
+                throw new UnsupportedOperationException("Unknown image format: " + this);
+            }
+        }
+    }
+
+    /**
+     * Return the corresponding OpenGL internal format of the <code>Image</code>
+     * {@link Format}.
+     * 
+     * @return The OpenGL internal format of the image.
+     */
+    public int determineInternalFormat() {
+        return format.determineInternalFormat(colorSpace);
+    }
+
+    /**
+     * Return the corresponding OpenGL internal format of the <code>Image</code>
+     * {@link Format}.
+     * 
+     * @return The OpenGL internal format of the image.
+     */
+    public int determineFormat() {
+        return format.determineFormat();
+    }
+
+    /**
+     * Return the corresponding OpenGL internal format of the <code>Image</code>
+     * {@link Format}.
+     * 
+     * @return The OpenGL internal format of the image.
+     */
+    public int determineDataType() {
+        return format.determineDataType();
     }
 }

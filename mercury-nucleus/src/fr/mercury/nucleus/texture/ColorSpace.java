@@ -1,7 +1,8 @@
 package fr.mercury.nucleus.texture;
 
 /**
- * <code>ColorSpace</code> enumerates all supported colorspace for an {@link Image}.
+ * <code>ColorSpace</code> enumerates all supported colorspace for an
+ * {@link Image}.
  * 
  * @author GnosticOccultist
  */

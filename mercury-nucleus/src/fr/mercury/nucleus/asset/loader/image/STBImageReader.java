@@ -1,10 +1,10 @@
 package fr.mercury.nucleus.asset.loader.image;
 
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
+
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
@@ -13,12 +13,10 @@ import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.asset.loader.AssetLoader;
 import fr.mercury.nucleus.asset.loader.AssetLoaderDescriptor;
 import fr.mercury.nucleus.asset.loader.VoidLoaderConfig;
-import fr.mercury.nucleus.asset.loader.AssetLoader.Config;
 import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.texture.ColorSpace;
 import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.texture.Image.Format;
-import fr.mercury.nucleus.texture.Texture;
 import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.data.Allocator;
 
@@ -75,7 +73,7 @@ public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
         Image image = null;
 
         // Creating the image from byte buffer.
-        ByteBuffer buffer = Allocator.alloc(16777216);
+        var buffer = Allocator.alloc(16777216);
         image = decodeImage(buffer, data);
 
         // Prevent the user that the image has been successfully loaded.
@@ -96,13 +94,13 @@ public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
      */
     private Image decodeImage(ByteBuffer buffer, AssetData data) {
 
-        try (MemoryStack stack = MemoryStack.stackPush()) {
+        try (var stack = MemoryStack.stackPush()) {
 
             // Buffers to retrieve the width, height and component size
             // of the texture file.
-            IntBuffer w = stack.mallocInt(1);
-            IntBuffer h = stack.mallocInt(1);
-            IntBuffer channels = stack.mallocInt(1);
+            var w = stack.mallocInt(1);
+            var h = stack.mallocInt(1);
+            var channels = stack.mallocInt(1);
 
             // Decode texture image into a byte buffer, by not enforcing pixel channels.
             ByteBuffer decodedImage = STBImage.stbi_load_from_memory(
@@ -129,7 +127,7 @@ public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
             var colorSpace = settings.isGammaCorrection() ? ColorSpace.sRGB : ColorSpace.LINEAR;
 
             // Create the image and fill its data with the decoded image.
-            Image image = new Image(w.get(), h.get(), format, decodedImage);
+            var image = new Image(w.get(), h.get(), format, decodedImage);
             image.setColorSpace(colorSpace);
             // Rewind the buffer so freeing the data doesn't crash.
             decodedImage.rewind();
@@ -150,7 +148,7 @@ public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
      * @return The byte buffer with the updated size.
      */
     private ByteBuffer resize(ByteBuffer buffer, Integer size) {
-        ByteBuffer newBuffer = Allocator.alloc(size);
+        var newBuffer = Allocator.alloc(size);
         buffer.flip();
         newBuffer.put(buffer);
         return newBuffer;

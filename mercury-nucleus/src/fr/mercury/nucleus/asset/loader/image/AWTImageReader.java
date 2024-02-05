@@ -18,11 +18,9 @@ import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.asset.loader.AssetLoader;
 import fr.mercury.nucleus.asset.loader.AssetLoaderDescriptor;
 import fr.mercury.nucleus.asset.loader.VoidLoaderConfig;
-import fr.mercury.nucleus.asset.loader.AssetLoader.Config;
 import fr.mercury.nucleus.asset.loader.data.AssetData;
 import fr.mercury.nucleus.texture.ColorSpace;
 import fr.mercury.nucleus.texture.Image;
-import fr.mercury.nucleus.texture.Texture;
 import fr.mercury.nucleus.texture.Image.Format;
 import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.data.Allocator;
@@ -54,11 +52,11 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
     private AssetManager assetManager;
 
     /**
-     * Loads the texture file from the specified {@link AssetData} into an {@link Image}, to use in the
-     * application.
+     * Loads the texture file from the specified {@link AssetData} into an
+     * {@link Image}, to use in the application.
      * 
-     * @param data   The asset data to load (not null).
-     * @return       The loaded image object.
+     * @param data The asset data to load (not null).
+     * @return The loaded image object.
      */
     @Override
     public Image load(AssetData data) {
@@ -156,22 +154,22 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
         Image image = null;
 
         switch (type) {
-            // Often used in PNG files.
-            case BufferedImage.TYPE_4BYTE_ABGR:
-                var array = (byte[]) getDataArray(data, img);
-                assert buffer.capacity() == array.length;
-                buffer.put(array);
-                buffer.flip();
-                image = new Image(img.getWidth(), img.getHeight(), Format.ABGR8, buffer);
-                break;
-            // Often used in JPEG files.
-            case BufferedImage.TYPE_3BYTE_BGR:
-                array = (byte[]) getDataArray(data, img);
-                assert buffer.capacity() == array.length;
-                buffer.put(array);
-                buffer.flip();
-                image = new Image(img.getWidth(), img.getHeight(), Format.BGR8, buffer);
-                break;
+        // Often used in PNG files.
+        case BufferedImage.TYPE_4BYTE_ABGR:
+            var array = (byte[]) getDataArray(data, img);
+            assert buffer.capacity() == array.length;
+            buffer.put(array);
+            buffer.flip();
+            image = new Image(img.getWidth(), img.getHeight(), Format.ABGR8, buffer);
+            break;
+        // Often used in JPEG files.
+        case BufferedImage.TYPE_3BYTE_BGR:
+            array = (byte[]) getDataArray(data, img);
+            assert buffer.capacity() == array.length;
+            buffer.put(array);
+            buffer.flip();
+            image = new Image(img.getWidth(), img.getHeight(), Format.BGR8, buffer);
+            break;
         }
 
         if (image != null) {
@@ -194,14 +192,14 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
     private Object getDataArray(AssetData data, BufferedImage img) {
         var buffer = img.getRaster().getDataBuffer();
         switch (buffer.getDataType()) {
-            case DataBuffer.TYPE_BYTE:
-                var byteBuf = (DataBufferByte) buffer;
-                return byteBuf.getData();
-            case DataBuffer.TYPE_USHORT:
-                var shortBuf = (DataBufferUShort) buffer;
-                return shortBuf.getData();
-            case DataBuffer.TYPE_UNDEFINED:
-                throw new IllegalStateException("Undefined data buffer type for image: " + data.getName());
+        case DataBuffer.TYPE_BYTE:
+            var byteBuf = (DataBufferByte) buffer;
+            return byteBuf.getData();
+        case DataBuffer.TYPE_USHORT:
+            var shortBuf = (DataBufferUShort) buffer;
+            return shortBuf.getData();
+        case DataBuffer.TYPE_UNDEFINED:
+            throw new IllegalStateException("Undefined data buffer type for image: " + data.getName());
         }
         throw new IllegalStateException("Unresolved data buffer type " + buffer + ", for image: " + data.getName());
     }
