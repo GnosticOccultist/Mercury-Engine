@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.renderer.device;
+package fr.mercury.nucleus.application.kernel.device;
 
 import java.util.Arrays;
 import java.util.List;
@@ -6,11 +6,12 @@ import java.util.List;
 import javax.swing.JOptionPane;
 
 import org.lwjgl.opengl.GLCapabilities;
-
+import org.lwjgl.system.Callback;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.MercurySettings;
 import fr.mercury.nucleus.application.service.AbstractApplicationService;
+import fr.mercury.nucleus.renderer.opengl.OpenGLDebugOutputCallback;
 
 public class PhysicalDevice extends AbstractApplicationService {
 
@@ -18,7 +19,7 @@ public class PhysicalDevice extends AbstractApplicationService {
      * The application logger.
      */
     private static final Logger logger = FactoryLogger.getLogger("mercury.app");
-    
+
     /**
      * The extension for OpenGL debug output callback.
      */
@@ -49,7 +50,7 @@ public class PhysicalDevice extends AbstractApplicationService {
      */
     private final GLCapabilities capabilities;
 
-    public PhysicalDevice(Vendor vendor, String deviceName, String version, String shadingLangVersion, 
+    public PhysicalDevice(Vendor vendor, String deviceName, String version, String shadingLangVersion,
             String[] extensions, GLCapabilities capabilities) {
         this.vendor = vendor;
         this.deviceName = deviceName;
@@ -99,32 +100,37 @@ public class PhysicalDevice extends AbstractApplicationService {
     public String getShadingLangVersion() {
         return shadingLangVersion;
     }
-    
+
     private String versionOnly() {
         return version.split(" ")[0];
     }
-    
-    public boolean supportsGLDebug() {
-        return hasExtension(GL_DEBUG_OUTPUT_EXT);
+
+    public boolean supportsGraphicsDebug() {
+        return capabilities.OpenGL43 || capabilities.GL_KHR_debug || capabilities.GL_ARB_debug_output
+                || capabilities.GL_AMD_debug_output;
     }
-    
+
+    public Callback setupGraphicsDebugMessageCallback() {
+        return OpenGLDebugOutputCallback.create(capabilities);
+    }
+
     public boolean hasExtension(String extension) {
         return Arrays.asList(extensions).contains(extension);
     }
 
     public int majorVersion() {
-        String versionOnly = versionOnly();
+        var versionOnly = versionOnly();
         return Integer.parseInt(versionOnly.split("\\.")[0]);
     }
 
     public int minorVersion() {
-        String versionOnly = versionOnly();
+        var versionOnly = versionOnly();
         return Integer.parseInt(versionOnly.split("\\.")[1]);
     }
 
     public int releaseNumberVersion() {
-        String versionOnly = versionOnly();
-        String[] splitVersion = versionOnly.split("\\.");
+        var versionOnly = versionOnly();
+        var splitVersion = versionOnly.split("\\.");
         if (splitVersion.length > 2) {
             return Integer.parseInt(splitVersion[2]);
         }
@@ -142,6 +148,7 @@ public class PhysicalDevice extends AbstractApplicationService {
     @Override
     public String toString() {
         return "* VENDOR = " + vendor + "\n" + "* DEVICE_NAME = " + deviceName + "\n" + "* GRAPHICS_API_VERSION = "
-                + version + "\n" + "* SHADING_LANGUAGE_VERSION = " + shadingLangVersion + "\n" + "* EXTENSIONS_COUNT = " + extensions.length;
+                + version + "\n" + "* SHADING_LANGUAGE_VERSION = " + shadingLangVersion + "\n" + "* EXTENSIONS_COUNT = "
+                + extensions.length;
     }
 }

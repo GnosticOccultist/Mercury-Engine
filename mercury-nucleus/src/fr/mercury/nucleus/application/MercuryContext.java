@@ -2,13 +2,13 @@ package fr.mercury.nucleus.application;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.lwjgl.opengl.ARBDebugOutput;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL13C;
 import org.lwjgl.opengl.GL20C;
 import org.lwjgl.opengl.GL30C;
 import org.lwjgl.opengl.GLCapabilities;
+import org.lwjgl.system.Callback;
 import org.lwjgl.system.Configuration;
 import org.lwjgl.system.MemoryUtil;
 
@@ -17,13 +17,12 @@ import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.application.kernel.OS;
 import fr.mercury.nucleus.application.kernel.OSArch;
+import fr.mercury.nucleus.application.kernel.device.PhysicalDevice;
+import fr.mercury.nucleus.application.kernel.device.Vendor;
 import fr.mercury.nucleus.application.service.GLFWWindow;
 import fr.mercury.nucleus.input.DelegateInputProcessor;
 import fr.mercury.nucleus.input.GLFWKeyInput;
 import fr.mercury.nucleus.input.GLFWMouseInput;
-import fr.mercury.nucleus.renderer.device.PhysicalDevice;
-import fr.mercury.nucleus.renderer.device.Vendor;
-import fr.mercury.nucleus.renderer.opengl.OpenGLDebugOutputCallback;
 import fr.mercury.nucleus.utils.MercuryException;
 
 /**
@@ -90,7 +89,7 @@ public class MercuryContext implements Runnable {
     /**
      * The OpenGL debug output callback, or null if graphics debugging is disabled.
      */
-    private OpenGLDebugOutputCallback debugOutput;
+    private Callback debugOutput;
 
     /**
      * Instantiates and return a new <code>MercuryContext</code> bound to the
@@ -330,9 +329,9 @@ public class MercuryContext implements Runnable {
         physicalDevice.check(settings);
         application.linkService(physicalDevice);
 
-        if (settings.isGraphicsDebugOutput() && physicalDevice.supportsGLDebug()) {
+        if (settings.isGraphicsDebugOutput() && physicalDevice.supportsGraphicsDebug()) {
             logger.info("Enabling OpenGL debug mode.");
-            ARBDebugOutput.glDebugMessageCallbackARB(this.debugOutput = new OpenGLDebugOutputCallback(), 0);
+            this.debugOutput = physicalDevice.setupGraphicsDebugMessageCallback();
         }
 
         if (settings.getInteger("Samples") > 1) {

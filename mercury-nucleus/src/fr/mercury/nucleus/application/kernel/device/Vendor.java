@@ -1,4 +1,4 @@
-package fr.mercury.nucleus.renderer.device;
+package fr.mercury.nucleus.application.kernel.device;
 
 import fr.alchemy.utilities.Validator;
 
