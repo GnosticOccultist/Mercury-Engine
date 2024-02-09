@@ -160,10 +160,18 @@ public class ClasspathLocator implements AssetLocator {
         @Override
         public LocatedAsset sibling(AssetDescriptor<?> sibling) {
             try {
-                var parent = getPath().getParent();
-                var path = parent.getFileName() + sibling.getName();
+                var name = sibling.getName();
+                if (name.startsWith("/")) {
+                    name = name.substring(1);
+                }
+
+                var path = Paths.get(getName()).resolveSibling(name).toString();
 
                 var sibUrl = Thread.currentThread().getContextClassLoader().getResource(path);
+                if (sibUrl == null) {
+                    throw new RuntimeException("Unable to find sibling asset with path '" + path + "'!" + name);
+                }
+
                 return ClasspathLocator.this.create(assetManager, sibling, sibUrl);
 
             } catch (IOException ex) {
