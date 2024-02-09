@@ -7,12 +7,10 @@ import org.lwjgl.assimp.AIFileIO;
 import org.lwjgl.system.MemoryUtil;
 
 import fr.mercury.nucleus.asset.AssetManager;
-import fr.mercury.nucleus.asset.loader.data.AssetData;
-import fr.mercury.nucleus.asset.loader.data.PathAssetData;
+import fr.mercury.nucleus.asset.loader.AnimaMundiDescriptor;
+import fr.mercury.nucleus.asset.locator.AssetLocator.LocatedAsset;
 
 class AssimpFileSystem {
-
-    private final AssetManager assetManager;
 
     private AIFileIO fileIO;
 
@@ -21,7 +19,6 @@ class AssimpFileSystem {
     private final Map<String, byte[]> contentCache;
 
     AssimpFileSystem(AssetManager assetManager) {
-        this.assetManager = assetManager;
         this.openedFiles = new TreeMap<>();
         this.contentCache = new TreeMap<>();
 
@@ -31,9 +28,10 @@ class AssimpFileSystem {
         fileIO.OpenProc((long fileIOHandle, long fileName, long openMode) -> {
             var filePath = MemoryUtil.memUTF8Safe(fileName);
 
-            var assetData = new PathAssetData(filePath);
+            var assetData = new AnimaMundiDescriptor(filePath, new AssimpLoaderConfig());
+            var located = assetManager.tryLocating(assetData).orElseThrow();
 
-            var fileHandle = open(assetData);
+            var fileHandle = open(located);
             return fileHandle;
         });
 
@@ -48,13 +46,13 @@ class AssimpFileSystem {
         });
     }
 
-    private long open(AssetData data) {
+    private long open(LocatedAsset located) {
         var result = 0L;
-        if (data != null) {
-            var path = data.getPath().toString();
+        if (located != null) {
+            var path = located.getName();
             var contentArray = contentCache.get(path);
 
-            var file = new AssimpFile(this, data, contentArray);
+            var file = new AssimpFile(this, located, contentArray);
             result = file.handle();
             openedFiles.put(result, file);
 

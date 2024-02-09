@@ -13,7 +13,7 @@ import fr.alchemy.utilities.file.json.JSONValue;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.AssetManager;
-import fr.mercury.nucleus.asset.loader.data.AssetData;
+import fr.mercury.nucleus.asset.locator.AssetLocator.LocatedAsset;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
 import fr.mercury.nucleus.renderer.opengl.vertex.VertexAttribute;
@@ -21,7 +21,7 @@ import fr.mercury.nucleus.scenegraph.Material;
 import fr.mercury.nucleus.scenegraph.MaterialVariable.ValueType;
 import fr.mercury.nucleus.utils.MercuryException;
 
-public class MaterialLoader implements AssetLoader<Material[], VoidLoaderConfig> {
+public class MaterialLoader implements AssetLoader<Material[]> {
 
     /**
      * The logger of the application.
@@ -49,19 +49,14 @@ public class MaterialLoader implements AssetLoader<Material[], VoidLoaderConfig>
     private final StringBuffer buffer = new StringBuffer(MAX_DEFINES);
     
     @Override
-    public Material[] load(AssetData data) {
-        return load(data, VoidLoaderConfig.get());
-    }
-
-    @Override
-    public Material[] load(AssetData data, VoidLoaderConfig config) {
-        var extension = FileUtils.getExtension(data.getName());
+    public Material[] load(LocatedAsset asset) {
+        var extension = FileUtils.getExtension(asset.getName());
 
         if (FileExtensions.JSON_FORMAT.equals(extension)) {
-            try (final InputStreamReader isr = FileUtils.readStream(data.openStream())) {
+            try (final InputStreamReader isr = FileUtils.readStream(asset.openStream())) {
                 return loadJSON(isr);
             } catch (IOException ex) {
-                logger.error("An error has occured while reading material file '" + data + "' !", ex);
+                logger.error("An error has occured while reading material file '" + asset + "' !", ex);
             }
         }
 

@@ -7,18 +7,18 @@ import java.util.function.Consumer;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.application.service.TaskExecutorService;
 import fr.mercury.nucleus.asset.AssetManager;
-import fr.mercury.nucleus.asset.loader.data.AssetData;
+import fr.mercury.nucleus.asset.locator.AssetLocator.LocatedAsset;
 
 /**
- * <code>AssetLoader</code> is an interface for implementing a specific type of  asset loader. 
- * The asset loader is in charge of loading an asset in various format (a disk-file for example) 
- * and parsing it into a usable object.
+ * <code>AssetLoader</code> is an interface for implementing a specific type of
+ * asset loader. The asset loader is in charge of loading an asset in various
+ * format (a disk-file for example) and parsing it into a usable object.
  * 
  * @param <T> The type of asset to load.
  * 
  * @author GnosticOccultist
  */
-public interface AssetLoader<T, C extends AssetLoader.Config> {
+public interface AssetLoader<T> {
 
     /**
      * Loads asynchronously the specific asset type from the specified path using a
@@ -29,11 +29,11 @@ public interface AssetLoader<T, C extends AssetLoader.Config> {
      * main {@link Thread}.
      * 
      * @param data The asset data to load (not null).
-     * @return     A future task which will contain the loaded object once finished.
+     * @return A future task which will contain the loaded object once finished.
      * 
      * @see #loadFuture(String, Consumer)
      */
-    default CompletableFuture<T> loadFuture(AssetData data) {
+    default CompletableFuture<T> loadFuture(LocatedAsset data) {
         Validator.nonNull(data, "The asset data to load can't be null!");
         return CompletableFuture.supplyAsync(() -> load(data));
     }
@@ -50,37 +50,14 @@ public interface AssetLoader<T, C extends AssetLoader.Config> {
      * @param data     The asset data to load (not null).
      * @param config   The loader configuration, or null for none.
      * @param listener The listener to get the asset once loaded.
-     * @return         A future task which will contain the loaded object once finished, but
-     *                 shouldn't be needed if you provide a listener for the result.
+     * @return A future task which will contain the loaded object once finished, but
+     *         shouldn't be needed if you provide a listener for the result.
      * 
      * @see #loadFuture(String, Consumer)
      */
-    default CompletableFuture<Void> loadFuture(AssetData data, C config, Consumer<T> listener) {
+    default CompletableFuture<Void> loadFuture(LocatedAsset data, Consumer<T> listener) {
         Validator.nonNull(data, "The asset data to load can't be null!");
-        return CompletableFuture.supplyAsync(() -> load(data, config)).thenAccept(listener);
-    }
-    
-    /**
-     * Loads asynchronously the specific asset type from the specified path using a
-     * {@link CompletableFuture} and execute the given listener to handle the asset
-     * once loaded.
-     * <p>
-     * Note however than <code>OpenGL</code> specific method can't be invoked inside
-     * the future or in the listener, unless the provided {@link Executor} is
-     * running on the main {@link Thread}, like {@link TaskExecutorService#getGraphicsExecutor()}
-     * 
-     * @param data     The asset data to load (not null).
-     * @param executor The executor to use for running the given listener.
-     * @param listener The listener to get the asset once loaded.
-     * @return         A future task which will contain the loaded object once finished, but
-     *                 shouldn't be needed if you provide a listener for the result.
-     * 
-     * @see #loadFuture(String, Consumer)
-     * @see TaskExecutorService
-     */
-    default CompletableFuture<Void> loadFuture(AssetData data, Executor executor, Consumer<T> listener) {
-        Validator.nonNull(data, "The asset data to load can't be null!");
-        return loadFuture(data, null, executor, listener);
+        return CompletableFuture.supplyAsync(() -> load(data)).thenAccept(listener);
     }
 
     /**
@@ -90,43 +67,31 @@ public interface AssetLoader<T, C extends AssetLoader.Config> {
      * <p>
      * Note however than <code>OpenGL</code> specific method can't be invoked inside
      * the future or in the listener, unless the provided {@link Executor} is
-     * running on the main {@link Thread}, like {@link TaskExecutorService#getGraphicsExecutor()}
+     * running on the main {@link Thread}, like
+     * {@link TaskExecutorService#getGraphicsExecutor()}
      * 
      * @param data     The asset data to load (not null).
-     * @param config   The loader configuration, or null for none.
      * @param executor The executor to use for running the given listener.
      * @param listener The listener to get the asset once loaded.
-     * @return         A future task which will contain the loaded object once finished, but
-     *                 shouldn't be needed if you provide a listener for the result.
+     * @return A future task which will contain the loaded object once finished, but
+     *         shouldn't be needed if you provide a listener for the result.
      * 
      * @see #loadFuture(String, Consumer)
      * @see TaskExecutorService
      */
-    default CompletableFuture<Void> loadFuture(AssetData data, C config, Executor executor, Consumer<T> listener) {
+    default CompletableFuture<Void> loadFuture(LocatedAsset data, Executor executor, Consumer<T> listener) {
         Validator.nonNull(data, "The asset data to load can't be null!");
-        return CompletableFuture.supplyAsync(() -> load(data, config)).thenAcceptAsync(listener, executor);
+        return loadFuture(data, executor, listener);
     }
-    
+
     /**
      * Loads the specific asset type from the specified path, to use in the
      * application.
      * 
      * @param data The asset data to load (not null).
-     * @return     The loaded object.
+     * @return The loaded object.
      */
-    default T load(AssetData data) {
-        return load(data, null);
-    }
-
-    /**
-     * Loads the specific asset type from the specified path, to use in the
-     * application.
-     * 
-     * @param data   The asset data to load (not null).
-     * @param config The loader configuration, or null for none.
-     * @return       The loaded object.
-     */
-    T load(AssetData data, C config);
+    T load(LocatedAsset data);
 
     /**
      * Sets the {@link AssetManager} for this <code>AssetLoader</code>, which can be
@@ -136,10 +101,10 @@ public interface AssetLoader<T, C extends AssetLoader.Config> {
      * 
      * @param assetManager The asset manager (not null).
      */
-    default void registerAssetManager(AssetManager assetManager) {}
-    
+    default void registerAssetManager(AssetManager assetManager) {
+    }
+
     public interface Config {
-        
-        
+
     }
 }

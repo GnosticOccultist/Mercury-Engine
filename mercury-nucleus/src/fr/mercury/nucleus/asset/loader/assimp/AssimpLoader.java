@@ -24,7 +24,7 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.asset.loader.AssetLoader;
 import fr.mercury.nucleus.asset.loader.AssetLoaderDescriptor;
-import fr.mercury.nucleus.asset.loader.data.AssetData;
+import fr.mercury.nucleus.asset.locator.AssetLocator.LocatedAsset;
 import fr.mercury.nucleus.math.objects.Matrix4f;
 import fr.mercury.nucleus.math.objects.Transform;
 import fr.mercury.nucleus.renderer.logic.state.FaceCullingState;
@@ -48,7 +48,7 @@ import fr.mercury.nucleus.utils.MercuryException;
 import fr.mercury.nucleus.utils.data.Allocator;
 import fr.mercury.nucleus.utils.data.BufferUtils;
 
-public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig> {
+public class AssimpLoader implements AssetLoader<AnimaMundi> {
 
     /**
      * The assimp asset loader descriptor.
@@ -65,19 +65,15 @@ public class AssimpLoader implements AssetLoader<AnimaMundi, AssimpLoaderConfig>
     private AssetManager assetManager = null;
 
     @Override
-    public AnimaMundi load(AssetData data) {
-        return load(data, AssimpLoaderConfig.DEFAULT_CONFIG);
-    }
-
-    @Override
-    public AnimaMundi load(AssetData data, AssimpLoaderConfig config) {
+    public AnimaMundi load(LocatedAsset data) {
         // Define our own IO logic for Assimp.
         var tempFileSystem = new AssimpFileSystem(assetManager);
         var fileIO = tempFileSystem.getFileIO();
 
         // Assimp uses relative path, so relativize....
-        var c = data.relativize();
-        var scene = Assimp.aiImportFileEx(c, config.flags(), fileIO);
+        var name = data.getName();
+        var config = (AssimpLoaderConfig) data.asset().getConfig();
+        var scene = Assimp.aiImportFileEx(name, config.flags(), fileIO);
         Assimp.aiDetachAllLogStreams();
 
         if (scene == null || scene.mRootNode() == null) {

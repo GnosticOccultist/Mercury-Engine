@@ -17,8 +17,7 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.asset.loader.AssetLoader;
 import fr.mercury.nucleus.asset.loader.AssetLoaderDescriptor;
-import fr.mercury.nucleus.asset.loader.VoidLoaderConfig;
-import fr.mercury.nucleus.asset.loader.data.AssetData;
+import fr.mercury.nucleus.asset.locator.AssetLocator.LocatedAsset;
 import fr.mercury.nucleus.texture.ColorSpace;
 import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.texture.Image.Format;
@@ -34,7 +33,7 @@ import fr.mercury.nucleus.utils.data.Allocator;
  * 
  * @author GnosticOccultist
  */
-public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
+public class AWTImageReader implements AssetLoader<Image> {
 
     /**
      * The logger of the application.
@@ -55,26 +54,12 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
      * Loads the texture file from the specified {@link AssetData} into an
      * {@link Image}, to use in the application.
      * 
-     * @param data The asset data to load (not null).
+     * @param asset The asset data to load (not null).
      * @return The loaded image object.
      */
     @Override
-    public Image load(AssetData data) {
-        return load(data, VoidLoaderConfig.get());
-    }
-
-    /**
-     * Loads the texture file from the specified {@link AssetData} into an
-     * {@link Image}, to use in the application. <br>
-     * The loader doesn't use support any {@link Config}.
-     * 
-     * @param data   The asset data to load (not null).
-     * @param config The loader configuration, or null for none.
-     * @return The loaded image object.
-     */
-    @Override
-    public Image load(AssetData data, VoidLoaderConfig config) {
-        var ext = data.getExtension();
+    public Image load(LocatedAsset asset) {
+        var ext = asset.asset().getExtension();
         if (ImageIO.getImageReadersBySuffix(ext) == null) {
             throw new MercuryException("The image extension " + ext + " is not supported by AWT!");
         }
@@ -82,7 +67,7 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
         ImageIO.setUseCache(false);
         Image image = null;
 
-        try (var is = data.openStream(); var bis = new BufferedInputStream(is)) {
+        try (var is = asset.openStream(); var bis = new BufferedInputStream(is)) {
             var img = ImageIO.read(bis);
             var width = img.getWidth();
             var height = img.getHeight();
@@ -91,10 +76,10 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
             var buffer = Allocator.alloc(width * height * channels);
 
             // Check if it's a known format.
-            image = handleKnownFormat(data, img, buffer);
+            image = handleKnownFormat(asset, img, buffer);
             // Prevent the user that the image has been successfully loaded.
             if (image != null) {
-                logger.info("Successfully loaded image with AWT: " + data.getName() + ", image= " + image);
+                logger.info("Successfully loaded image with AWT: " + asset.getName() + ", image= " + image);
                 return image;
             }
 
@@ -129,12 +114,12 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
             image.setColorSpace(colorSpace);
 
         } catch (IOException ex) {
-            logger.error("Failed to read image with AWT: " + data.getName());
+            logger.error("Failed to read image with AWT: " + asset.getName());
         }
 
         // Prevent the user that the image has been successfully loaded.
         if (image != null) {
-            logger.info("Successfully loaded image with AWT: " + data.getName() + ", image= " + image);
+            logger.info("Successfully loaded image with AWT: " + asset.getName() + ", image= " + image);
         }
 
         return image;
@@ -144,19 +129,19 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
      * Handle known data format such as 8-bits ABGR and 8-bits BGR, which are often
      * used in Windows systems.
      * 
-     * @param data   The asset data to load (not null).
+     * @param asset  The asset data to load (not null).
      * @param img    The read buffered image (not null).
      * @param buffer An empty byte buffer to contain the pixel data.
      * @return An image or null if it isn't a standard format.
      */
-    private Image handleKnownFormat(AssetData data, BufferedImage img, ByteBuffer buffer) {
+    private Image handleKnownFormat(LocatedAsset asset, BufferedImage img, ByteBuffer buffer) {
         var type = img.getType();
         Image image = null;
 
         switch (type) {
         // Often used in PNG files.
         case BufferedImage.TYPE_4BYTE_ABGR:
-            var array = (byte[]) getDataArray(data, img);
+            var array = (byte[]) getDataArray(asset, img);
             assert buffer.capacity() == array.length;
             buffer.put(array);
             buffer.flip();
@@ -164,7 +149,7 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
             break;
         // Often used in JPEG files.
         case BufferedImage.TYPE_3BYTE_BGR:
-            array = (byte[]) getDataArray(data, img);
+            array = (byte[]) getDataArray(asset, img);
             assert buffer.capacity() == array.length;
             buffer.put(array);
             buffer.flip();
@@ -185,11 +170,11 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
     /**
      * Return an array containing the pixel data of the given {@link BufferedImage}.
      * 
-     * @param data The asset data to load (not null).
-     * @param img  The read buffered image (not null).
+     * @param asset The asset data to load (not null).
+     * @param img   The read buffered image (not null).
      * @return An array containing the pixel data, either in byte or short values.
      */
-    private Object getDataArray(AssetData data, BufferedImage img) {
+    private Object getDataArray(LocatedAsset asset, BufferedImage img) {
         var buffer = img.getRaster().getDataBuffer();
         switch (buffer.getDataType()) {
         case DataBuffer.TYPE_BYTE:
@@ -199,9 +184,9 @@ public class AWTImageReader implements AssetLoader<Image, VoidLoaderConfig> {
             var shortBuf = (DataBufferUShort) buffer;
             return shortBuf.getData();
         case DataBuffer.TYPE_UNDEFINED:
-            throw new IllegalStateException("Undefined data buffer type for image: " + data.getName());
+            throw new IllegalStateException("Undefined data buffer type for image: " + asset.getName());
         }
-        throw new IllegalStateException("Unresolved data buffer type " + buffer + ", for image: " + data.getName());
+        throw new IllegalStateException("Unresolved data buffer type " + buffer + ", for image: " + asset.getName());
     }
 
     @Override

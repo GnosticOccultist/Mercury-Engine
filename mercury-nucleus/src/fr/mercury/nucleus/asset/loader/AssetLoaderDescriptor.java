@@ -23,7 +23,7 @@ import fr.mercury.nucleus.asset.AssetManager;
  * @see AssetManager#registerLoader(AssetLoaderDescriptor)
  * @see AssetManager#load(String, AssetLoaderDescriptor)
  */
-public final class AssetLoaderDescriptor<A extends AssetLoader<?, ?>> implements Supplier<A>, Comparable<AssetLoaderDescriptor<?>> {
+public final class AssetLoaderDescriptor<A extends AssetLoader<?>> implements Supplier<A>, Comparable<AssetLoaderDescriptor<?>> {
 
     /**
      * The callable function to create a new loader instance.

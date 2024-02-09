@@ -1,8 +1,10 @@
-package fr.mercury.nucleus.asset.loader;
+package fr.mercury.nucleus.asset;
+
+import fr.mercury.nucleus.asset.loader.AssetLoader;
 
 /**
- * <code>VoidLoaderConfig</code> is an implementation of {@link AssetLoader.Config} to define
- * an empty asset loader configuration.
+ * <code>VoidLoaderConfig</code> is an implementation of
+ * {@link AssetLoader.Config} to define an empty asset loader configuration.
  * 
  * @author GnosticOccultist
  */
@@ -12,7 +14,7 @@ public final class VoidLoaderConfig implements AssetLoader.Config {
      * The instance of void config.
      */
     private static final VoidLoaderConfig INSTANCE = new VoidLoaderConfig();
-    
+
     /**
      * Return the single instance of <code>VoidLoaderConfig</code>.
      * 
@@ -26,6 +28,11 @@ public final class VoidLoaderConfig implements AssetLoader.Config {
      * Private constructor, use {@link VoidLoaderConfig#get()}.
      */
     private VoidLoaderConfig() {
-        
+
+    }
+
+    @Override
+    public String toString() {
+        return "VoidLoaderConfig";
     }
 }

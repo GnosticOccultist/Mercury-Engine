@@ -12,8 +12,7 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.asset.loader.AssetLoader;
 import fr.mercury.nucleus.asset.loader.AssetLoaderDescriptor;
-import fr.mercury.nucleus.asset.loader.VoidLoaderConfig;
-import fr.mercury.nucleus.asset.loader.data.AssetData;
+import fr.mercury.nucleus.asset.locator.AssetLocator.LocatedAsset;
 import fr.mercury.nucleus.texture.ColorSpace;
 import fr.mercury.nucleus.texture.Image;
 import fr.mercury.nucleus.texture.Image.Format;
@@ -29,7 +28,7 @@ import fr.mercury.nucleus.utils.data.Allocator;
  * 
  * @author GnosticOccultist
  */
-public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
+public class STBImageReader implements AssetLoader<Image> {
 
     /**
      * The logger of the application.
@@ -50,35 +49,21 @@ public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
      * Loads the texture file from the specified {@link AssetData} into an
      * {@link Image}, to use in the application.
      * 
-     * @param data The asset data to load (not null).
+     * @param asset The asset data to load (not null).
      * @return The loaded image object.
      */
     @Override
-    public Image load(AssetData data) {
-        return load(data, VoidLoaderConfig.get());
-    }
-
-    /**
-     * Loads the texture file from the specified {@link AssetData} into an
-     * {@link Image}, to use in the application. <br>
-     * The loader doesn't use support any {@link Config}.
-     * 
-     * @param data   The asset data to load (not null).
-     * @param config The loader configuration, or null for none.
-     * @return The loaded image object.
-     */
-    @Override
-    public Image load(AssetData data, VoidLoaderConfig config) {
+    public Image load(LocatedAsset asset) {
 
         Image image = null;
 
         // Creating the image from byte buffer.
         var buffer = Allocator.alloc(16777216);
-        image = decodeImage(buffer, data);
+        image = decodeImage(buffer, asset);
 
         // Prevent the user that the image has been successfully loaded.
         if (image != null) {
-            logger.info("Successfully loaded image with STB: " + data.getName() + ", image= " + image);
+            logger.info("Successfully loaded image with STB: " + asset.getName() + ", image= " + image);
         }
 
         return image;
@@ -89,10 +74,10 @@ public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
      * finally create an {@link Image} instance from the loaded data.
      * 
      * @param buffer The byte buffer to fill with pixel data.
-     * @param data   The asset data of the image to load.
+     * @param asset  The asset data of the image to load.
      * @return The loaded image instance.
      */
-    private Image decodeImage(ByteBuffer buffer, AssetData data) {
+    private Image decodeImage(ByteBuffer buffer, LocatedAsset asset) {
 
         try (var stack = MemoryStack.stackPush()) {
 
@@ -104,7 +89,7 @@ public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
 
             // Decode texture image into a byte buffer, by not enforcing pixel channels.
             ByteBuffer decodedImage = STBImage.stbi_load_from_memory(
-                    FileUtils.toByteBuffer(data.openStream(), buffer, this::resize), w, h, channels, 0);
+                    FileUtils.toByteBuffer(asset.openStream(), buffer, this::resize), w, h, channels, 0);
 
             if (decodedImage == null) {
                 throw new MercuryException("Failed to load image: " + STBImage.stbi_failure_reason());
@@ -118,7 +103,7 @@ public class STBImageReader implements AssetLoader<Image, VoidLoaderConfig> {
             } else if (chan == 3) {
                 format = Format.RGB8;
             } else {
-                logger.warning("Invalid color channels in file " + data.getName() + ", channels= " + channels);
+                logger.warning("Invalid color channels in file " + asset.getName() + ", channels= " + channels);
                 format = Format.RGBA8;
             }
 

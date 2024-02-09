@@ -1,18 +1,18 @@
-package fr.mercury.nucleus.asset.loader;
+package fr.mercury.nucleus.asset.loader.shader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import fr.alchemy.utilities.file.FileExtensions;
 import fr.alchemy.utilities.file.FileUtils;
 import fr.alchemy.utilities.logging.FactoryLogger;
 import fr.alchemy.utilities.logging.Logger;
-import fr.mercury.nucleus.asset.loader.data.AssetData;
-import fr.mercury.nucleus.asset.loader.data.PathAssetData;
+import fr.mercury.nucleus.asset.AssetDescriptor;
+import fr.mercury.nucleus.asset.AssetManager;
+import fr.mercury.nucleus.asset.loader.AssetLoader;
+import fr.mercury.nucleus.asset.loader.AssetLoaderDescriptor;
+import fr.mercury.nucleus.asset.locator.AssetLocator.LocatedAsset;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource;
 import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
 
@@ -25,7 +25,7 @@ import fr.mercury.nucleus.renderer.opengl.shader.ShaderSource.ShaderType;
  * 
  * @author GnosticOccultist
  */
-public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderConfig> {
+public final class GLSLLoader implements AssetLoader<ShaderSource> {
 
     /**
      * The logger of the application.
@@ -55,30 +55,22 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
             FileExtensions.SHADER_FILE_EXTENSIONS);
 
     /**
+     * The asset manager.
+     */
+    private AssetManager assetManager;
+
+    /**
      * Load the <code>ShaderSource</code> from the provided file path.
      * 
      * @param path The asset data of the file to read.
      * @return The readed shader source code.
      */
     @Override
-    public ShaderSource load(AssetData data) {
-        return load(data, VoidLoaderConfig.get());
-    }
-
-    /**
-     * Load the <code>ShaderSource</code> from the provided file path.
-     * 
-     * @param path   The asset data of the file to read.
-     * @param config The void configuration (not used).
-     * @return The readed shader source code.
-     */
-    @Override
-    public ShaderSource load(AssetData data, VoidLoaderConfig config) {
-
-        StringBuilder sb = new StringBuilder();
+    public ShaderSource load(LocatedAsset data) {
+        var sb = new StringBuilder();
         read(data, sb);
 
-        ShaderSource shaderSource = new ShaderSource(ShaderType.fromExtension(FileUtils.getExtension(data.getName())),
+        var shaderSource = new ShaderSource(ShaderType.fromExtension(FileUtils.getExtension(data.getName())),
                 sb.toString());
 
         return shaderSource;
@@ -93,12 +85,15 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
      * that the method is recursive, so an imported file can itself define some
      * imports.
      * 
-     * @param data The asset data of the file to read.
-     * @param sb   The string builder to fill.
+     * @param asset The asset data of the file to read.
+     * @param sb    The string builder to fill.
      * @return The filled string builder with the file's content.
      */
-    private StringBuilder read(AssetData data, StringBuilder sb) {
-        try (final var bufferedReader = FileUtils.readBuffered(data.openStream())) {
+    private StringBuilder read(LocatedAsset asset, StringBuilder sb) {
+
+        var assetName = asset.asset().getName();
+
+        try (final var bufferedReader = FileUtils.readBuffered(asset.openStream())) {
 
             String line = null;
             int lineIndex = 0;
@@ -118,18 +113,20 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
                         importPath = importPath.substring(1, importPath.length() - 1);
                     }
                     // It shouldn't need to import the main-file itself into it.
-                    if (data.getName().equals(importPath)) {
-                        throw new IOException(data.getName() + " at line " + lineIndex + " cannot import itself!");
+                    if (assetName.equals(importPath)) {
+                        throw new IOException(assetName + " at line " + lineIndex + " cannot import itself!");
                     }
 
                     // Read the import file and inject its content in the string builder.
-                    var imp = data.sibling(importPath);
-                    if (Files.exists(imp.getPath())) {
-                        read(imp, sb);
-                    } else {
-                        // Try to find from absolute path.
-                        imp = new PathAssetData(Paths.get(importPath));
+                    var importAsset = new AssetDescriptor<ShaderSource>(importPath);
+                    // Look for a sibling import file (relative path).
+                    var imp = asset.sibling(importAsset);
+                    if (imp == null) {
+                        // Try resolving it as an absolute path.
+                        imp = assetManager.tryLocating(importAsset).orElseThrow();
                     }
+
+                    read(imp, sb);
 
                     logger.info("Successfully imported: " + importPath);
                 } else if (line.startsWith(IMPORT_BEGIN_FOR)) {
@@ -144,7 +141,7 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
 
                     forDeclaration = forDeclaration.substring((IMPORT_BEGIN_FOR + " ").length()).trim();
 
-                    Matcher matcher = FOR_REGEX.matcher(forDeclaration);
+                    var matcher = FOR_REGEX.matcher(forDeclaration);
                     if (matcher.matches()) {
                         String varN = "$" + matcher.group(1);
                         int start = Integer.parseInt(matcher.group(2));
@@ -154,7 +151,7 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
                             inj = "$0";
                         }
 
-                        String inCode = currentFor.toString();
+                        var inCode = currentFor.toString();
                         currentFor = null;
 
                         for (int i = start; i < end; i++) {
@@ -179,10 +176,15 @@ public final class GLSLLoader implements AssetLoader<ShaderSource, VoidLoaderCon
                 }
             }
         } catch (IOException ex) {
-            logger.error("Failed to read import: " + data.getName() + " Error: " + ex.getMessage());
+            logger.error("Failed to read import: " + assetName + " Error: " + ex.getMessage());
             ex.printStackTrace();
         }
 
         return sb;
+    }
+
+    @Override
+    public void registerAssetManager(AssetManager assetManager) {
+        this.assetManager = assetManager;
     }
 }

@@ -6,7 +6,7 @@ import org.lwjgl.assimp.AIFile;
 import org.lwjgl.assimp.Assimp;
 import org.lwjgl.system.MemoryUtil;
 
-import fr.mercury.nucleus.asset.loader.data.AssetData;
+import fr.mercury.nucleus.asset.locator.AssetLocator.LocatedAsset;
 
 class AssimpFile {
 
@@ -16,9 +16,9 @@ class AssimpFile {
 
     private final byte[] contentArray;
 
-    AssimpFile(AssimpFileSystem fileSystem, AssetData data, byte[] contentArray) {
+    AssimpFile(AssimpFileSystem fileSystem, LocatedAsset located, byte[] contentArray) {
         if (contentArray == null) {
-            contentArray = data.getBytes();
+            contentArray = located.getBytes();
         }
 
         this.contentArray = contentArray;

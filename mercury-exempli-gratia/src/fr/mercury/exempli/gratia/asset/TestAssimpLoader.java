@@ -2,7 +2,9 @@ package fr.mercury.exempli.gratia.asset;
 
 import fr.mercury.nucleus.application.MercuryApplication;
 import fr.mercury.nucleus.application.MercurySettings;
+import fr.mercury.nucleus.asset.loader.AnimaMundiDescriptor;
 import fr.mercury.nucleus.asset.loader.assimp.AssimpLoader;
+import fr.mercury.nucleus.asset.loader.assimp.AssimpLoaderConfig;
 import fr.mercury.nucleus.input.Axis;
 import fr.mercury.nucleus.input.Button;
 import fr.mercury.nucleus.input.DelegateInputProcessor;
@@ -96,7 +98,7 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
 
         // Load and prepare the cube in the scene.
         // TODO: Allow to add config flags when loading a model.
-        sponza = assetManager.loadAnimaMundi("/model/sponza/sponza.gltf");
+        sponza = assetManager.loadAnimaMundi(new AnimaMundiDescriptor("/model/sponza/sponza.gltf", new AssimpLoaderConfig()));
         sponza.setName("sponza");
         sponza.setTranslation(5.0f, -2.3F, 0.0F).setScale(1f, 1f, 1f);
 
