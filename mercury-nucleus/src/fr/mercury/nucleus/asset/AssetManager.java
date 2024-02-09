@@ -47,10 +47,17 @@ import fr.mercury.nucleus.texture.TextureAtlas;
 import fr.mercury.nucleus.utils.MercuryException;
 
 /**
- * <code>AssetManager</code> manages all the assets which can be used inside an
- * {@link Application}. For example, it will be able to load an asset with a
- * registered <code>AssetLoader</code> and translate a physical file into a
- * virtual object which can be later used inside a {@link ShaderProgram}, ...
+ * <code>AssetManager</code> is an implementation of
+ * {@link AbstractApplicationService} responsible of locating, loading or
+ * caching assets for an {@link Application}.
+ * <p>
+ * For example, it will be able to load an asset with a registered
+ * {@link AssetLoader} to a usable object instance by the application (model,
+ * texture, shader, material, etc.).
+ * <p>
+ * In order to locate an asset, the manager will use a set of
+ * {@link AssetLocator}, mainly the {@link ClasspathLocator} which work within
+ * the classpath hierarchy.
  * 
  * @author GnosticOccultist
  */
@@ -113,7 +120,12 @@ public class AssetManager extends AbstractApplicationService {
      */
     public <A extends AssetLoader<?>> AssetManager registerLoader(AssetLoaderDescriptor<A> descriptor, A assetLoader) {
         Validator.nonNull(descriptor, "The descriptor can't be null!");
-        loaders.put(descriptor, assetLoader);
+        if (assetLoader != null) {
+            assetLoader.registerAssetManager(this);
+        }
+
+        this.loaders.put(descriptor, assetLoader);
+        logger.info("Registering asset loader with descriptor " + descriptor + ", " + assetLoader);
         return this;
     }
 
@@ -121,21 +133,41 @@ public class AssetManager extends AbstractApplicationService {
      * Unregister a specified type of {@link AssetLoader} using the given
      * {@link AssetLoaderDescriptor}.
      * 
-     * @param type       The type of loader to register.
-     * @param extensions The readable extensions with this loader.
+     * @param descriptor The loader descriptor to unregister (not null).
      * @return The removed asset loader or null if none.
      */
     @SuppressWarnings("unchecked")
     public <A extends AssetLoader<?>> A unregisterLoader(AssetLoaderDescriptor<A> descriptor) {
-        return (A) loaders.remove(descriptor);
+        Validator.nonNull(descriptor, "The descriptor can't be null!");
+        var assetLoader = loaders.remove(descriptor);
+        if (assetLoader != null) {
+            assetLoader.registerAssetManager(null);
+            logger.info("Unregistering asset loader with descriptor " + descriptor + ", " + assetLoader);
+        }
+
+        return (A) assetLoader;
     }
 
+    /**
+     * Register the provided {@link AssetLocator} to locate assets on filesystem.
+     * 
+     * @param locator The locator to register (not null).
+     * @return The asset manager for chaining purposes.
+     */
     public AssetManager registerLocator(AssetLocator locator) {
+        Validator.nonNull(locator, "The asset locator can't be null!");
         this.locators.add(locator);
         logger.info("Registering root " + locator);
         return this;
     }
 
+    /**
+     * Unregister the specified {@link AssetLocator} to no longer locate assets on
+     * filesystem.
+     * 
+     * @param locator The locator to unregister (not null).
+     * @return The asset manager for chaining purposes.
+     */
     public AssetManager unregisterLocator(AssetLocator locator) {
         var removed = locators.remove(locator);
         if (removed) {
@@ -145,10 +177,21 @@ public class AssetManager extends AbstractApplicationService {
         return this;
     }
 
+    /**
+     * Try to locate the provided {@link AssetDescriptor} using the registered
+     * {@link AssetLocator}. It will return an optional {@link LocatedAsset} empty
+     * if the asset couldn't be located.
+     * 
+     * @param asset The descriptor of the asset to locate (not null).
+     * @return An optional located asset, empty if the asset couldn't be located
+     *         (not null).
+     */
     public Optional<LocatedAsset> tryLocating(AssetDescriptor<?> asset) {
+        Validator.nonNull(asset, "The asset descriptor can't be null!");
+
         if (locators.isEmpty()) {
             logger.error("Couldn't resolve '" + asset + " since there are no locators registered!");
-            return null;
+            return Optional.empty();
         }
 
         for (var locator : locators) {

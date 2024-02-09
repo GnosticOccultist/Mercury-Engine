@@ -98,7 +98,8 @@ public class TestAssimpLoader extends MercuryApplication implements InputValueLi
 
         // Load and prepare the cube in the scene.
         // TODO: Allow to add config flags when loading a model.
-        sponza = assetManager.loadAnimaMundi(new AnimaMundiDescriptor("/model/sponza/sponza.gltf", new AssimpLoaderConfig()));
+        sponza = assetManager
+                .loadAnimaMundi(new AnimaMundiDescriptor("/model/sponza/sponza.gltf", new AssimpLoaderConfig()));
         sponza.setName("sponza");
         sponza.setTranslation(5.0f, -2.3F, 0.0F).setScale(1f, 1f, 1f);
 

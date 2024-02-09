@@ -62,7 +62,7 @@ public class AssimpLoader implements AssetLoader<AnimaMundi> {
      */
     private static final Logger logger = FactoryLogger.getLogger("mercury.asset.assimp");
 
-    private AssetManager assetManager = null;
+    private AssetManager assetManager;
 
     @Override
     public AnimaMundi load(LocatedAsset data) {
