@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import org.lwjgl.opengl.EXTTextureFilterAnisotropic;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL11C;
+import org.lwjgl.opengl.GL12C;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
@@ -148,14 +149,35 @@ public abstract class Texture extends GLObject {
         }
 
         // Don't know if it's really useful...
-        GL11C.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
+        GL11C.glPixelStorei(GL11C.GL_UNPACK_ALIGNMENT, 1);
 
         // Prepare image buffer for reading.
         ByteBuffer buffer = image.getData();
         buffer.rewind();
 
-        GL11C.glTexImage2D(getOpenGLType(), 0, image.determineInternalFormat(), image.getWidth(), image.getHeight(), 0,
-                image.determineFormat(), image.determineDataType(), buffer);
+        if (image.hasMipmaps()) {
+
+            GL11C.glTexParameteri(getOpenGLType(), GL12C.GL_TEXTURE_MAX_LEVEL, image.mipmapsCount() - 1);
+
+            var pos = 0;
+            for (var level = 0; level < image.mipmapsCount(); ++level) {
+                var width = Math.max(1, image.getWidth() >> level);
+                var height = Math.max(1, image.getHeight() >> level);
+                var size = image.getMipmapSize(level);
+
+                buffer.position(pos);
+                buffer.limit(pos + size);
+
+                GL11C.glTexImage2D(getOpenGLType(), level, image.determineInternalFormat(), width, height, 0,
+                        image.determineFormat(), image.determineDataType(), buffer);
+
+                pos += size;
+            }
+
+        } else {
+            GL11C.glTexImage2D(getOpenGLType(), 0, image.determineInternalFormat(), image.getWidth(), image.getHeight(),
+                    0, image.determineFormat(), image.determineDataType(), buffer);
+        }
 
         image.setNeedUpdate(false);
     }

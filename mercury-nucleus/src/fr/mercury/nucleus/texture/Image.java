@@ -3,8 +3,8 @@ package fr.mercury.nucleus.texture;
 import java.nio.ByteBuffer;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL14;
-import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import fr.alchemy.utilities.Validator;
 import fr.mercury.nucleus.math.objects.Color;
@@ -42,6 +42,11 @@ public class Image {
      * The data of the image.
      */
     private final ByteBuffer data;
+    /**
+     * The array containing the sizes of each mipmap level, or null if image has no
+     * mipmaps.
+     */
+    private int[] mipmapSizes;
     /**
      * Whether a texture which uses the image needs to be updated.
      */
@@ -83,7 +88,7 @@ public class Image {
      * @param buffer The byte buffer to copy the pixel values from.
      */
     public Image(int width, int height, ByteBuffer buffer) {
-        this(width, height, Format.RGBA8, buffer);
+        this(width, height, Format.RGBA8, buffer, null);
     }
 
     /**
@@ -97,6 +102,22 @@ public class Image {
      * @param buffer The byte buffer to copy the pixel values from.
      */
     public Image(int width, int height, Format format, ByteBuffer buffer) {
+        this(width, height, format, buffer, null);
+    }
+
+    /**
+     * Instantiates a new <code>Image</code> with the provided width, height and
+     * format. The internal buffer of the image copies the pixel data from the
+     * provided byte buffer.
+     * 
+     * @param width       The width of the image (&gt 0).
+     * @param height      The height of the image (&gt 0).
+     * @param format      The format of the image (not null).
+     * @param buffer      The byte buffer to copy the pixel values from.
+     * @param mipmapSizes An array containing the size of each mipmap level, or null
+     *                    for no mipmaps.
+     */
+    public Image(int width, int height, Format format, ByteBuffer buffer, int[] mipmapSizes) {
         Validator.positive(width, "The image's width must be positive!");
         Validator.positive(height, "The image's height must be positive!");
         Validator.nonNull(format, "The image's format can't be null!");
@@ -105,6 +126,7 @@ public class Image {
         this.height = height;
         this.format = format;
         this.colorSpace = ColorSpace.LINEAR;
+        setMipmapSizes(mipmapSizes);
 
         this.data = BufferUtils.createByteBuffer(buffer.capacity());
         if (buffer != null) {
@@ -265,6 +287,60 @@ public class Image {
     }
 
     /**
+     * Return whether the <code>Image</code> contains mipmap levels.
+     * 
+     * @return Whether the image contains mipmaps.
+     */
+    public boolean hasMipmaps() {
+        return mipmapSizes != null;
+    }
+
+    /**
+     * Return the count of mipmap levels contained in the <code>Image</code>.
+     * 
+     * @return The count of mipmap levels (&ge;0).
+     */
+    public int mipmapsCount() {
+        return hasMipmaps() ? mipmapSizes.length : 0;
+    }
+
+    /**
+     * Return the size in bytes of the given mipmap level in the <code>Image</code>.
+     * 
+     * @param level The mipmap level (&ge;0, &lt;mipmap count).
+     * @return The size in bytes of the mipmap level (&gt;0).
+     */
+    public int getMipmapSize(int level) {
+        Validator.inRange(level, 0, mipmapsCount() - 1);
+        return mipmapSizes[level];
+    }
+
+    /**
+     * Return an array containing the size of each mipmap level of the
+     * <code>Image</code>. If the image have no mipmaps, the result will be null.
+     * 
+     * @return An array containing the size of each mipmap level, or null for no
+     *         mipmaps.
+     */
+    public int[] getMipmapSizes() {
+        return mipmapSizes;
+    }
+
+    /**
+     * Sets the array containing the size of each mipmap level of the
+     * <code>Image</code>. If the image have no mipmaps, the value passed should be
+     * null.
+     * 
+     * @param mipmapSizes The array containing the size of each mipmap level, or
+     *                    null for no mipmaps.
+     * @return The image for chaining purposes (not null).
+     */
+    public Image setMipmapSizes(int[] mipmapSizes) {
+        this.mipmapSizes = (mipmapSizes != null && mipmapSizes.length <= 1) ? null : mipmapSizes;
+        return this;
+    }
+
+    /**
      * Return whether the <code>Image</code> data's has been changed, and needs to
      * be updated if used in the OpenGL context.
      * 
@@ -306,17 +382,21 @@ public class Image {
          */
         BGR8(24),
         /**
-         * 8-bit alpha, blue, green and red color, often used on Windows systems.
-         */
-        ABGR8(32),
-        /**
          * 8-bit red, green and blue color.
          */
         RGB8(24),
         /**
+         * 8-bit alpha, blue, green and red color, often used on Windows systems.
+         */
+        ABGR8(32),
+        /**
          * 8-bit red, green, blue and alpha color.
          */
         RGBA8(32),
+        /**
+         * 8-bit blue, green, red and alpha color.
+         */
+        BGRA8(32),
         /**
          * 
          */
@@ -421,6 +501,7 @@ public class Image {
                     return GL30.GL_SRGB8;
                 case ABGR8:
                 case RGBA8:
+                case BGRA8:
                     return GL30.GL_SRGB8_ALPHA8;
                 default:
                     throw new UnsupportedOperationException(
@@ -434,6 +515,7 @@ public class Image {
                 return GL11.GL_RGB8;
             case ABGR8:
             case RGBA8:
+            case BGRA8:
                 return GL11.GL_RGBA8;
             case RGB16F:
                 return GL30.GL_RGB16F;
@@ -464,13 +546,15 @@ public class Image {
         public int determineFormat() {
             switch (this) {
             case BGR8:
-                return GL20.GL_BGR;
+                return GL12.GL_BGR;
             case RGB8:
             case RGB16F:
             case RGB32F:
                 return GL11.GL_RGB;
-            case ABGR8:
+            case BGRA8:
+                return GL12.GL_BGRA;
             case RGBA8:
+            case ABGR8:
             case RGBA16F:
             case RGBA32F:
                 return GL11.GL_RGBA;
@@ -492,9 +576,10 @@ public class Image {
         public int determineDataType() {
             switch (this) {
             case ABGR8:
-                return GL20.GL_UNSIGNED_INT_8_8_8_8;
+                return GL12.GL_UNSIGNED_INT_8_8_8_8;
             case BGR8:
             case RGB8:
+            case BGRA8:
             case RGBA8:
                 return GL11.GL_UNSIGNED_BYTE;
             case RGB16F:
