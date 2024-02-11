@@ -117,6 +117,18 @@ public interface AssetLocator {
         }
 
         /**
+         * Return the {@link AssetDescriptor} to describe the <code>LocatedAsset</code>,
+         * cast to the provided type.
+         * 
+         * @param type The type of asset descriptor for casting (not null).
+         * @return The descriptor of the located asset (not null).
+         */
+        public <T extends AssetDescriptor<?>> T asset(Class<T> type) {
+            Validator.nonNull(type, "The type caster can't be null!");
+            return type.cast(asset);
+        }
+
+        /**
          * Return the name of the <code>LocatedAsset</code>.
          * 
          * @return The name of the located asset (not null or empty).

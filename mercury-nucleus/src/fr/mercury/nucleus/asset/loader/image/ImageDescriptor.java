@@ -12,4 +12,10 @@ public class ImageDescriptor<C extends ImageAssetConfig> extends AssetDescriptor
     public ImageDescriptor(String name, C config) {
         super(name, config);
     }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public C getConfig() {
+        return (C) super.getConfig();
+    }
 }

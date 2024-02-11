@@ -12,6 +12,7 @@ import fr.alchemy.utilities.logging.Logger;
 import fr.mercury.nucleus.asset.AssetManager;
 import fr.mercury.nucleus.asset.loader.AssetLoader;
 import fr.mercury.nucleus.asset.loader.AssetLoaderDescriptor;
+import fr.mercury.nucleus.asset.loader.image.ImageAssetConfig.FlipMode;
 import fr.mercury.nucleus.asset.locator.AssetLocator.LocatedAsset;
 import fr.mercury.nucleus.texture.ColorSpace;
 import fr.mercury.nucleus.texture.Image;
@@ -86,6 +87,10 @@ public class STBImageReader implements AssetLoader<Image> {
             var w = stack.mallocInt(1);
             var h = stack.mallocInt(1);
             var channels = stack.mallocInt(1);
+
+            var imageDescriptor = asset.asset(ImageDescriptor.class);
+            var flipMode = imageDescriptor.getConfig().flipMode();
+            STBImage.stbi_set_flip_vertically_on_load(flipMode == FlipMode.FLIP_Y);
 
             // Decode texture image into a byte buffer, by not enforcing pixel channels.
             ByteBuffer decodedImage = STBImage.stbi_load_from_memory(
