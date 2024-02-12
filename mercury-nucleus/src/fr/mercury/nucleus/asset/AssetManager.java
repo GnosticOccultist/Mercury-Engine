@@ -125,7 +125,8 @@ public class AssetManager extends AbstractApplicationService {
         }
 
         this.loaders.put(descriptor, assetLoader);
-        logger.info("Registering asset loader with descriptor " + descriptor + ", " + assetLoader);
+        logger.info("Registering " + ((assetLoader == null) ? "delayed" : "") + " asset loader with descriptor "
+                + descriptor);
         return this;
     }
 
