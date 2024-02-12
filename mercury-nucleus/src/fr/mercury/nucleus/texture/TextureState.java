@@ -52,6 +52,15 @@ public class TextureState implements Comparable<TextureState> {
      * Whether the mipmaps were generated.
      */
     protected boolean generatedMipMaps;
+    /**
+     * The texture max mipmap level, or -1 to use all available mimap levels in the
+     * image.
+     */
+    protected int maxLevel = -1;
+    /**
+     * The texture base mipmap level.
+     */
+    protected int baseLevel = 0;
 
     /**
      * Instantiates a new <code>TextureState</code> and {@link #reset() resetting}
@@ -79,6 +88,8 @@ public class TextureState implements Comparable<TextureState> {
         this.anisotropicFilter = source.anisotropicFilter;
         this.needMipmaps = source.needMipmaps;
         this.generatedMipMaps = source.generatedMipMaps;
+        this.maxLevel = source.maxLevel;
+        this.baseLevel = source.baseLevel;
     }
 
     /**
@@ -150,6 +161,9 @@ public class TextureState implements Comparable<TextureState> {
         needMipmaps = false;
         generatedMipMaps = false;
 
+        maxLevel = -1;
+        baseLevel = 0;
+
         compareMode = CompareMode.NONE;
 
         anisotropicFilter = 1;
@@ -168,6 +182,7 @@ public class TextureState implements Comparable<TextureState> {
      * <li>{@link MinFilter} & {@link MagFilter}
      * <li>{@link CompareMode}
      * <li><code>Mipmapping</code>
+     * <li><code>Mipmapping levels</code>
      * </pre>
      */
     @Override
@@ -184,6 +199,9 @@ public class TextureState implements Comparable<TextureState> {
             changes++;
         }
         if (needMipmaps != other.needMipmaps || generatedMipMaps != other.generatedMipMaps) {
+            changes++;
+        }
+        if (maxLevel != other.maxLevel || baseLevel != other.baseLevel) {
             changes++;
         }
 

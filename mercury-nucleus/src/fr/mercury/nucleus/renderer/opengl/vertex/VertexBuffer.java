@@ -1,6 +1,7 @@
 package fr.mercury.nucleus.renderer.opengl.vertex;
 
 import java.nio.Buffer;
+import java.nio.FloatBuffer;
 import java.util.function.Consumer;
 
 import org.lwjgl.opengl.GL15;
@@ -14,13 +15,16 @@ import fr.mercury.nucleus.utils.data.Allocator;
 
 /**
  * <code>VertexBuffer</code> is an implementation of the {@link GLBuffer}, which
- * contains vertex data (<i>position, normal, texture coordinate, etc</i>) used for rendering a {@link Mesh}.
+ * contains vertex data (<i>position, normal, texture coordinate, etc</i>) used
+ * for rendering a {@link Mesh}.
  * <p>
- * Each <code>VertexBuffer</code> can be organized inside a {@link VertexArray} and be called as an attributes list. 
- * The attribute can then be attached to a specific index and be used during the rendering process.
+ * Each <code>VertexBuffer</code> can be organized inside a {@link VertexArray}
+ * and be called as an attributes list. The attribute can then be attached to a
+ * specific index and be used during the rendering process.
  * <p>
- * This process is auto-managed inside the <code>Mesh</code> class when calling {@link #upload()}, so you don't want 
- * to bother about all the <code>GLObject</code> invokations, if you don't know anything about them.
+ * This process is auto-managed inside the <code>Mesh</code> class when calling
+ * {@link #upload()}, so you don't want to bother about all the
+ * <code>GLObject</code> invokations, if you don't know anything about them.
  * 
  * @author GnosticOccultist
  */
@@ -206,6 +210,34 @@ public class VertexBuffer extends GLBuffer {
 
         this.data = data;
         this.needsUpdate = true;
+    }
+
+    /**
+     * Writes the provided floating point value to the internal {@link Buffer} of
+     * the <code>VertexBuffer</code>.
+     * 
+     * @param The floating point value.
+     * @return The vertex buffer for chaining purposes (not null).
+     */
+    public VertexBuffer put(float v) {
+        Validator.check(format == Format.FLOAT,
+                "The format '" + format + "' of the vertex buffer can't accept float data values!");
+        assert data != null;
+
+        ((FloatBuffer) data).put(v);
+        this.needsUpdate = true;
+        return this;
+    }
+
+    /**
+     * Clear the internal {@link Buffer} of the <code>VertexBuffer</code>.
+     * 
+     * @return The vertex buffer for chaining purposes (not null).
+     */
+    public VertexBuffer clear() {
+        this.data.clear();
+        this.needsUpdate = true;
+        return this;
     }
 
     /**

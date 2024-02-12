@@ -31,6 +31,18 @@ public final class MercuryMath {
      */
     public static final double EPSILON = 0.0001D;
     /**
+     * The PI floating point value.
+     */
+    public static final float PI = (float) Math.PI;
+    /**
+     * The factor to multiply a degree value to convert it into radians.
+     */
+    public static final float DEG_TO_RAD = PI / 180.0f;
+    /**
+     * The factor to multiply a radian value to convert it into degrees.
+     */
+    public static final float RAD_TO_DEG = 180.0f / PI;
+    /**
      * The local vars from the main thread.
      */
     public static final LocalVars LOCAL_VARS = LocalVars.get();
@@ -127,7 +139,7 @@ public final class MercuryMath {
      * It uses the {@link Math#sqrt(double)} function.
      * 
      * @param value The value to get the square root from.
-     * @return      The square root of the value, or {@link Float#NaN}.
+     * @return The square root of the value, or {@link Float#NaN}.
      */
     public static float sqrt(float value) {
         return (float) Math.sqrt(value);
@@ -139,7 +151,7 @@ public final class MercuryMath {
      * It uses the {@link Math#sqrt(double)} function and inverse it.
      * 
      * @param value The value to get the inverse square root from.
-     * @return      The inverse square root of the value.
+     * @return The inverse square root of the value.
      */
     public static float invSqrt(float value) {
         return (float) (1.0f / Math.sqrt(value));
@@ -163,7 +175,7 @@ public final class MercuryMath {
      * It uses the {@link Math#sin(double)} function.
      * 
      * @param value The angle in radians.
-     * @return      The sinus of the value.
+     * @return The sinus of the value.
      */
     public static float sin(float value) {
         return (float) Math.sin(value);
@@ -175,9 +187,40 @@ public final class MercuryMath {
      * It uses the {@link Math#tan(double)} function.
      * 
      * @param value The angle in radians.
-     * @return      The tangent of the value.
+     * @return The tangent of the value.
      */
     public static float tan(float value) {
         return (float) Math.tan(value);
+    }
+
+    /**
+     * Return the least common multiple (LCM) of the two provided integers. This is
+     * the smallest positive integer for both a and b.
+     * 
+     * @param a The first integer value (not zero).
+     * @param b The second integer value.
+     * @return The least common multiple of the two values.
+     */
+    public static int lcm(int a, int b) {
+        return a * (b / gcd(a, b));
+    }
+
+    /**
+     * Return the greatest common divisor (GCD) of the two provided integers. This
+     * is the largest positive integer that divides both a and b.
+     * <p>
+     * It uses the Euclidean algorithm for computation.
+     * 
+     * @param a The first integer value (not zero).
+     * @param b The second integer value.
+     * @return The greatest common divisor of the two values.
+     */
+    public static int gcd(int a, int b) {
+        while (b > 0) {
+            var temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
     }
 }

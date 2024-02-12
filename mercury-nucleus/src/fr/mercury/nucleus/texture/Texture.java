@@ -157,8 +157,6 @@ public abstract class Texture extends GLObject {
 
         if (image.hasMipmaps()) {
 
-            GL11C.glTexParameteri(getOpenGLType(), GL12C.GL_TEXTURE_MAX_LEVEL, image.mipmapsCount() - 1);
-
             var pos = 0;
             for (var level = 0; level < image.mipmapsCount(); ++level) {
                 var width = Math.max(1, image.getWidth() >> level);
@@ -227,10 +225,23 @@ public abstract class Texture extends GLObject {
             currentState.setAnisotropicFilter(toApply.anisotropicFilter);
         }
 
-        if (!toApply.isGeneratedMipMaps() && toApply.isNeedMipmaps()) {
+        if (!toApply.isGeneratedMipMaps() && toApply.isNeedMipmaps() && !image.hasMipmaps()) {
             GL30C.glGenerateMipmap(getOpenGLType());
             currentState.setGeneratedMipMaps(true);
             currentState.setNeedMipmaps(true);
+        }
+
+        if (image.hasMipmaps() || currentState.isGeneratedMipMaps()) {
+            if (currentState.maxLevel != toApply.maxLevel) {
+                var maxLevel = toApply.maxLevel == -1 ? image.mipmapsCount() - 1 : toApply.maxLevel;
+                GL11C.glTexParameteri(getOpenGLType(), GL12C.GL_TEXTURE_MAX_LEVEL, maxLevel);
+                currentState.maxLevel = toApply.maxLevel;
+            }
+
+            if (currentState.baseLevel != toApply.baseLevel) {
+                GL11C.glTexParameteri(getOpenGLType(), GL12C.GL_TEXTURE_BASE_LEVEL, toApply.baseLevel);
+                currentState.baseLevel = toApply.baseLevel;
+            }
         }
     }
 
@@ -298,6 +309,22 @@ public abstract class Texture extends GLObject {
                 toApply.setGeneratedMipMaps(false);
             }
         }
+        return (T) this;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public <T extends Texture> T setMaxLevel(int maxLevel) {
+        Validator.inRange(maxLevel, -1, image.mipmapsCount() - 1);
+        toApply.maxLevel = maxLevel;
+
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends Texture> T setBaseLevel(int baseLevel) {
+        Validator.inRange(baseLevel, 0, image.mipmapsCount() - 1);
+        toApply.baseLevel = baseLevel;
+
         return (T) this;
     }
 
