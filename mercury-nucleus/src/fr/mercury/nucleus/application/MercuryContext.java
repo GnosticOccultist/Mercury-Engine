@@ -297,6 +297,17 @@ public class MercuryContext implements Runnable {
         Configuration.DEBUG_MEMORY_ALLOCATOR_INTERNAL.set(mem);
         Configuration.DEBUG_STACK.set(mem);
 
+        var glfwLib = settings.getString("GLFWLibraryName");
+        if (glfwLib != null) {
+            Configuration.GLFW_LIBRARY_NAME.set(glfwLib);
+        }
+
+        if (osArch.os().equals(OS.MAC_OS)) {
+            // Force async GLFW on Mac.
+            Configuration.GLFW_LIBRARY_NAME.set("glfw_async");
+            Configuration.GLFW_CHECK_THREAD0.set(false);
+        }
+
         window.initialize(settings);
 
         // Make the OpenGL context current.
