@@ -304,6 +304,7 @@ public class MercuryContext implements Runnable {
 
         if (osArch.os().equals(OS.MAC_OS)) {
             // Force async GLFW on Mac.
+            logger.info("Switching to async glfw library.");
             Configuration.GLFW_LIBRARY_NAME.set("glfw_async");
             Configuration.GLFW_CHECK_THREAD0.set(false);
         }
