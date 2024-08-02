@@ -29,6 +29,8 @@ import static org.lwjgl.glfw.GLFW.glfwSetWindowIcon;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
+import static org.lwjgl.glfw.GLFW.glfwGetClipboardString;
+import static org.lwjgl.glfw.GLFW.glfwSetClipboardString;
 import static org.lwjgl.glfw.GLFW.glfwShowWindow;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
@@ -426,6 +428,32 @@ public class GLFWWindow extends AbstractApplicationService implements Window {
     public void useVSync(boolean vSync) {
         assert getContext().getType().isRenderable();
         glfwSwapInterval(vSync ? 1 : 0);
+    }
+
+    /**
+     * Return the content of the system clipboard. If the clipboard is empty or if
+     * its content cannot be converted to a UTF-8 encoded string, a null value is
+     * returned.
+     * 
+     * @return The clipboard content as a string, or null if empty or invalid.
+     */
+    @OpenGLCall
+    public String getClipboardContent() {
+        assert getContext().getType().isRenderable();
+        var content = glfwGetClipboardString(window);
+        return content;
+    }
+
+    /**
+     * Sets the system clipboard to the specified UTF-8 encoded string.
+     * 
+     * @param content The clipboard content as a string (not null).
+     */
+    @OpenGLCall
+    public void setClipboardContent(String content) {
+        Validator.nonNull(content, "The clipboard content can't be null!");
+        assert getContext().getType().isRenderable();
+        glfwSetClipboardString(window, content);
     }
 
     /**
